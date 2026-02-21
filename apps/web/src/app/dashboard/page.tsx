@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { StatsCard } from '@/components/StatsCard'
+import { OverdueAlert } from '@/components/OverdueAlert'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate, formatMonth, getCurrentMonth } from '@/lib/format'
@@ -189,45 +190,6 @@ export default function DashboardPage() {
     margin: 0,
   }
 
-  const overdueAlertStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '16px 20px',
-    backgroundColor: 'var(--color-danger-50)',
-    border: '1px solid var(--color-danger-100)',
-    borderRadius: 'var(--radius-lg)',
-  }
-
-  const overdueLeftStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  }
-
-  const overdueIconStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    borderRadius: 'var(--radius-md)',
-    backgroundColor: 'var(--color-danger-100)',
-    color: 'var(--color-danger-600)',
-  }
-
-  const overdueLinkStyle: CSSProperties = {
-    fontSize: 'var(--font-sm)',
-    fontWeight: 600,
-    color: 'var(--color-danger-600)',
-    textDecoration: 'none',
-    padding: '8px 16px',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--color-danger-200)',
-    backgroundColor: 'var(--color-white)',
-    transition: 'all var(--transition-fast)',
-  }
-
   // ─── Render ───────────────────────────────────────
 
   const revenue = data?.revenue ?? 0
@@ -277,28 +239,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Overdue Alert */}
-        {data && data.overdueCount > 0 && (
-          <div style={overdueAlertStyle}>
-            <div style={overdueLeftStyle}>
-              <div style={overdueIconStyle}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontWeight: 600, color: 'var(--color-danger-700)', margin: 0, fontSize: 'var(--font-sm)' }}>
-                  {data.overdueCount} cliente{data.overdueCount > 1 ? 's' : ''} inadimplente{data.overdueCount > 1 ? 's' : ''}
-                </p>
-                <p style={{ color: 'var(--color-danger-600)', margin: 0, fontSize: 'var(--font-xs)' }}>
-                  Total em aberto: {formatCurrency(data.overdueTotal)}
-                </p>
-              </div>
-            </div>
-            <Link href="/inadimplentes" style={overdueLinkStyle}>
-              Ver Todos
-            </Link>
-          </div>
-        )}
+        {data && <OverdueAlert count={data.overdueCount} total={data.overdueTotal} />}
 
         {/* Stats Grid */}
         {loading ? (
