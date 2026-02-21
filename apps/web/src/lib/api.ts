@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+const API_BASE = '/api'
 
 interface ApiOptions {
   method?: string
@@ -19,7 +19,7 @@ class ApiError extends Error {
 export async function apiClient<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -34,4 +34,20 @@ export async function apiClient<T>(path: string, options: ApiOptions = {}): Prom
   }
 
   return response.json() as Promise<T>
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  return apiClient<T>(path)
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  return apiClient<T>(path, { method: 'POST', body })
+}
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  return apiClient<T>(path, { method: 'PUT', body })
+}
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  return apiClient<T>(path, { method: 'DELETE' })
 }
