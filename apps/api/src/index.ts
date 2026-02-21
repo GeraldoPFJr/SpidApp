@@ -2,6 +2,7 @@ import cors from '@fastify/cors'
 import Fastify from 'fastify'
 import { env } from './config/env.js'
 import { healthRoutes } from './routes/health.js'
+import { categoriesRoutes } from './routes/categories.js'
 import { productsRoutes } from './routes/products.js'
 import { customersRoutes } from './routes/customers.js'
 import { suppliersRoutes } from './routes/suppliers.js'
@@ -18,6 +19,7 @@ async function main() {
   await app.register(cors, { origin: true })
 
   await app.register(healthRoutes)
+  await app.register(categoriesRoutes, { prefix: '/categories' })
   await app.register(productsRoutes, { prefix: '/products' })
   await app.register(customersRoutes, { prefix: '/customers' })
   await app.register(suppliersRoutes, { prefix: '/suppliers' })
