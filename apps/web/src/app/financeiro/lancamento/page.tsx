@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
-import type { Account, FinanceCategory } from '@vendi/shared'
+import type { Account, FinanceCategory } from '@spid/shared'
 
 export default function LancamentoPage() {
   const router = useRouter()

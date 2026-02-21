@@ -1,5 +1,5 @@
 {
-  "name": "@vendi/mobile",
+  "name": "@spid/mobile",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -12,8 +12,8 @@
     "@capacitor/android": "^7.5.0",
     "@capacitor/core": "^7.1.0",
     "@capacitor/preferences": "^7.0.0",
-    "@vendi/shared": "workspace:*",
-    "@vendi/ui": "workspace:*",
+    "@spid/shared": "workspace:*",
+    "@spid/ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0"

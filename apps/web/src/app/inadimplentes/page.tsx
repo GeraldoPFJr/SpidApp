@@ -7,7 +7,7 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { Account } from '@vendi/shared'
+import type { Account } from '@spid/shared'
 
 // ─── Types ──────────────────────────────────────────────
 

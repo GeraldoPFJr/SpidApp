@@ -81,7 +81,7 @@ export async function shareCoupon(): Promise<void> {
     try {
       await navigator.share({
         title: 'Comprovante de Venda',
-        text: 'Comprovante de venda gerado pelo Vendi.',
+        text: 'Comprovante de venda gerado pelo Spid.',
       })
     } catch {
       // User cancelled or share not supported

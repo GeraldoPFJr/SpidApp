@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createSaleSchema } from '@vendi/shared/schemas/index.js'
+import { createSaleSchema } from '@spid/shared/schemas/index.js'
 import {
   convertToBase,
   generateInstallments,
   generateCouponNumber,
-} from '@vendi/shared/utils/index.js'
+} from '@spid/shared/utils/index.js'
 import type { Prisma, PrismaClient } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 

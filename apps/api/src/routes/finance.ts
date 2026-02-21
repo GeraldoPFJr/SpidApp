@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createFinanceEntrySchema } from '@vendi/shared/schemas/index.js'
+import { createFinanceEntrySchema } from '@spid/shared/schemas/index.js'
 import { prisma } from '../lib/prisma.js'
 
 const accountSchema = z.object({

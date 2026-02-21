@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
-import type { Product } from '@vendi/shared'
+import type { Product } from '@spid/shared'
 
 interface ProductRow extends Product {
   categoryName?: string

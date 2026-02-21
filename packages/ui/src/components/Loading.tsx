@@ -29,12 +29,12 @@ export function Loading({ size = 'md' }: LoadingProps) {
     border: `3px solid ${colors.neutral[200]}`,
     borderTopColor: colors.primary[600],
     borderRadius: '50%',
-    animation: 'vendi-spin 0.6s linear infinite',
+    animation: 'spid-spin 0.6s linear infinite',
   }
 
   return (
     <>
-      <style>{`@keyframes vendi-spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`@keyframes spid-spin { to { transform: rotate(360deg) } }`}</style>
       <div style={containerStyle}>
         <div style={spinnerStyle} />
       </div>

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@vendi/shared', '@vendi/ui'],
+  transpilePackages: ['@spid/shared', '@spid/ui'],
 }
 
 export default nextConfig

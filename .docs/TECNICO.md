@@ -1,4 +1,4 @@
-# TECNICO — Vendi
+# TECNICO — Spid
 
 ## Stack
 - **Mobile**: React + TypeScript + Capacitor + SQLite

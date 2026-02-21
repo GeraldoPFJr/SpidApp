@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
-import { createPurchaseSchema } from '@vendi/shared/schemas/index.js'
-import { convertToBase } from '@vendi/shared/utils/index.js'
+import { createPurchaseSchema } from '@spid/shared/schemas/index.js'
+import { convertToBase } from '@spid/shared/utils/index.js'
 import { prisma } from '../lib/prisma.js'
 
 export async function purchasesRoutes(app: FastifyInstance) {

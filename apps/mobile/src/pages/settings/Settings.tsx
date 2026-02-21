@@ -28,7 +28,7 @@ interface SettingsData {
 }
 
 function loadSettings(): SettingsData {
-  const stored = localStorage.getItem('vendi_settings')
+  const stored = localStorage.getItem('spid_settings')
   const defaults: SettingsData = {
     razaoSocial: '', nomeFantasia: '', cnpj: '', ie: '',
     endereco: '', cidade: '', uf: '', cep: '', telefone1: '', telefone2: '',
@@ -48,7 +48,7 @@ function loadSettings(): SettingsData {
 }
 
 function saveSettings(data: SettingsData) {
-  localStorage.setItem('vendi_settings', JSON.stringify(data))
+  localStorage.setItem('spid_settings', JSON.stringify(data))
   localStorage.setItem('APP_INSTANCE_ID', data.appInstanceId)
   localStorage.setItem('SYNC_SECRET', data.syncSecret)
 }

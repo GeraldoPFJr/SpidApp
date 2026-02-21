@@ -1,7 +1,7 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { formatDate } from '../../lib/format'
-import type { InventoryMovement } from '@vendi/shared'
+import type { InventoryMovement } from '@spid/shared'
 
 interface MovementWithProduct extends InventoryMovement {
   productName: string

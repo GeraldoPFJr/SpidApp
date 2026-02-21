@@ -17,10 +17,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
-      "@vendi/shared": ["./packages/shared/src"],
-      "@vendi/shared/*": ["./packages/shared/src/*"],
-      "@vendi/ui": ["./packages/ui/src"],
-      "@vendi/ui/*": ["./packages/ui/src/*"]
+      "@spid/shared": ["./packages/shared/src"],
+      "@spid/shared/*": ["./packages/shared/src/*"],
+      "@spid/ui": ["./packages/ui/src"],
+      "@spid/ui/*": ["./packages/ui/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", ".next", "build"]

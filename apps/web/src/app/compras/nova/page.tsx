@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
-import type { Supplier, Product, ProductUnit } from '@vendi/shared'
+import type { Supplier, Product, ProductUnit } from '@spid/shared'
 
 interface PurchaseItemRow {
   id: string

@@ -2,7 +2,7 @@ import { type CSSProperties, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, formatDate } from '../../lib/format'
-import type { Purchase, Supplier } from '@vendi/shared'
+import type { Purchase, Supplier } from '@spid/shared'
 
 interface PurchaseWithSupplier extends Purchase {
   supplierName: string

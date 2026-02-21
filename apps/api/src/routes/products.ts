@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createProductSchema, updateProductSchema } from '@vendi/shared/schemas/index.js'
+import { createProductSchema, updateProductSchema } from '@spid/shared/schemas/index.js'
 import { prisma } from '../lib/prisma.js'
 
 const priceTierSchema = z.object({

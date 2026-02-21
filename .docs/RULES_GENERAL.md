@@ -1,4 +1,4 @@
-# RULES_GENERAL — Vendi
+# RULES_GENERAL — Spid
 
 ## Git
 - Git flow: main → dev → feat/<slug>, fix/<slug>

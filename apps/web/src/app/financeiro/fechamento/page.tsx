@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, getCurrentMonth } from '@/lib/format'
-import type { Account } from '@vendi/shared'
+import type { Account } from '@spid/shared'
 
 interface ClosureData {
   openingBalance: number

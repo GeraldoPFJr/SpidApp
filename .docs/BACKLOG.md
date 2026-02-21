@@ -1,4 +1,4 @@
-# BACKLOG — Vendi
+# BACKLOG — Spid
 
 ## Historico
 - 2026-02-21: Especificacao tecnica completa (v1.0)

@@ -1,4 +1,4 @@
-package com.vendi.app;
+package com.spid.app;
 
 import com.getcapacitor.BridgeActivity;
 

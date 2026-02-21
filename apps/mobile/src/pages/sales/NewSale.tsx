@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { PaymentSplit, type PaymentEntry } from '../../components/PaymentSplit'
 import { formatBRL } from '../../lib/format'
-import type { Customer, Product, ProductUnit, Account } from '@vendi/shared'
+import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
 
 // ─── Types ─────────────────────────────────────────────────
 interface ProductWithUnits extends Product {

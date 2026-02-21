@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { ProductUnit, ProductPrice } from '@vendi/shared'
+import type { ProductUnit, ProductPrice } from '@spid/shared'
 
 interface ProductDetail {
   id: string

@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency } from '@/lib/format'
-import type { Customer } from '@vendi/shared'
+import type { Customer } from '@spid/shared'
 
 interface CustomerRow extends Customer {
   openAmount?: number

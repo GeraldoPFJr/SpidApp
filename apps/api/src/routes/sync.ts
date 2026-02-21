@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { syncPushSchema } from '@vendi/shared/schemas/index.js'
+import { syncPushSchema } from '@spid/shared/schemas/index.js'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 

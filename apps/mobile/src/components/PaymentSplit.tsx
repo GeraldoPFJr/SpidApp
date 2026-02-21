@@ -1,7 +1,7 @@
 import { type CSSProperties, useCallback, useState } from 'react'
 import { InstallmentConfig, type InstallmentPreview } from './InstallmentConfig'
 import { formatBRL } from '../lib/format'
-import type { PaymentMethod } from '@vendi/shared'
+import type { PaymentMethod } from '@spid/shared'
 
 export interface PaymentEntry {
   id: string

@@ -140,8 +140,8 @@ export function Sidebar() {
   return (
     <aside style={sidebarStyle}>
       <div style={logoContainerStyle}>
-        <span style={logoStyle}>Vendi</span>
-        <span style={logoIconStyle}>V</span>
+        <span style={logoStyle}>Spid</span>
+        <span style={logoIconStyle}>S</span>
         <button
           style={collapseButtonStyle}
           onClick={() => setCollapsed(!collapsed)}

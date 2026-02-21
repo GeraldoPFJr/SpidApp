@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
-import type { Category, Subcategory } from '@vendi/shared'
+import type { Category, Subcategory } from '@spid/shared'
 
 interface UnitRow {
   id: string

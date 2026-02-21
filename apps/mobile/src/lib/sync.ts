@@ -234,11 +234,11 @@ export function createSyncEngine(db: LocalDatabase): SyncEngine {
 
       // Update settings if stored
       try {
-        const stored = localStorage.getItem('vendi_settings')
+        const stored = localStorage.getItem('spid_settings')
         if (stored) {
           const settings = JSON.parse(stored)
           settings.lastSyncAt = now
-          localStorage.setItem('vendi_settings', JSON.stringify(settings))
+          localStorage.setItem('spid_settings', JSON.stringify(settings))
         }
       } catch { /* ignore */ }
 

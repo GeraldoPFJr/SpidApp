@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projeto
 
-**Vendi** — Sistema de vendas offline-first para vendedor autônomo de ovos e mercearia (porta a porta + WhatsApp). Operação 100% offline no celular Android com sincronização posterior para Neon Postgres.
+**Spid** — Sistema de vendas offline-first para vendedor autônomo de ovos e mercearia (porta a porta + WhatsApp). Operação 100% offline no celular Android com sincronização posterior para Neon Postgres.
 
 **Status**: Especificação completa, sem código implementado. Documentação de referência em `descritivo.md`, `diretrizes.md`, `inicio.md` e `tasklist.md`.
 

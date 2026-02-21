@@ -8,7 +8,7 @@ import { InstallmentConfig } from '@/components/InstallmentConfig'
 import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
-import type { Customer, Product, ProductUnit, Account } from '@vendi/shared'
+import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
 
 // ─── Types ──────────────────────────────────────────
 

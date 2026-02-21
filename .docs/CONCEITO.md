@@ -1,4 +1,4 @@
-# CONCEITO — Vendi
+# CONCEITO — Spid
 
 ## Dominio
 Sistema de vendas para vendedor autonomo de ovos e mercearia, operando porta a porta e via WhatsApp.

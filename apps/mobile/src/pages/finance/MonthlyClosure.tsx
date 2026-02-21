@@ -2,7 +2,7 @@ import { type CSSProperties, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { formatBRL, getCurrentMonth, formatMonthLabel } from '../../lib/format'
-import type { Account } from '@vendi/shared'
+import type { Account } from '@spid/shared'
 
 interface ClosureData {
   openingBalance: number

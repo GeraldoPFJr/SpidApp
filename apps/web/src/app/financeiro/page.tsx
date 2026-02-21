@@ -8,7 +8,7 @@ import { StatsCard } from '@/components/StatsCard'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { FinanceEntry, Account } from '@vendi/shared'
+import type { FinanceEntry, Account } from '@spid/shared'
 
 interface FinanceOverview {
   accounts: Array<Account & { balance: number }>

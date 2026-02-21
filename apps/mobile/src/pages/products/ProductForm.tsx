@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
-import type { Category, Subcategory, PriceTier } from '@vendi/shared'
+import type { Category, Subcategory, PriceTier } from '@spid/shared'
 
 interface UnitRow {
   id?: string

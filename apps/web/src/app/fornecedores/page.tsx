@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
-import type { Supplier } from '@vendi/shared'
+import type { Supplier } from '@spid/shared'
 
 export default function FornecedoresPage() {
   const router = useRouter()
