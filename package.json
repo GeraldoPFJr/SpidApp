@@ -1,0 +1,27 @@
+{
+  "name": "vendi",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:api": "pnpm --filter @vendi/api dev",
+    "dev:web": "pnpm --filter @vendi/web dev",
+    "dev:mobile": "pnpm --filter @vendi/mobile dev",
+    "build": "pnpm -r run build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "test": "pnpm -r run test",
+    "db:migrate": "pnpm --filter @vendi/api exec prisma migrate dev",
+    "db:generate": "pnpm --filter @vendi/api exec prisma generate",
+    "db:studio": "pnpm --filter @vendi/api exec prisma studio"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "eslint": "^9.20.0",
+    "prettier": "^3.5.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}
