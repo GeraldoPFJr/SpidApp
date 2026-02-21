@@ -7,7 +7,7 @@ import { type CSSProperties, type ReactNode, useCallback, useMemo, useState } fr
 export interface DataTableColumn<T> {
   key: string
   header: string
-  render?: (row: T) => ReactNode
+  render?: (row: T, key: string, index: number) => ReactNode
   width?: string
   sortable?: boolean
   align?: 'left' | 'center' | 'right'
@@ -365,7 +365,7 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              paginatedRows.map((row) => (
+              paginatedRows.map((row, rowIndex) => (
                 <tr
                   key={keyExtractor(row)}
                   style={rowStyle}
@@ -382,7 +382,7 @@ export function DataTable<T>({
                   {columns.map((col) => (
                     <td key={col.key} style={tdStyle(col)}>
                       {col.render
-                        ? col.render(row)
+                        ? col.render(row, col.key, page * pageSize + rowIndex)
                         : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
