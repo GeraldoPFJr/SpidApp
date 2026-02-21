@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd apps/web && npx prisma generate --schema=../../prisma/schema.prisma && next build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "env": {
+    "DATABASE_URL": "@database-url",
+    "SYNC_SECRET": "@sync-secret"
+  }
+}
