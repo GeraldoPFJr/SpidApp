@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+function getMonthRange(monthStr: string): { start: Date; end: Date } {
+  const [yearStr, mStr] = monthStr.split('-')
+  const year = parseInt(yearStr!, 10)
+  const month = parseInt(mStr!, 10)
+  const start = new Date(year, month - 1, 1)
+  const end = new Date(year, month, 0, 23, 59, 59, 999)
+  return { start, end }
+}
+
+function getCurrentMonth(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+export async function GET(request: NextRequest) {
+  const month = request.nextUrl.searchParams.get('month') ?? getCurrentMonth()
+  const { start, end } = getMonthRange(month)
+
+  const confirmedSales = await prisma.sale.findMany({
+    where: { status: 'CONFIRMED', date: { gte: start, lte: end } },
+    include: { items: true },
+  })
+
+  const faturamento = confirmedSales.reduce((sum, s) => sum + Number(s.total), 0)
+  const qtdVendas = confirmedSales.length
+  const ticketMedio = qtdVendas > 0 ? faturamento / qtdVendas : 0
+
+  const saleMovements = await prisma.inventoryMovement.findMany({
+    where: { reasonType: 'SALE', date: { gte: start, lte: end }, direction: 'OUT' },
+  })
+
+  let custoProdutos = 0
+  for (const mov of saleMovements) {
+    const lots = await prisma.costLot.findMany({
+      where: { productId: mov.productId },
+    })
+    const totalQty = lots.reduce((s, l) => s + l.qtyRemainingBase, 0)
+    const totalCost = lots.reduce((s, l) => s + Number(l.unitCostBase) * l.qtyRemainingBase, 0)
+    const avgCost = totalQty > 0 ? totalCost / totalQty : 0
+    custoProdutos += mov.qtyBase * avgCost
+  }
+
+  const lucroBruto = faturamento - custoProdutos
+
+  const expenseEntries = await prisma.financeEntry.findMany({
+    where: { type: 'EXPENSE', status: 'PAID', paidAt: { gte: start, lte: end } },
+  })
+  const despesas = expenseEntries.reduce((sum, e) => sum + Number(e.amount), 0)
+
+  const lucroLiquido = faturamento - custoProdutos - despesas
+
+  const clientesNovos = await prisma.customer.count({
+    where: { createdAt: { gte: start, lte: end }, deletedAt: null },
+  })
+
+  const payments = await prisma.payment.findMany({
+    where: { date: { gte: start, lte: end } },
+  })
+  const recebido = payments.reduce((sum, p) => sum + Number(p.amount), 0)
+
+  const openReceivables = await prisma.receivable.findMany({
+    where: { status: 'OPEN' },
+  })
+  const aReceber = openReceivables.reduce((sum, r) => sum + Number(r.amount), 0)
+
+  return NextResponse.json({
+    month,
+    faturamento: Math.round(faturamento * 100) / 100,
+    lucroBruto: Math.round(lucroBruto * 100) / 100,
+    despesas: Math.round(despesas * 100) / 100,
+    lucroLiquido: Math.round(lucroLiquido * 100) / 100,
+    qtdVendas,
+    clientesNovos,
+    ticketMedio: Math.round(ticketMedio * 100) / 100,
+    recebido: Math.round(recebido * 100) / 100,
+    aReceber: Math.round(aReceber * 100) / 100,
+  })
+}
