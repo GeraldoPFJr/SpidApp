@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "outDir": "dist",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@vendi/shared": ["../../packages/shared/src"],
+      "@vendi/shared/*": ["../../packages/shared/src/*"],
+      "@vendi/ui": ["../../packages/ui/src"],
+      "@vendi/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  "include": ["src"]
+}
