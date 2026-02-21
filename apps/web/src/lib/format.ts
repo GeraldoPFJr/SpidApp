@@ -29,12 +29,14 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatMonth(yearMonth: string): string {
-  const [year, month] = yearMonth.split('-')
+  const parts = yearMonth.split('-')
+  const year = parts[0] ?? ''
+  const month = parts[1] ?? '1'
   const months = [
     'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ]
-  return `${months[parseInt(month, 10) - 1]} ${year}`
+  return `${months[parseInt(month, 10) - 1] ?? 'Janeiro'} ${year}`
 }
 
 export function getCurrentMonth(): string {

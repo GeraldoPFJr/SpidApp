@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createFinanceEntrySchema } from '@spid/shared/schemas/index.js'
+import { createFinanceEntrySchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { parseBody } from '@/lib/api-utils'
 

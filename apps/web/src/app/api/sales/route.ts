@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSaleSchema } from '@spid/shared/schemas/index.js'
+import { createSaleSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 import { confirmSale } from '@/lib/sales-logic'

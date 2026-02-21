@@ -4,7 +4,7 @@ import { type CSSProperties, useMemo, useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
-import { formatCurrency, formatMonth, getCurrentMonth } from '@/lib/format'
+import { formatCurrency, getCurrentMonth } from '@/lib/format'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -70,13 +70,15 @@ export default function RelatoriosPage() {
   // ─── Month labels ──────────────────────────────
 
   const monthLabels = useMemo(() => {
-    const [y, m] = month.split('-').map(Number)
+    const parts = month.split('-').map(Number)
+    const y = parts[0] ?? 2024
+    const m = parts[1] ?? 1
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     const getLabel = (offset: number) => {
       let mm = m - offset
       let yy = y
       if (mm <= 0) { mm += 12; yy -= 1 }
-      return `${months[mm - 1]}/${yy}`
+      return `${months[mm - 1] ?? 'Jan'}/${yy}`
     }
     return { m2: getLabel(2), m1: getLabel(1), m0: getLabel(0) }
   }, [month])

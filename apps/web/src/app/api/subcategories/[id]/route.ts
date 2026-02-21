@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const existing = await prisma.subcategory.findUnique({ where: { id } })

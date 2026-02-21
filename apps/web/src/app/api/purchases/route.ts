@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createPurchaseSchema } from '@spid/shared/schemas/index.js'
-import { convertToBase } from '@spid/shared/utils/index.js'
+import { createPurchaseSchema, convertToBase } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 

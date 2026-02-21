@@ -102,7 +102,7 @@ export default function VendaDetalhePage() {
           PAID: { label: 'Pago', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
           CANCELLED: { label: 'Cancelado', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-500)' },
         }
-        const s = map[row.status] ?? map.OPEN
+        const s = map[row.status] ?? { label: 'Aberto', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' }
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)', backgroundColor: s.bg, color: s.color }}>
             {s.label}
@@ -189,7 +189,7 @@ export default function VendaDetalhePage() {
     DRAFT: { label: 'Rascunho', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
     CANCELLED: { label: 'Cancelada', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
   }
-  const st = statusMap[sale.status] ?? statusMap.CONFIRMED
+  const st = statusMap[sale.status] ?? { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
 
   return (
     <Layout>

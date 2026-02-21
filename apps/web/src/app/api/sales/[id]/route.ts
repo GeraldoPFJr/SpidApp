@@ -4,7 +4,7 @@ import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const sale = await prisma.sale.findUnique({

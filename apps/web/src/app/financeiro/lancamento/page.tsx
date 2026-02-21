@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useState } from 'react'
+import { type CSSProperties, Suspense, useCallback, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
@@ -8,6 +8,14 @@ import { apiClient } from '@/lib/api'
 import type { Account, FinanceCategory } from '@spid/shared'
 
 export default function LancamentoPage() {
+  return (
+    <Suspense>
+      <LancamentoContent />
+    </Suspense>
+  )
+}
+
+function LancamentoContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialType = searchParams.get('tipo') ?? 'EXPENSE'

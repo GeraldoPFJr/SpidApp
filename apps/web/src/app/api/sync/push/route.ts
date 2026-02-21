@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { syncPushSchema } from '@spid/shared/schemas/index.js'
+import { syncPushSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { validateAuth, isAuthError } from '@/lib/auth'
 import { parseBody } from '@/lib/api-utils'

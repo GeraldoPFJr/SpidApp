@@ -16,7 +16,7 @@ async function getProductStockBase(productId: string): Promise<number> {
   return (inSum._sum.qtyBase ?? 0) - (outSum._sum.qtyBase ?? 0)
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { productId } = await params
 
   const product = await prisma.product.findFirst({

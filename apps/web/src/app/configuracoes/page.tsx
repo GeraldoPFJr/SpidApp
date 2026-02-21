@@ -177,11 +177,6 @@ export default function ConfiguracoesPage() {
     transition: 'border-color var(--transition-fast)',
   }
 
-  const selectStyle: CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
-  }
-
   const radioGroupStyle: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',

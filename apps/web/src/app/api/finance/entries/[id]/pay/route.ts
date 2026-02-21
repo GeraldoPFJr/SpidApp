@@ -4,7 +4,7 @@ import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const existing = await prisma.financeEntry.findUnique({ where: { id } })

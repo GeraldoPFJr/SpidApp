@@ -3,7 +3,7 @@ import {
   convertToBase,
   generateInstallments,
   generateCouponNumber,
-} from '@spid/shared/utils/index.js'
+} from '@spid/shared'
 
 type TxClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 

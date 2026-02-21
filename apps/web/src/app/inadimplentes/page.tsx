@@ -192,11 +192,6 @@ export default function InadimplentesPage() {
     margin: 0,
   }
 
-  const expandedRowStyle: CSSProperties = {
-    backgroundColor: 'var(--color-neutral-50)',
-    borderBottom: '1px solid var(--color-neutral-200)',
-  }
-
   const receivableTableStyle: CSSProperties = {
     width: '100%',
     borderCollapse: 'collapse',

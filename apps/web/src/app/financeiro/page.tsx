@@ -1,7 +1,6 @@
 'use client'
 
-import { type CSSProperties, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Layout } from '@/components/Layout'
 import { StatsCard } from '@/components/StatsCard'
@@ -16,7 +15,6 @@ interface FinanceOverview {
 }
 
 export default function FinanceiroPage() {
-  const router = useRouter()
   const { data, loading } = useApi<FinanceOverview>('/finance')
   const [typeFilter, setTypeFilter] = useState('')
   const [accountFilter, setAccountFilter] = useState('')
@@ -42,7 +40,7 @@ export default function FinanceiroPage() {
           RETIRADA: { label: 'Retirada', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
           TRANSFER: { label: 'Transf.', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-700)' },
         }
-        const s = map[row.type] ?? map.EXPENSE
+        const s = map[row.type] ?? { label: 'Despesa', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' }
         return <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)', backgroundColor: s.bg, color: s.color }}>{s.label}</span>
       },
     },
@@ -58,16 +56,11 @@ export default function FinanceiroPage() {
           PAID: { label: 'Pago', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
           CANCELLED: { label: 'Cancelado', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-500)' },
         }
-        const s = map[row.status] ?? map.SCHEDULED
+        const s = map[row.status] ?? { label: 'Agendado', bg: 'var(--color-primary-100)', color: 'var(--color-primary-700)' }
         return <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)', backgroundColor: s.bg, color: s.color }}>{s.label}</span>
       },
     },
   ], [])
-
-  const cardStyle: CSSProperties = {
-    backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)', padding: '20px', boxShadow: 'var(--shadow-sm)',
-  }
 
   return (
     <Layout>

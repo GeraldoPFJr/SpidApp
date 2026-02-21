@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateProductSchema } from '@spid/shared/schemas/index.js'
+import { updateProductSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
-import { errorResponse, parseBody } from '@/lib/api-utils'
+import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const product = await prisma.product.findFirst({
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const existing = await prisma.product.findFirst({

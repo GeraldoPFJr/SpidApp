@@ -189,8 +189,6 @@ export default function NovaVendaPage() {
     outline: 'none',
   }
 
-  const selectStyle: CSSProperties = { ...inputStyle, cursor: 'pointer' }
-
   const labelStyle: CSSProperties = {
     fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)',
     marginBottom: '4px', display: 'block',

@@ -1,4 +1,4 @@
-import type { CostLot } from '../types/index.js'
+import type { CostLot } from '../types/index'
 
 /**
  * Converte quantidade de unidade vendavel para unidade base.

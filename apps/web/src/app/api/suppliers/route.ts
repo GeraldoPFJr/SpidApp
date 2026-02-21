@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupplierSchema } from '@spid/shared/schemas/index.js'
+import { createSupplierSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { parseBody } from '@/lib/api-utils'
 

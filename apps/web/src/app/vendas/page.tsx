@@ -66,7 +66,7 @@ export default function VendasPage() {
           DRAFT: { label: 'Rascunho', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
           CANCELLED: { label: 'Cancelada', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
         }
-        const s = map[row.status] ?? map.CONFIRMED
+        const s = map[row.status] ?? { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
         return (
           <span style={{
             display: 'inline-flex', alignItems: 'center', padding: '2px 10px',

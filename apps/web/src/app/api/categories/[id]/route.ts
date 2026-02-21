@@ -9,7 +9,7 @@ const updateCategorySchema = z.object({
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const category = await prisma.category.findUnique({
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const existing = await prisma.category.findUnique({ where: { id } })

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { convertToBase } from '@spid/shared/utils/index.js'
+import { convertToBase } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const purchase = await prisma.purchase.findUnique({
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
 
   const existing = await prisma.purchase.findUnique({

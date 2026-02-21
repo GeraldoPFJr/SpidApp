@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { convertToBase } from '@spid/shared/utils/index.js'
+import { convertToBase } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
