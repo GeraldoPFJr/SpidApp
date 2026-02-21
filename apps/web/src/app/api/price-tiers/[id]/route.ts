@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { prisma } from '@/lib/prisma'
+import { errorResponse, parseBody } from '@/lib/api-utils'
+
+const priceTierSchema = z.object({
+  name: z.string().min(1).max(100),
+  isDefault: z.boolean().default(false),
+})
+
+type RouteParams = { params: Promise<{ id: string }> }
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
+  const result = await parseBody(request, priceTierSchema.partial())
+  if ('error' in result) return result.error
+
+  const existing = await prisma.priceTier.findUnique({ where: { id } })
+  if (!existing) return errorResponse('Price tier not found', 404)
+
+  const updated = await prisma.priceTier.update({
+    where: { id },
+    data: result.data,
+  })
+
+  return NextResponse.json(updated)
+}
