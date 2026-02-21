@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from './api'
+import { getAppInstanceId } from './credentials'
 import type { LocalDatabase } from './database'
 import {
   getPendingOperations,
@@ -137,7 +138,7 @@ export function createSyncEngine(db: LocalDatabase): SyncEngine {
       const response = await apiClient<ServerPushResponse>('/sync/push', {
         method: 'POST',
         body: {
-          deviceId: localStorage.getItem('APP_INSTANCE_ID') ?? 'unknown',
+          deviceId: getAppInstanceId() || 'unknown',
           operations: operations.map((op) => ({
             operationId: op.operationId,
             entityType: op.entityType,
@@ -175,7 +176,7 @@ export function createSyncEngine(db: LocalDatabase): SyncEngine {
       while (hasMore) {
         const params = new URLSearchParams()
         if (newCursor) params.set('cursor', newCursor)
-        params.set('deviceId', localStorage.getItem('APP_INSTANCE_ID') ?? 'unknown')
+        params.set('deviceId', getAppInstanceId() || 'unknown')
 
         const response = await apiClient<ServerPullResponse>(
           `/sync/pull?${params.toString()}`,
