@@ -51,6 +51,8 @@ import { MonthlyClosurePage } from './pages/finance/MonthlyClosure'
 import { InadimplentesPage } from './pages/Inadimplentes'
 import { SettingsPage } from './pages/settings/Settings'
 
+const OVERDUE_DISMISSED_KEY = 'spid_overdue_dismissed'
+
 interface OverdueItem {
   customerName: string
   totalOpen: number
@@ -61,22 +63,32 @@ export function App() {
   const [showOverdue, setShowOverdue] = useState(false)
 
   useEffect(() => {
-    apiClient<OverdueItem[]>('/receivables/overdue-summary')
+    // Skip if already dismissed this session
+    if (sessionStorage.getItem(OVERDUE_DISMISSED_KEY)) return
+
+    apiClient<OverdueItem[]>('/receivables/overdue')
       .then((items) => {
-        if (items && items.length > 0) {
+        if (Array.isArray(items) && items.length > 0) {
           setOverdueItems(items)
           setShowOverdue(true)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // API unavailable — silently skip, no modal shown
+      })
   }, [])
+
+  function handleDismissOverdue() {
+    setShowOverdue(false)
+    sessionStorage.setItem(OVERDUE_DISMISSED_KEY, '1')
+  }
 
   return (
     <BrowserRouter>
       <OverdueModal
         open={showOverdue}
         items={overdueItems}
-        onClose={() => setShowOverdue(false)}
+        onClose={handleDismissOverdue}
       />
       <MobileLayout>
         <Routes>
