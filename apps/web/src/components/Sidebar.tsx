@@ -2,72 +2,175 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/vendas', label: 'Vendas' },
-  { href: '/produtos', label: 'Produtos' },
-  { href: '/clientes', label: 'Clientes' },
-  { href: '/fornecedores', label: 'Fornecedores' },
-  { href: '/compras', label: 'Compras' },
-  { href: '/estoque', label: 'Estoque' },
-  { href: '/financeiro', label: 'Financeiro' },
-  { href: '/inadimplentes', label: 'Inadimplentes' },
-  { href: '/configuracoes', label: 'Configuracoes' },
+  { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4' },
+  { href: '/vendas', label: 'Vendas', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+  { href: '/clientes', label: 'Clientes', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+  { href: '/produtos', label: 'Produtos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+  { href: '/fornecedores', label: 'Fornecedores', icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z' },
+  { href: '/compras', label: 'Compras', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z' },
+  { href: '/estoque', label: 'Estoque', icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
+  { href: '/financeiro', label: 'Financeiro', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { href: '/inadimplentes', label: 'Inadimplentes', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z' },
+  { href: '/configuracoes', label: 'Configuracoes', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
 ] as const
+
+function NavIcon({ path }: { path: string }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={path} />
+    </svg>
+  )
+}
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
+
+  const sidebarWidth = collapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)'
 
   const sidebarStyle: CSSProperties = {
-    width: '240px',
+    width: sidebarWidth,
+    minWidth: sidebarWidth,
     minHeight: '100vh',
-    backgroundColor: '#1F2937',
-    color: '#F9FAFB',
+    backgroundColor: 'var(--color-neutral-800)',
+    color: 'var(--color-neutral-50)',
     display: 'flex',
     flexDirection: 'column',
-    padding: '24px 0',
+    transition: 'width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), min-width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    overflow: 'hidden',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    zIndex: 100,
+  }
+
+  const logoContainerStyle: CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: collapsed ? 'center' : 'space-between',
+    padding: collapsed ? '20px 0' : '20px 20px',
+    borderBottom: '1px solid var(--color-neutral-700)',
+    minHeight: '64px',
   }
 
   const logoStyle: CSSProperties = {
-    fontSize: '1.5rem',
+    fontSize: '1.375rem',
     fontWeight: 700,
-    padding: '0 24px 24px',
-    borderBottom: '1px solid #374151',
-    marginBottom: '16px',
+    letterSpacing: '-0.025em',
+    color: 'var(--color-white)',
+    display: collapsed ? 'none' : 'block',
+    whiteSpace: 'nowrap',
+  }
+
+  const logoIconStyle: CSSProperties = {
+    display: collapsed ? 'flex' : 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '36px',
+    height: '36px',
+    borderRadius: 'var(--radius-md)',
+    backgroundColor: 'var(--color-primary-600)',
+    color: 'var(--color-white)',
+    fontSize: '1rem',
+    fontWeight: 700,
+  }
+
+  const collapseButtonStyle: CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: 'var(--color-neutral-400)',
+    cursor: 'pointer',
+    padding: '4px',
+    borderRadius: 'var(--radius-sm)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color var(--transition-fast), background var(--transition-fast)',
   }
 
   const navStyle: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
     gap: '2px',
-    padding: '0 8px',
+    padding: collapsed ? '16px 8px' : '16px 12px',
+    flex: 1,
+    overflowY: 'auto',
+    overflowX: 'hidden',
   }
 
   function linkStyle(isActive: boolean): CSSProperties {
     return {
-      display: 'block',
-      padding: '10px 16px',
-      borderRadius: '8px',
-      fontSize: '0.875rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: collapsed ? '0' : '12px',
+      justifyContent: collapsed ? 'center' : 'flex-start',
+      padding: collapsed ? '10px' : '10px 12px',
+      borderRadius: 'var(--radius-md)',
+      fontSize: 'var(--font-sm)',
       fontWeight: isActive ? 600 : 400,
-      color: isActive ? '#FFFFFF' : '#9CA3AF',
-      backgroundColor: isActive ? '#2563EB' : 'transparent',
+      color: isActive ? 'var(--color-white)' : 'var(--color-neutral-400)',
+      backgroundColor: isActive ? 'var(--color-primary-600)' : 'transparent',
       textDecoration: 'none',
       transition: 'all 150ms ease',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
     }
+  }
+
+  const labelStyle: CSSProperties = {
+    display: collapsed ? 'none' : 'block',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }
 
   return (
     <aside style={sidebarStyle}>
-      <div style={logoStyle}>Vendi</div>
+      <div style={logoContainerStyle}>
+        <span style={logoStyle}>Vendi</span>
+        <span style={logoIconStyle}>V</span>
+        <button
+          style={collapseButtonStyle}
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {collapsed ? (
+              <path d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            ) : (
+              <path d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+            )}
+          </svg>
+        </button>
+      </div>
       <nav style={navStyle}>
-        {NAV_ITEMS.map((item) => (
-          <Link key={item.href} href={item.href} style={linkStyle(pathname.startsWith(item.href))}>
-            {item.label}
-          </Link>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              style={linkStyle(isActive)}
+              title={collapsed ? item.label : undefined}
+            >
+              <NavIcon path={item.icon} />
+              <span style={labelStyle}>{item.label}</span>
+            </Link>
+          )
+        })}
       </nav>
     </aside>
   )
