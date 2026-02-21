@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { MobileLayout } from './components/MobileLayout'
+import { OverdueModal } from './components/OverdueModal'
+import { apiClient } from './lib/api'
 
 // Pages
 import { DashboardPage } from './pages/Dashboard'
@@ -44,9 +47,33 @@ import { MonthlyClosurePage } from './pages/finance/MonthlyClosure'
 import { InadimplentesPage } from './pages/Inadimplentes'
 import { SettingsPage } from './pages/settings/Settings'
 
+interface OverdueItem {
+  customerName: string
+  totalOpen: number
+}
+
 export function App() {
+  const [overdueItems, setOverdueItems] = useState<OverdueItem[]>([])
+  const [showOverdue, setShowOverdue] = useState(false)
+
+  useEffect(() => {
+    apiClient<OverdueItem[]>('/receivables/overdue-summary')
+      .then((items) => {
+        if (items && items.length > 0) {
+          setOverdueItems(items)
+          setShowOverdue(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <BrowserRouter>
+      <OverdueModal
+        open={showOverdue}
+        items={overdueItems}
+        onClose={() => setShowOverdue(false)}
+      />
       <MobileLayout>
         <Routes>
           {/* Dashboard */}
