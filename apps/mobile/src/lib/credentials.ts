@@ -30,9 +30,13 @@ function generateUUIDv4(): string {
 
 /**
  * Ensures APP_INSTANCE_ID and SYNC_SECRET exist in localStorage.
- * Call once at app startup (idempotent).
+ * Migrates from legacy keys if present. Call once at app startup (idempotent).
  */
 export function initializeCredentials(): void {
+  // Migrate legacy keys (APP_INSTANCE_ID -> spid_app_instance_id)
+  migrateLegacyKey('APP_INSTANCE_ID', KEY_INSTANCE_ID)
+  migrateLegacyKey('SYNC_SECRET', KEY_SYNC_SECRET)
+
   if (!localStorage.getItem(KEY_INSTANCE_ID)) {
     localStorage.setItem(KEY_INSTANCE_ID, generateUUIDv4())
   }
@@ -40,6 +44,15 @@ export function initializeCredentials(): void {
   if (!localStorage.getItem(KEY_SYNC_SECRET)) {
     localStorage.setItem(KEY_SYNC_SECRET, DEFAULT_SYNC_SECRET)
   }
+}
+
+function migrateLegacyKey(legacyKey: string, newKey: string): void {
+  const legacyValue = localStorage.getItem(legacyKey)
+  if (!legacyValue) return
+  if (localStorage.getItem(newKey)) return
+
+  localStorage.setItem(newKey, legacyValue)
+  localStorage.removeItem(legacyKey)
 }
 
 // ── Getters ───────────────────────────────────────────────

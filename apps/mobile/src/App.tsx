@@ -3,6 +3,10 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { MobileLayout } from './components/MobileLayout'
 import { OverdueModal } from './components/OverdueModal'
 import { apiClient } from './lib/api'
+import { initializeCredentials } from './lib/credentials'
+
+// Initialize credentials on first app open (idempotent)
+initializeCredentials()
 
 // Pages
 import { DashboardPage } from './pages/Dashboard'
