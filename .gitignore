@@ -28,7 +28,6 @@ prisma/*.db-journal
 Thumbs.db
 
 # Capacitor
-apps/mobile/android/
 apps/mobile/ios/
 
 # Logs

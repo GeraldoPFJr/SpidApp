@@ -9,6 +9,7 @@
     "sync": "cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^7.5.0",
     "@capacitor/core": "^7.1.0",
     "@capacitor/preferences": "^7.0.0",
     "@vendi/shared": "workspace:*",
