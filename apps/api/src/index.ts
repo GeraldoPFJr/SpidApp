@@ -9,6 +9,7 @@ import { suppliersRoutes } from './routes/suppliers.js'
 import { purchasesRoutes } from './routes/purchases.js'
 import { salesRoutes } from './routes/sales.js'
 import { inventoryRoutes } from './routes/inventory.js'
+import { receivablesRoutes } from './routes/receivables.js'
 import { financeRoutes } from './routes/finance.js'
 import { syncRoutes } from './routes/sync.js'
 import { reportsRoutes } from './routes/reports.js'
@@ -26,6 +27,7 @@ async function main() {
   await app.register(purchasesRoutes, { prefix: '/purchases' })
   await app.register(salesRoutes, { prefix: '/sales' })
   await app.register(inventoryRoutes, { prefix: '/inventory' })
+  await app.register(receivablesRoutes, { prefix: '/receivables' })
   await app.register(financeRoutes, { prefix: '/finance' })
   await app.register(syncRoutes, { prefix: '/sync' })
   await app.register(reportsRoutes, { prefix: '/reports' })
