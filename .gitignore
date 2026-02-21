@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Capacitor
+apps/mobile/android/
+apps/mobile/ios/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Session states (temporary)
+.docs/sessions/*.md
