@@ -56,8 +56,11 @@ export default function NovaVendaPage() {
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  // Inline customer creation
+  const [creatingCustomer, setCreatingCustomer] = useState(false)
+
   // Data
-  const { data: customers } = useApi<(Customer & { hasOverdue?: boolean })[]>('/customers')
+  const { data: customers, refetch: refetchCustomers } = useApi<(Customer & { hasOverdue?: boolean })[]>('/customers')
   const { data: products } = useApi<ProductOption[]>('/products')
   const { data: accounts } = useApi<Account[]>('/accounts')
 
@@ -77,10 +80,37 @@ export default function NovaVendaPage() {
   const selectedCustomer = customers?.find((c) => c.id === customerId)
 
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch.trim()) return customers ?? []
+    const list = customers ?? []
+    if (!customerSearch.trim()) return list.slice(0, 10)
     const term = customerSearch.toLowerCase()
-    return (customers ?? []).filter((c) => c.name.toLowerCase().includes(term))
+    return list.filter((c) => c.name.toLowerCase().includes(term)).slice(0, 10)
   }, [customers, customerSearch])
+
+  const hasExactMatch = useMemo(() => {
+    if (!customerSearch.trim()) return true
+    const term = customerSearch.trim().toLowerCase()
+    return (customers ?? []).some((c) => c.name.toLowerCase() === term)
+  }, [customers, customerSearch])
+
+  const handleCreateInlineCustomer = useCallback(async () => {
+    const name = customerSearch.trim()
+    if (!name) return
+    setCreatingCustomer(true)
+    try {
+      const newCustomer = await apiClient<Customer>('/customers', {
+        method: 'POST',
+        body: { name },
+      })
+      await refetchCustomers()
+      setCustomerId(newCustomer.id)
+      setCustomerSearch('')
+      setShowCustomerDropdown(false)
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setCreatingCustomer(false)
+    }
+  }, [customerSearch, refetchCustomers])
 
   // ─── Item Management ──────────────────────────────
 
@@ -338,27 +368,55 @@ export default function NovaVendaPage() {
             {/* Customer Selection */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: 'var(--font-base)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Cliente</h2>
-              <div style={{ position: 'relative', maxWidth: '400px' }}>
-                <input
-                  type="text"
-                  value={customerId ? selectedCustomer?.name ?? '' : customerSearch}
-                  onChange={(e) => {
-                    setCustomerSearch(e.target.value)
-                    setCustomerId(null)
-                    setShowCustomerDropdown(true)
-                  }}
-                  onFocus={() => setShowCustomerDropdown(true)}
-                  placeholder="Buscar cliente ou deixar vazio para Consumidor Final..."
-                  style={inputStyle}
-                />
-                {showCustomerDropdown && customerSearch && filteredCustomers.length > 0 && (
+              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+              <div
+                style={{ position: 'relative', maxWidth: '400px' }}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setShowCustomerDropdown(false)
+                  }
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={customerId ? selectedCustomer?.name ?? '' : customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value)
+                      setCustomerId(null)
+                      setShowCustomerDropdown(true)
+                    }}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    placeholder="Buscar cliente ou deixar vazio para Consumidor Final..."
+                    style={inputStyle}
+                  />
+                  {customerId && (
+                    <button
+                      onClick={() => {
+                        setCustomerId(null)
+                        setCustomerSearch('')
+                      }}
+                      style={{
+                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                        border: 'none', background: 'none', cursor: 'pointer', padding: '2px',
+                        color: 'var(--color-neutral-400)', display: 'flex', alignItems: 'center',
+                      }}
+                      tabIndex={-1}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {showCustomerDropdown && !customerId && (
                   <div style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
                     backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)',
-                    maxHeight: '200px', overflowY: 'auto',
+                    maxHeight: '280px', overflowY: 'auto', marginTop: '4px',
                   }}>
-                    {filteredCustomers.slice(0, 10).map((c) => (
+                    {filteredCustomers.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => {
@@ -382,6 +440,31 @@ export default function NovaVendaPage() {
                         )}
                       </button>
                     ))}
+                    {filteredCustomers.length === 0 && customerSearch.trim() && (
+                      <div style={{ padding: '12px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>
+                        Nenhum cliente encontrado
+                      </div>
+                    )}
+                    {customerSearch.trim() && !hasExactMatch && (
+                      <button
+                        onClick={handleCreateInlineCustomer}
+                        disabled={creatingCustomer}
+                        style={{
+                          width: '100%', textAlign: 'left', padding: '10px 12px',
+                          border: 'none', borderTop: '1px solid var(--color-neutral-200)',
+                          backgroundColor: 'var(--color-primary-50)', cursor: creatingCustomer ? 'wait' : 'pointer',
+                          fontSize: 'var(--font-sm)', color: 'var(--color-primary-700)', fontWeight: 500,
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-100)' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-50)' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        {creatingCustomer ? 'Criando...' : `Criar "${customerSearch.trim()}"`}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

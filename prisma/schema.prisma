@@ -412,6 +412,16 @@ model MonthlyClosure {
   @@map("monthly_closures")
 }
 
+// ─── Configuracoes ───────────────────────────────────────
+
+model AppSettings {
+  id        String   @id @default("singleton")
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
 // ─── Offline/Sync ────────────────────────────────────────
 
 model OutboxOperation {

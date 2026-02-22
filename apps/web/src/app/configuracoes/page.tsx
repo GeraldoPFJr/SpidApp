@@ -48,7 +48,7 @@ interface AppSettings {
 
 export default function ConfiguracoesPage() {
   const { data: settings, loading } = useApi<AppSettings>('/settings')
-  const { data: priceTiers } = useApi<PriceTier[]>('/price-tiers')
+  const { data: priceTiers, refetch: refetchTiers } = useApi<PriceTier[]>('/price-tiers')
   const { data: printers } = useApi<PrinterProfile[]>('/settings/printers')
 
   const [activeSection, setActiveSection] = useState('company')
@@ -67,6 +67,13 @@ export default function ConfiguracoesPage() {
   const [costMethod, setCostMethod] = useState<'FIFO' | 'AVERAGE'>('FIFO')
   const [defaultPrintFormat, setDefaultPrintFormat] = useState<string>('80mm')
   const [defaultPriceTierId, setDefaultPriceTierId] = useState('')
+
+  // Price tier CRUD
+  const [newTierName, setNewTierName] = useState('')
+  const [addingTier, setAddingTier] = useState(false)
+  const [editingTierId, setEditingTierId] = useState<string | null>(null)
+  const [editingTierName, setEditingTierName] = useState('')
+  const [tierError, setTierError] = useState<string | null>(null)
 
   // Initialize from API
   useEffect(() => {
@@ -97,6 +104,60 @@ export default function ConfiguracoesPage() {
   const updateCompany = useCallback((field: keyof CompanyInfo, value: string) => {
     setCompany((prev) => ({ ...prev, [field]: value }))
   }, [])
+
+  const handleAddTier = useCallback(async () => {
+    const name = newTierName.trim()
+    if (!name) return
+    setAddingTier(true)
+    setTierError(null)
+    try {
+      const isFirst = !priceTiers || priceTiers.length === 0
+      await apiClient('/price-tiers', {
+        method: 'POST',
+        body: { name, isDefault: isFirst },
+      })
+      setNewTierName('')
+      refetchTiers()
+    } catch {
+      setTierError('Erro ao criar tabela de precos.')
+    } finally {
+      setAddingTier(false)
+    }
+  }, [newTierName, priceTiers, refetchTiers])
+
+  const handleRenameTier = useCallback(async (id: string) => {
+    const name = editingTierName.trim()
+    if (!name) return
+    setTierError(null)
+    try {
+      await apiClient(`/price-tiers/${id}`, {
+        method: 'PUT',
+        body: { name },
+      })
+      setEditingTierId(null)
+      setEditingTierName('')
+      refetchTiers()
+    } catch {
+      setTierError('Erro ao renomear tabela.')
+    }
+  }, [editingTierName, refetchTiers])
+
+  const handleDeleteTier = useCallback(async (id: string, name: string) => {
+    if (!confirm(`Excluir a tabela "${name}"? Esta acao nao pode ser desfeita.`)) return
+    setTierError(null)
+    try {
+      await apiClient(`/price-tiers/${id}`, { method: 'DELETE' })
+      if (defaultPriceTierId === id) setDefaultPriceTierId('')
+      refetchTiers()
+    } catch (err) {
+      const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : 0
+      if (status === 409) {
+        setTierError('Nao e possivel excluir: esta tabela possui precos vinculados a produtos.')
+      } else {
+        setTierError('Erro ao excluir tabela.')
+      }
+    }
+  }, [defaultPriceTierId, refetchTiers])
 
   // ─── Styles ────────────────────────────────────────
 
@@ -453,47 +514,168 @@ export default function ConfiguracoesPage() {
               </div>
             )}
 
-            {/* Default Price Tier */}
+            {/* Price Tiers */}
             {activeSection === 'pricing' && (
-              <div style={cardStyle}>
-                <h2 style={sectionTitleStyle}>Tabela de Precos Padrao</h2>
-                <p style={sectionDescStyle}>Selecione a tabela de precos usada por padrao nas vendas</p>
+              <>
+                <div style={cardStyle}>
+                  <h2 style={sectionTitleStyle}>Tabelas de Precos</h2>
+                  <p style={sectionDescStyle}>Crie tabelas de preco (ex: Varejo, Atacado) para definir precos diferentes por produto</p>
 
-                {priceTiers && priceTiers.length > 0 ? (
-                  <div style={radioGroupStyle}>
-                    {priceTiers.map((tier) => (
-                      <div
-                        key={tier.id}
-                        style={radioItemStyle(defaultPriceTierId === tier.id)}
-                        onClick={() => setDefaultPriceTierId(tier.id)}
-                      >
-                        <div style={radioCircleStyle(defaultPriceTierId === tier.id)}>
-                          {defaultPriceTierId === tier.id && <div style={radioInnerStyle} />}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontWeight: 500, color: 'var(--color-neutral-800)', fontSize: 'var(--font-sm)' }}>
-                            {tier.name}
-                          </span>
-                          {tier.isDefault && (
-                            <span style={{
-                              display: 'inline-flex', padding: '1px 8px',
-                              fontSize: 'var(--font-xs)', fontWeight: 500,
-                              borderRadius: 'var(--radius-full)',
-                              backgroundColor: 'var(--color-primary-100)', color: 'var(--color-primary-700)',
-                            }}>
-                              Padrao
-                            </span>
+                  {tierError && (
+                    <div style={{ padding: '10px 14px', marginBottom: '16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
+                      {tierError}
+                    </div>
+                  )}
+
+                  {/* Add new tier */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <input
+                      type="text"
+                      value={newTierName}
+                      onChange={(e) => setNewTierName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddTier() }}
+                      placeholder="Nome da tabela (ex: Varejo, Atacado)"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                    <button
+                      onClick={handleAddTier}
+                      disabled={addingTier || !newTierName.trim()}
+                      style={{
+                        padding: '8px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
+                        color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                        border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                        opacity: addingTier || !newTierName.trim() ? 0.5 : 1,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {addingTier ? 'Criando...' : '+ Adicionar'}
+                    </button>
+                  </div>
+
+                  {/* List tiers */}
+                  {priceTiers && priceTiers.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {priceTiers.map((tier) => (
+                        <div
+                          key={tier.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                            border: `1px solid ${defaultPriceTierId === tier.id ? 'var(--color-primary-300)' : 'var(--color-neutral-200)'}`,
+                            backgroundColor: defaultPriceTierId === tier.id ? 'var(--color-primary-50)' : 'var(--color-white)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            {/* Radio for default selection */}
+                            <div
+                              onClick={() => setDefaultPriceTierId(tier.id)}
+                              style={{ ...radioCircleStyle(defaultPriceTierId === tier.id), cursor: 'pointer' }}
+                            >
+                              {defaultPriceTierId === tier.id && <div style={radioInnerStyle} />}
+                            </div>
+
+                            {editingTierId === tier.id ? (
+                              <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                                <input
+                                  type="text"
+                                  value={editingTierName}
+                                  onChange={(e) => setEditingTierName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRenameTier(tier.id)
+                                    if (e.key === 'Escape') { setEditingTierId(null); setEditingTierName('') }
+                                  }}
+                                  autoFocus
+                                  style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 'var(--font-sm)' }}
+                                />
+                                <button
+                                  onClick={() => handleRenameTier(tier.id)}
+                                  style={{
+                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                    color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                  }}
+                                >
+                                  Salvar
+                                </button>
+                                <button
+                                  onClick={() => { setEditingTierId(null); setEditingTierName('') }}
+                                  style={{
+                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                    color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
+                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                  }}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            ) : (
+                              <div
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, cursor: 'pointer' }}
+                                onClick={() => setDefaultPriceTierId(tier.id)}
+                              >
+                                <span style={{ fontWeight: 500, color: 'var(--color-neutral-800)', fontSize: 'var(--font-sm)' }}>
+                                  {tier.name}
+                                </span>
+                                {defaultPriceTierId === tier.id && (
+                                  <span style={{
+                                    display: 'inline-flex', padding: '1px 8px',
+                                    fontSize: 'var(--font-xs)', fontWeight: 500,
+                                    borderRadius: 'var(--radius-full)',
+                                    backgroundColor: 'var(--color-primary-100)', color: 'var(--color-primary-700)',
+                                  }}>
+                                    Padrao
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {editingTierId !== tier.id && (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                onClick={() => { setEditingTierId(tier.id); setEditingTierName(tier.name) }}
+                                title="Renomear"
+                                style={{
+                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-neutral-500)',
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTier(tier.id, tier.name)}
+                                title="Excluir"
+                                style={{
+                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-danger-500)',
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                              </button>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-neutral-300)' }}>
+                      Nenhuma tabela de precos cadastrada. Crie uma acima.
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-100)' }}>
+                    <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-primary-700)', margin: 0 }}>
+                      <strong>Dica:</strong> Selecione a tabela padrao clicando no circulo a esquerda. Os precos de cada produto sao configurados na tela de cadastro/edicao do produto, na secao &quot;Precos&quot;.
+                    </p>
                   </div>
-                ) : (
-                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>
-                    Nenhuma tabela de precos cadastrada. Cadastre tabelas na area de produtos.
-                  </div>
-                )}
-              </div>
+                </div>
+              </>
             )}
 
             {/* Printing */}

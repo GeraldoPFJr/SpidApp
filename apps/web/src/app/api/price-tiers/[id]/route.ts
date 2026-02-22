@@ -30,3 +30,28 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params
+
+    const existing = await prisma.priceTier.findUnique({
+      where: { id },
+      include: { _count: { select: { prices: true } } },
+    })
+    if (!existing) return errorResponse('Price tier not found', 404)
+
+    if (existing._count.prices > 0) {
+      return errorResponse(
+        'Nao e possivel excluir: esta tabela possui precos vinculados a produtos.',
+        409,
+      )
+    }
+
+    await prisma.priceTier.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/price-tiers/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
