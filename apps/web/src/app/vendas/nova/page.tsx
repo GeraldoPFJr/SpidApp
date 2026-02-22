@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useMemo, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { PaymentSplit, type PaymentEntry } from '@/components/PaymentSplit'
@@ -59,6 +59,20 @@ export default function NovaVendaPage() {
     intervalDays: 30,
     intervalMode: 'days' as 'days' | 'sameDay',
   })
+
+  // Auto-fill default payment when entering step 2
+  useEffect(() => {
+    const firstAccount = accounts?.[0]
+    if (step === 2 && payments.length === 0 && firstAccount) {
+      setPayments([{
+        id: crypto.randomUUID(),
+        method: 'CASH',
+        amount: total.toFixed(2).replace('.', ','),
+        accountId: firstAccount.id,
+        installments: 1,
+      }])
+    }
+  }, [step, payments.length, accounts, total])
 
   // Step 3: confirmation
   const [saving, setSaving] = useState(false)
@@ -654,19 +668,7 @@ export default function NovaVendaPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button onClick={() => router.back()} style={navButtonStyle('secondary')}>Cancelar</button>
               <button
-                onClick={() => {
-                  const firstAccount = accounts?.[0]
-                  if (payments.length === 0 && firstAccount) {
-                    setPayments([{
-                      id: crypto.randomUUID(),
-                      method: 'CASH',
-                      amount: total.toFixed(2).replace('.', ','),
-                      accountId: firstAccount.id,
-                      installments: 1,
-                    }])
-                  }
-                  setStep(2)
-                }}
+                onClick={() => setStep(2)}
                 disabled={!items.some((i) => i.productId)}
                 style={{ ...navButtonStyle('primary'), opacity: !items.some((i) => i.productId) ? 0.5 : 1, cursor: !items.some((i) => i.productId) ? 'not-allowed' : 'pointer' }}
               >
