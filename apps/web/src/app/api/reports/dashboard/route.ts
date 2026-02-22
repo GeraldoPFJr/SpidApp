@@ -66,16 +66,42 @@ export async function GET(request: NextRequest) {
   })
   const aReceber = openReceivables.reduce((sum, r) => sum + Number(r.amount), 0)
 
+  // Overdue receivables
+  const now = new Date()
+  const overdueReceivables = await prisma.receivable.findMany({
+    where: { status: 'OPEN', dueDate: { lt: now } },
+  })
+  const overdueCount = overdueReceivables.length
+  const overdueTotal = overdueReceivables.reduce((sum, r) => sum + Number(r.amount), 0)
+
+  // Recent sales (last 10)
+  const recentSales = await prisma.sale.findMany({
+    where: { date: { gte: start, lte: end } },
+    include: { customer: { select: { name: true } } },
+    orderBy: { date: 'desc' },
+    take: 10,
+  })
+
   return NextResponse.json({
     month,
-    faturamento: Math.round(faturamento * 100) / 100,
-    lucroBruto: Math.round(lucroBruto * 100) / 100,
-    despesas: Math.round(despesas * 100) / 100,
-    lucroLiquido: Math.round(lucroLiquido * 100) / 100,
-    qtdVendas,
-    clientesNovos,
-    ticketMedio: Math.round(ticketMedio * 100) / 100,
-    recebido: Math.round(recebido * 100) / 100,
-    aReceber: Math.round(aReceber * 100) / 100,
+    revenue: Math.round(faturamento * 100) / 100,
+    grossProfit: Math.round(lucroBruto * 100) / 100,
+    expenses: Math.round(despesas * 100) / 100,
+    netProfit: Math.round(lucroLiquido * 100) / 100,
+    salesCount: qtdVendas,
+    newCustomers: clientesNovos,
+    averageTicket: Math.round(ticketMedio * 100) / 100,
+    received: Math.round(recebido * 100) / 100,
+    toReceive: Math.round(aReceber * 100) / 100,
+    overdueCount,
+    overdueTotal: Math.round(overdueTotal * 100) / 100,
+    recentSales: recentSales.map((s) => ({
+      id: s.id,
+      date: s.date.toISOString(),
+      customerName: s.customer?.name ?? null,
+      total: Number(s.total),
+      status: s.status,
+      couponNumber: s.couponNumber,
+    })),
   })
 }

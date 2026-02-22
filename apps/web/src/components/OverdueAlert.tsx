@@ -14,7 +14,7 @@ interface OverdueAlertProps {
 // ─── Component ──────────────────────────────────────────
 
 export function OverdueAlert({ count, total }: OverdueAlertProps) {
-  if (count <= 0) return null
+  if (!count || count <= 0) return null
 
   const containerStyle: CSSProperties = {
     display: 'flex',
