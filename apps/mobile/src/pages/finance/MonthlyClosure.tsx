@@ -16,10 +16,10 @@ export function MonthlyClosurePage() {
   const { data: accounts } = useApi<Account[]>('/accounts')
   const [month, setMonth] = useState(getCurrentMonth())
   const [accountId, setAccountId] = useState('')
-  const { data: closureData, loading } = useApi<ClosureData>(
+  const { data: closureData, loading: _closureLoading } = useApi<ClosureData>(
     accountId ? `/finance/closure?month=${month}&accountId=${accountId}` : null
   )
-  const { execute, loading: saving } = useApiMutation('/finance/closure')
+  const { execute, loading: saving, error: apiError } = useApiMutation('/finance/closure')
   const [countedClosing, setCountedClosing] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -31,7 +31,10 @@ export function MonthlyClosurePage() {
       countedClosing: parseFloat(countedClosing) || 0,
       notes: notes.trim() || null,
     })
-    if (result) navigate('/financeiro', { replace: true })
+    if (!result) {
+      return
+    }
+    navigate('/financeiro', { replace: true })
   }
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
@@ -118,6 +121,12 @@ export function MonthlyClosurePage() {
             <label style={labelStyle}>Observacoes</label>
             <textarea className="form-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observacoes sobre o fechamento..." rows={2} />
           </div>
+        </div>
+      )}
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
         </div>
       )}
 

@@ -18,7 +18,7 @@ type StatusFilter = 'ALL' | 'CONFIRMED' | 'DRAFT' | 'CANCELLED'
 
 export function SaleListPage() {
   const navigate = useNavigate()
-  const { data: sales, loading } = useApi<SaleWithCustomer[]>('/sales')
+  const { data: sales, loading, error } = useApi<SaleWithCustomer[]>('/sales')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
   const filtered = useMemo(() => {
@@ -96,6 +96,12 @@ export function SaleListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar vendas: {error}</span>
+        </div>
+      )}
+
       <div style={filterRowStyle}>
         {filters.map((f) => (
           <button
@@ -121,7 +127,7 @@ export function SaleListPage() {
       ) : (
         <div style={listGroupStyle}>
           {filtered.map((sale, idx) => {
-            const st = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG.CONFIRMED
+            const st = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG['CONFIRMED']
             return (
               <div
                 key={sale.id}
@@ -141,10 +147,10 @@ export function SaleListPage() {
                       fontSize: 'var(--font-xs)',
                       fontWeight: 500,
                       borderRadius: 'var(--radius-full)',
-                      backgroundColor: st.bg,
-                      color: st.color,
+                      backgroundColor: st?.bg ?? 'var(--success-100)',
+                      color: st?.color ?? 'var(--success-700)',
                     }}>
-                      {st.label}
+                      {st?.label ?? sale.status}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: '2px' }}>

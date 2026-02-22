@@ -30,7 +30,7 @@ function formatDateBR(date: Date): string {
 }
 
 function formatDateISO(date: Date): string {
-  return date.toISOString().split('T')[0]
+  return date.toISOString().split('T')[0] ?? ''
 }
 
 export function InstallmentConfig({ totalAmount, onChange }: InstallmentConfigProps) {

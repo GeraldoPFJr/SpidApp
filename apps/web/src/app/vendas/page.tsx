@@ -7,6 +7,16 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
 
+interface SaleRaw {
+  id: string
+  date: string
+  customer?: { name: string } | null
+  customerName?: string | null
+  total: number
+  status: string
+  couponNumber: number | null
+}
+
 interface SaleRow {
   id: string
   date: string
@@ -16,10 +26,22 @@ interface SaleRow {
   couponNumber: number | null
 }
 
+function mapSaleRow(raw: SaleRaw): SaleRow {
+  return {
+    id: raw.id,
+    date: raw.date,
+    customerName: raw.customerName ?? raw.customer?.name ?? null,
+    total: Number(raw.total),
+    status: raw.status,
+    couponNumber: raw.couponNumber,
+  }
+}
+
 export default function VendasPage() {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState('')
-  const { data, loading } = useApi<SaleRow[]>('/sales')
+  const { data: rawData, loading } = useApi<SaleRaw[]>('/sales')
+  const data = useMemo(() => rawData?.map(mapSaleRow) ?? null, [rawData])
 
   const filtered = useMemo(() => {
     if (!data) return []

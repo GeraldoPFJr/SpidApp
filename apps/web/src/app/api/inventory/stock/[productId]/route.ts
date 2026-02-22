@@ -17,29 +17,34 @@ async function getProductStockBase(productId: string): Promise<number> {
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { productId } = await params
+  try {
+    const { productId } = await params
 
-  const product = await prisma.product.findFirst({
-    where: { id: productId, deletedAt: null },
-    include: { units: { orderBy: { sortOrder: 'asc' } } },
-  })
-  if (!product) return errorResponse('Product not found', 404)
+    const product = await prisma.product.findFirst({
+      where: { id: productId, deletedAt: null },
+      include: { units: { orderBy: { sortOrder: 'asc' } } },
+    })
+    if (!product) return errorResponse('Product not found', 404)
 
-  const qtyBase = await getProductStockBase(product.id)
+    const qtyBase = await getProductStockBase(product.id)
 
-  const units = product.units.map((unit) => ({
-    unitId: unit.id,
-    nameLabel: unit.nameLabel,
-    factorToBase: unit.factorToBase,
-    available: Math.floor(qtyBase / unit.factorToBase),
-  }))
+    const units = product.units.map((unit) => ({
+      unitId: unit.id,
+      nameLabel: unit.nameLabel,
+      factorToBase: unit.factorToBase,
+      available: Math.floor(qtyBase / unit.factorToBase),
+    }))
 
-  return NextResponse.json({
-    productId: product.id,
-    productName: product.name,
-    qtyBase,
-    minStock: product.minStock,
-    belowMin: product.minStock !== null && qtyBase < product.minStock,
-    units,
-  })
+    return NextResponse.json({
+      productId: product.id,
+      productName: product.name,
+      qtyBase,
+      minStock: product.minStock,
+      belowMin: product.minStock !== null && qtyBase < product.minStock,
+      units,
+    })
+  } catch (error) {
+    console.error('Error in GET /api/inventory/stock/[productId]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

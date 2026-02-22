@@ -1,4 +1,4 @@
-import { type CSSProperties, useMemo, useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { formatDate } from '../../lib/format'
 import type { InventoryMovement } from '@spid/shared'
@@ -13,8 +13,8 @@ const REASON_LABELS: Record<string, string> = {
 }
 
 export function MovementListPage() {
-  const { data: movements, loading, refetch } = useApi<MovementWithProduct[]>('/inventory/movements')
-  const { execute: createMovement, loading: creating } = useApiMutation('/inventory/movements')
+  const { data: movements, loading, error, refetch } = useApi<MovementWithProduct[]>('/inventory/movements')
+  const { execute: createMovement, loading: creating, error: createError } = useApiMutation('/inventory/movements')
   const [showForm, setShowForm] = useState(false)
   const [formProductId, setFormProductId] = useState('')
   const [formDirection, setFormDirection] = useState<'IN' | 'OUT'>('OUT')
@@ -33,7 +33,10 @@ export function MovementListPage() {
 
   async function handleCreateMovement() {
     if (!formProductId || formQty <= 0) return
-    await createMovement({ productId: formProductId, direction: formDirection, qtyBase: formQty, reasonType: formReason, notes: formNotes.trim() || null })
+    const result = await createMovement({ productId: formProductId, direction: formDirection, qtyBase: formQty, reasonType: formReason, notes: formNotes.trim() || null })
+    if (!result) {
+      return
+    }
     setShowForm(false)
     setFormProductId('')
     setFormQty(1)
@@ -47,6 +50,12 @@ export function MovementListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar movimentacoes: {error}</span>
+        </div>
+      )}
+
       <button className="btn btn-primary btn-block" onClick={() => setShowForm(!showForm)}>
         {showForm ? 'Cancelar' : '+ Movimentacao Manual'}
       </button>
@@ -95,6 +104,11 @@ export function MovementListPage() {
             <label style={labelStyle}>Observacoes</label>
             <input style={inputStyle} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Opcional" />
           </div>
+          {createError && (
+            <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+              <span>{createError}</span>
+            </div>
+          )}
           <button className="btn btn-primary btn-block" onClick={handleCreateMovement} disabled={creating}>
             {creating ? 'Salvando...' : 'Registrar'}
           </button>

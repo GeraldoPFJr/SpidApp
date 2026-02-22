@@ -5,7 +5,7 @@ import type { Supplier } from '@spid/shared'
 
 export function SupplierListPage() {
   const navigate = useNavigate()
-  const { data: suppliers, loading } = useApi<Supplier[]>('/suppliers')
+  const { data: suppliers, loading, error } = useApi<Supplier[]>('/suppliers')
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
@@ -70,6 +70,12 @@ export function SupplierListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar fornecedores: {error}</span>
+        </div>
+      )}
+
       <input
         type="text"
         placeholder="Buscar por nome ou cidade..."

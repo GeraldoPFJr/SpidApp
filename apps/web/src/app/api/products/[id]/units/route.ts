@@ -13,18 +13,23 @@ const unitBodySchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, unitBodySchema)
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, unitBodySchema)
+    if ('error' in result) return result.error
 
-  const product = await prisma.product.findFirst({
-    where: { id, deletedAt: null },
-  })
-  if (!product) return errorResponse('Product not found', 404)
+    const product = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
+    })
+    if (!product) return errorResponse('Product not found', 404)
 
-  const unit = await prisma.productUnit.create({
-    data: { ...result.data, productId: id },
-  })
+    const unit = await prisma.productUnit.create({
+      data: { ...result.data, productId: id },
+    })
 
-  return NextResponse.json(unit, { status: 201 })
+    return NextResponse.json(unit, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/products/[id]/units:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

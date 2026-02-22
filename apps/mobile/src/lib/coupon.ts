@@ -63,9 +63,12 @@ export async function shareCoupon(): Promise<void> {
 
   // Try Capacitor Share plugin
   try {
-    const { Share } = await import('@capacitor/core')
-    if ('share' in Share) {
-      await (Share as any).share({
+    const capacitor = await import('@capacitor/core')
+    const Share = (capacitor as Record<string, unknown>)['Share'] as
+      | { share: (opts: { title: string; text: string; dialogTitle: string }) => Promise<void> }
+      | undefined
+    if (Share && 'share' in Share) {
+      await Share.share({
         title: 'Comprovante de Venda',
         text: 'Segue seu comprovante de venda.',
         dialogTitle: 'Compartilhar Comprovante',

@@ -54,6 +54,7 @@ export default function NovaVendaPage() {
   // Step 3: confirmation
   const [saving, setSaving] = useState(false)
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Data
   const { data: customers } = useApi<(Customer & { hasOverdue?: boolean })[]>('/customers')
@@ -141,32 +142,44 @@ export default function NovaVendaPage() {
 
   const handleSubmit = useCallback(async () => {
     setSaving(true)
+    setSubmitError(null)
     try {
+      const saleItems = items.map((i) => {
+        const qty = parseFloat(i.qty.replace(',', '.')) || 0
+        const unitPrice = parseFloat(i.unitPrice.replace(',', '.')) || 0
+        return {
+          productId: i.productId,
+          unitId: i.unitId,
+          qty,
+          unitPrice,
+          total: qty * unitPrice,
+        }
+      })
       const result = await apiClient<{ id: string }>('/sales', {
         method: 'POST',
         body: {
           customerId: customerId,
-          items: items.map((i) => ({
-            productId: i.productId,
-            unitId: i.unitId,
-            qty: parseFloat(i.qty.replace(',', '.')) || 0,
-            unitPrice: parseFloat(i.unitPrice.replace(',', '.')) || 0,
-          })),
+          date: new Date().toISOString(),
+          status: 'CONFIRMED',
+          subtotal,
           discount: discountValue,
           surcharge: surchargeValue,
           freight: freightValue,
+          total,
+          deviceId: 'web',
+          items: saleItems,
           payments: payments.map((p) => ({
             method: p.method,
             amount: parseFloat(p.amount.replace(',', '.')) || 0,
             accountId: p.accountId,
-            installments: p.installments,
+            installments: p.installments || null,
           })),
         },
       })
       setSavedSaleId(result.id)
       setStep(4) // Success
     } catch {
-      alert('Erro ao salvar venda. Tente novamente.')
+      setSubmitError('Erro ao salvar venda. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -602,6 +615,11 @@ export default function NovaVendaPage() {
         {/* ─── STEP 3: Review ─── */}
         {step === 3 && (
           <>
+            {submitError && (
+              <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+                {submitError}
+              </div>
+            )}
             <div style={cardStyle}>
               <h2 style={{ fontSize: 'var(--font-base)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Resumo da Venda</h2>
 

@@ -6,37 +6,37 @@ import { confirmSale } from '@/lib/sales-logic'
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-
-  const sale = await prisma.sale.findUnique({
-    where: { id },
-    include: { items: true },
-  })
-  if (!sale) return errorResponse('Sale not found', 404)
-  if (sale.status !== 'DRAFT') {
-    return errorResponse('Only draft sales can be confirmed', 400)
-  }
-
-  let body: {
-    payments?: Array<{
-      method: string
-      amount: number
-      accountId: string
-      cardType?: string | null
-      installments?: number | null
-      installmentIntervalDays?: number | null
-    }>
-  } | undefined
-
   try {
-    body = await request.json()
-  } catch {
-    body = undefined
-  }
+    const { id } = await params
 
-  const deviceId = sale.deviceId
+    const sale = await prisma.sale.findUnique({
+      where: { id },
+      include: { items: true },
+    })
+    if (!sale) return errorResponse('Sale not found', 404)
+    if (sale.status !== 'DRAFT') {
+      return errorResponse('Only draft sales can be confirmed', 400)
+    }
 
-  try {
+    let body: {
+      payments?: Array<{
+        method: string
+        amount: number
+        accountId: string
+        cardType?: string | null
+        installments?: number | null
+        installmentIntervalDays?: number | null
+      }>
+    } | undefined
+
+    try {
+      body = await request.json()
+    } catch {
+      body = undefined
+    }
+
+    const deviceId = sale.deviceId
+
     const result = await prisma.$transaction(async (tx) => {
       const items = sale.items.map((i) => ({
         productId: i.productId,
@@ -60,8 +60,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
     return NextResponse.json(result)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to confirm sale'
+  } catch (error) {
+    console.error('Error in POST /api/sales/[id]/confirm:', error)
+    const message = error instanceof Error ? error.message : 'Failed to confirm sale'
     return errorResponse(message, 500)
   }
 }

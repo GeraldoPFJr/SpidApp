@@ -16,8 +16,8 @@ interface UseApiOptions {
   immediate?: boolean
 }
 
-const APP_INSTANCE_ID = localStorage.getItem('APP_INSTANCE_ID') ?? ''
-const SYNC_SECRET = localStorage.getItem('SYNC_SECRET') ?? ''
+// Note: apiClient already injects auth headers (X-App-Instance-Id, X-Sync-Secret)
+// from credentials.ts getters. Do NOT override them here.
 
 export function useApi<T>(
   url: string | null,
@@ -35,12 +35,7 @@ export function useApi<T>(
     if (!url) return
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
-      const data = await apiClient<T>(url, {
-        headers: {
-          'X-App-Instance-Id': APP_INSTANCE_ID,
-          'X-Sync-Secret': SYNC_SECRET,
-        },
-      })
+      const data = await apiClient<T>(url)
       if (mountedRef.current) {
         setState({ data, loading: false, error: null })
       }
@@ -85,14 +80,7 @@ export function useApiMutation<TInput, TOutput = unknown>(url: string) {
       setLoading(true)
       setError(null)
       try {
-        const result = await apiClient<TOutput>(url, {
-          method,
-          body,
-          headers: {
-            'X-App-Instance-Id': APP_INSTANCE_ID,
-            'X-Sync-Secret': SYNC_SECRET,
-          },
-        })
+        const result = await apiClient<TOutput>(url, { method, body })
         setLoading(false)
         return result
       } catch (err) {

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { PaymentSplit, type PaymentEntry } from '../../components/PaymentSplit'
 import { formatBRL } from '../../lib/format'
+import { getAppInstanceId } from '../../lib/credentials'
 import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
 
 // ─── Types ─────────────────────────────────────────────────
@@ -96,7 +97,7 @@ export function NewSalePage() {
   const { data: customers } = useApi<Customer[]>('/customers')
   const { data: products } = useApi<ProductWithUnits[]>('/products')
   const { data: accounts } = useApi<Account[]>('/accounts')
-  const { execute: submitSale, loading: saving } = useApiMutation('/sales')
+  const { execute: submitSale, loading: saving, error: saleError } = useApiMutation('/sales')
 
   // ─── Calculations ──────────────────────────────────────
   const subtotal = useMemo(
@@ -141,8 +142,8 @@ export function NewSalePage() {
     setSelectedProduct(product)
     setProductSearch(product.name)
     if (product.units.length > 0) {
-      setSelectedUnit(product.units[0].id)
-      setItemPrice(product.units[0].defaultPrice ?? 0)
+      setSelectedUnit(product.units[0]?.id ?? '')
+      setItemPrice(product.units[0]?.defaultPrice ?? 0)
     }
     setItemQty(1)
   }
@@ -185,27 +186,35 @@ export function NewSalePage() {
   async function handleConfirm() {
     const payload = {
       customerId: customerId || null,
+      date: new Date().toISOString(),
+      status: 'CONFIRMED' as const,
+      subtotal,
+      discount: discountAmount,
+      surcharge,
+      freight,
+      total,
+      notes: null as string | null,
+      deviceId: getAppInstanceId(),
       items: items.map((i) => ({
         productId: i.productId,
         unitId: i.unitId,
         qty: i.qty,
         unitPrice: i.unitPrice,
+        total: i.qty * i.unitPrice,
       })),
-      discount: discountAmount,
-      surcharge,
-      freight,
       payments: payments.map((p) => ({
         method: p.method,
         amount: p.amount,
-        accountId: p.accountId,
+        accountId: p.accountId ?? '',
         installments: p.installments,
-        installmentPreviews: p.installmentPreviews,
+        installmentIntervalDays: undefined,
       })),
     }
     const result = await submitSale(payload)
-    if (result) {
-      setShowSuccess(true)
+    if (!result) {
+      return
     }
+    setShowSuccess(true)
   }
 
   // ─── Styles ────────────────────────────────────────────
@@ -715,6 +724,12 @@ export function NewSalePage() {
           )
         })}
       </div>
+
+      {saleError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{saleError}</span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 'var(--sp-3)' }}>
         <button className="btn btn-secondary btn-block" onClick={() => setStep(1)}>

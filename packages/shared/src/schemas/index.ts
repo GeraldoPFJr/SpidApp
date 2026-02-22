@@ -38,6 +38,7 @@ export const createCustomerSchema = z.object({
   doc: z.string().max(20).nullish(),
   address: z.string().max(500).nullish(),
   notes: z.string().max(1000).nullish(),
+  type: z.enum(['PF', 'PJ']).default('PF'),
 })
 
 export const updateCustomerSchema = createCustomerSchema.partial().extend({

@@ -8,18 +8,28 @@ const createCategorySchema = z.object({
 })
 
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    include: { subcategories: true },
-    orderBy: { name: 'asc' },
-  })
+  try {
+    const categories = await prisma.category.findMany({
+      include: { subcategories: true },
+      orderBy: { name: 'asc' },
+    })
 
-  return NextResponse.json(categories)
+    return NextResponse.json(categories)
+  } catch (error) {
+    console.error('Error in GET /api/categories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, createCategorySchema)
-  if ('error' in result) return result.error
+  try {
+    const result = await parseBody(request, createCategorySchema)
+    if ('error' in result) return result.error
 
-  const category = await prisma.category.create({ data: result.data })
-  return NextResponse.json(category, { status: 201 })
+    const category = await prisma.category.create({ data: result.data })
+    return NextResponse.json(category, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/categories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

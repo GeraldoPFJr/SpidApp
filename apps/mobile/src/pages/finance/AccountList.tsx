@@ -8,15 +8,18 @@ interface AccountWithBalance extends Account {
 }
 
 export function AccountListPage() {
-  const { data: accounts, loading, refetch } = useApi<AccountWithBalance[]>('/accounts/summary')
-  const { execute, loading: creating } = useApiMutation('/accounts')
+  const { data: accounts, loading, error, refetch } = useApi<AccountWithBalance[]>('/accounts/summary')
+  const { execute, loading: creating, error: createError } = useApiMutation('/accounts')
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState<'CASH' | 'BANK' | 'OTHER'>('BANK')
 
   async function handleCreate() {
     if (!newName.trim()) return
-    await execute({ name: newName.trim(), type: newType })
+    const result = await execute({ name: newName.trim(), type: newType })
+    if (!result) {
+      return
+    }
     setShowForm(false)
     setNewName('')
     refetch()
@@ -35,6 +38,12 @@ export function AccountListPage() {
 
   return (
     <div style={pageStyle} className="animate-fade-in">
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar contas: {error}</span>
+        </div>
+      )}
+
       <button className="btn btn-primary btn-block" onClick={() => setShowForm(!showForm)}>
         {showForm ? 'Cancelar' : '+ Nova Conta'}
       </button>
@@ -53,6 +62,11 @@ export function AccountListPage() {
               <option value="OTHER">Outra</option>
             </select>
           </div>
+          {createError && (
+            <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+              <span>{createError}</span>
+            </div>
+          )}
           <button className="btn btn-primary btn-block" onClick={handleCreate} disabled={creating}>
             {creating ? 'Criando...' : 'Criar Conta'}
           </button>

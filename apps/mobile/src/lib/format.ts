@@ -23,5 +23,5 @@ export function getCurrentMonth(): string {
 export function formatMonthLabel(month: string): string {
   const [year, m] = month.split('-')
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-  return `${months[parseInt(m, 10) - 1]} ${year}`
+  return `${months[parseInt(m ?? '0', 10) - 1] ?? ''} ${year ?? ''}`
 }

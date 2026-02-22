@@ -4,38 +4,43 @@ import { prisma } from '@/lib/prisma'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const supplierId = searchParams.get('supplier_id')
-  const dateFrom = searchParams.get('date_from')
-  const dateTo = searchParams.get('date_to')
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const supplierId = searchParams.get('supplier_id')
+    const dateFrom = searchParams.get('date_from')
+    const dateTo = searchParams.get('date_to')
 
-  const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = {}
 
-  if (supplierId) where.supplierId = supplierId
-  if (dateFrom || dateTo) {
-    const dateFilter: Record<string, Date> = {}
-    if (dateFrom) dateFilter.gte = new Date(dateFrom)
-    if (dateTo) dateFilter.lte = new Date(dateTo)
-    where.date = dateFilter
+    if (supplierId) where.supplierId = supplierId
+    if (dateFrom || dateTo) {
+      const dateFilter: Record<string, Date> = {}
+      if (dateFrom) dateFilter.gte = new Date(dateFrom)
+      if (dateTo) dateFilter.lte = new Date(dateTo)
+      where.date = dateFilter
+    }
+
+    const purchases = await prisma.purchase.findMany({
+      where,
+      include: { supplier: true, items: true, costs: true },
+      orderBy: { date: 'desc' },
+    })
+
+    return NextResponse.json(purchases)
+  } catch (error) {
+    console.error('Error in GET /api/purchases:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const purchases = await prisma.purchase.findMany({
-    where,
-    include: { supplier: true, items: true, costs: true },
-    orderBy: { date: 'desc' },
-  })
-
-  return NextResponse.json(purchases)
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, createPurchaseSchema)
-  if ('error' in result) return result.error
-
-  const { items, costs, payments, ...headerData } = result.data
-  const deviceId = 'server'
-
   try {
+    const result = await parseBody(request, createPurchaseSchema)
+    if ('error' in result) return result.error
+
+    const { items, costs, payments, ...headerData } = result.data
+    const deviceId = 'server'
+
     const purchase = await prisma.$transaction(async (tx) => {
       const created = await tx.purchase.create({ data: headerData })
 
@@ -115,8 +120,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(purchase, { status: 201 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create purchase'
+  } catch (error) {
+    console.error('Error in POST /api/purchases:', error)
+    const message = error instanceof Error ? error.message : 'Failed to create purchase'
     return errorResponse(message, 500)
   }
 }

@@ -83,51 +83,56 @@ export async function POST(request: NextRequest) {
   const result = await parseBody(request, syncPushSchema)
   if ('error' in result) return result.error
 
-  const { deviceId, operations } = result.data
-  const handlers = buildEntityHandlers()
+  try {
+    const { deviceId, operations } = result.data
+    const handlers = buildEntityHandlers()
 
-  let applied = 0
-  let skipped = 0
-  const errors: Array<{ operationId: string; error: string }> = []
+    let applied = 0
+    let skipped = 0
+    const errors: Array<{ operationId: string; error: string }> = []
 
-  for (const op of operations) {
-    try {
-      const existing = await prisma.outboxOperation.findUnique({
-        where: { operationId: op.operationId },
-      })
-
-      if (existing) {
-        skipped++
-        continue
-      }
-
-      const handler = handlers[op.entityType]
-      if (!handler) {
-        errors.push({ operationId: op.operationId, error: `Unknown entity type: ${op.entityType}` })
-        continue
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await handler(op.action, op.payload as Record<string, unknown>, tx)
-
-        await tx.outboxOperation.create({
-          data: {
-            operationId: op.operationId,
-            entityType: op.entityType,
-            action: op.action,
-            payload: op.payload as object,
-            deviceId,
-            syncedAt: new Date(),
-          },
+    for (const op of operations) {
+      try {
+        const existing = await prisma.outboxOperation.findUnique({
+          where: { operationId: op.operationId },
         })
-      })
 
-      applied++
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      errors.push({ operationId: op.operationId, error: message })
+        if (existing) {
+          skipped++
+          continue
+        }
+
+        const handler = handlers[op.entityType]
+        if (!handler) {
+          errors.push({ operationId: op.operationId, error: `Unknown entity type: ${op.entityType}` })
+          continue
+        }
+
+        await prisma.$transaction(async (tx) => {
+          await handler(op.action, op.payload as Record<string, unknown>, tx)
+
+          await tx.outboxOperation.create({
+            data: {
+              operationId: op.operationId,
+              entityType: op.entityType,
+              action: op.action,
+              payload: op.payload as object,
+              deviceId,
+              syncedAt: new Date(),
+            },
+          })
+        })
+
+        applied++
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        errors.push({ operationId: op.operationId, error: message })
+      }
     }
-  }
 
-  return NextResponse.json({ applied, skipped, errors })
+    return NextResponse.json({ applied, skipped, errors })
+  } catch (error) {
+    console.error('Error in POST /api/sync/push:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

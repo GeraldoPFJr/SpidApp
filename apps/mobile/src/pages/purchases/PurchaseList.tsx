@@ -12,7 +12,7 @@ interface PurchaseWithSupplier extends Purchase {
 
 export function PurchaseListPage() {
   const navigate = useNavigate()
-  const { data: purchases, loading } = useApi<PurchaseWithSupplier[]>('/purchases')
+  const { data: purchases, loading, error } = useApi<PurchaseWithSupplier[]>('/purchases')
   const { data: suppliers } = useApi<Supplier[]>('/suppliers')
   const [supplierFilter, setSupplierFilter] = useState('')
 
@@ -72,6 +72,12 @@ export function PurchaseListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar compras: {error}</span>
+        </div>
+      )}
+
       {suppliers && suppliers.length > 0 && (
         <select
           style={filterStyle}

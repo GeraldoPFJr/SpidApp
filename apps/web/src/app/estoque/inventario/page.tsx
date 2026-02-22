@@ -25,6 +25,7 @@ export default function InventarioPage() {
   const { data: products } = useApi<InventoryProduct[]>('/inventory')
   const [counts, setCounts] = useState<CountRow[]>([])
   const [saving, setSaving] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const addProduct = useCallback((productId: string) => {
     if (counts.some((c) => c.productId === productId)) return
@@ -51,6 +52,7 @@ export default function InventarioPage() {
     const validCounts = counts.filter((c) => c.counted !== '' && c.difference !== 0)
     if (validCounts.length === 0) return
     setSaving(true)
+    setSubmitError(null)
     try {
       await apiClient('/inventory/count', {
         method: 'POST',
@@ -62,7 +64,7 @@ export default function InventarioPage() {
       })
       router.push('/estoque')
     } catch {
-      alert('Erro ao aplicar contagem')
+      setSubmitError('Erro ao aplicar contagem. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -95,6 +97,12 @@ export default function InventarioPage() {
           </button>
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Inventario / Contagem</h1>
         </div>
+
+        {submitError && (
+          <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+            {submitError}
+          </div>
+        )}
 
         {/* Add product */}
         <div style={cardStyle}>

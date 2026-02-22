@@ -11,17 +11,22 @@ const priceTierSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, priceTierSchema.partial())
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, priceTierSchema.partial())
+    if ('error' in result) return result.error
 
-  const existing = await prisma.priceTier.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Price tier not found', 404)
+    const existing = await prisma.priceTier.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Price tier not found', 404)
 
-  const updated = await prisma.priceTier.update({
-    where: { id },
-    data: result.data,
-  })
+    const updated = await prisma.priceTier.update({
+      where: { id },
+      data: result.data,
+    })
 
-  return NextResponse.json(updated)
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('Error in PUT /api/price-tiers/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

@@ -9,14 +9,24 @@ const priceTierSchema = z.object({
 })
 
 export async function GET() {
-  const tiers = await prisma.priceTier.findMany({ orderBy: { name: 'asc' } })
-  return NextResponse.json(tiers)
+  try {
+    const tiers = await prisma.priceTier.findMany({ orderBy: { name: 'asc' } })
+    return NextResponse.json(tiers)
+  } catch (error) {
+    console.error('Error in GET /api/price-tiers:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, priceTierSchema)
-  if ('error' in result) return result.error
+  try {
+    const result = await parseBody(request, priceTierSchema)
+    if ('error' in result) return result.error
 
-  const tier = await prisma.priceTier.create({ data: result.data })
-  return NextResponse.json(tier, { status: 201 })
+    const tier = await prisma.priceTier.create({ data: result.data })
+    return NextResponse.json(tier, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/price-tiers:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

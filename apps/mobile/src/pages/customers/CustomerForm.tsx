@@ -16,8 +16,8 @@ export function CustomerFormPage() {
   const navigate = useNavigate()
   const isEdit = Boolean(id)
 
-  const { data: existing } = useApi<any>(id ? `/customers/${id}` : null)
-  const { execute, loading: saving } = useApiMutation(id ? `/customers/${id}` : '/customers')
+  const { data: existing } = useApi<CustomerFormData & { id: string }>(id ? `/customers/${id}` : null)
+  const { execute, loading: saving, error: apiError } = useApiMutation(id ? `/customers/${id}` : '/customers')
 
   const [form, setForm] = useState<CustomerFormData>({
     name: '',
@@ -37,7 +37,7 @@ export function CustomerFormPage() {
         doc: existing.doc ?? '',
         address: existing.address ?? '',
         notes: existing.notes ?? '',
-        type: existing.doc && existing.doc.length > 14 ? 'PJ' : 'PF',
+        type: existing.type === 'PJ' ? 'PJ' : 'PF',
       })
     }
   }, [existing])
@@ -64,11 +64,13 @@ export function CustomerFormPage() {
       doc: form.doc.trim() || null,
       address: form.address.trim() || null,
       notes: form.notes.trim() || null,
+      type: form.type,
     }
     const result = await execute(payload, isEdit ? 'PUT' : 'POST')
-    if (result) {
-      navigate(isEdit ? `/clientes/${id}` : '/clientes', { replace: true })
+    if (!result) {
+      return
     }
+    navigate(isEdit ? `/clientes/${id}` : '/clientes', { replace: true })
   }
 
   const pageStyle: CSSProperties = {
@@ -209,6 +211,12 @@ export function CustomerFormPage() {
           />
         </div>
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
+        </div>
+      )}
 
       <button
         className="btn btn-primary btn-lg btn-block"

@@ -4,33 +4,38 @@ import { prisma } from '@/lib/prisma'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const active = searchParams.get('active')
-  const categoryId = searchParams.get('category_id')
-  const search = searchParams.get('search')
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const active = searchParams.get('active')
+    const categoryId = searchParams.get('category_id')
+    const search = searchParams.get('search')
 
-  const where: Record<string, unknown> = { deletedAt: null }
+    const where: Record<string, unknown> = { deletedAt: null }
 
-  if (active !== null) where.active = active === 'true'
-  if (categoryId) where.categoryId = categoryId
-  if (search) where.name = { contains: search, mode: 'insensitive' }
+    if (active !== null) where.active = active === 'true'
+    if (categoryId) where.categoryId = categoryId
+    if (search) where.name = { contains: search, mode: 'insensitive' }
 
-  const products = await prisma.product.findMany({
-    where,
-    include: { units: true, prices: true, category: true, subcategory: true },
-    orderBy: { name: 'asc' },
-  })
+    const products = await prisma.product.findMany({
+      where,
+      include: { units: true, prices: true, category: true, subcategory: true },
+      orderBy: { name: 'asc' },
+    })
 
-  return NextResponse.json(products)
+    return NextResponse.json(products)
+  } catch (error) {
+    console.error('Error in GET /api/products:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, createProductSchema)
-  if ('error' in result) return result.error
-
-  const { units, prices, ...productData } = result.data
-
   try {
+    const result = await parseBody(request, createProductSchema)
+    if ('error' in result) return result.error
+
+    const { units, prices, ...productData } = result.data
+
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({ data: productData })
 
@@ -51,8 +56,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(product, { status: 201 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create product'
+  } catch (error) {
+    console.error('Error in POST /api/products:', error)
+    const message = error instanceof Error ? error.message : 'Failed to create product'
     return errorResponse(message, 500)
   }
 }

@@ -10,7 +10,7 @@ interface CustomerWithOverdue extends Customer {
 
 export function CustomerListPage() {
   const navigate = useNavigate()
-  const { data: customers, loading } = useApi<CustomerWithOverdue[]>('/customers')
+  const { data: customers, loading, error } = useApi<CustomerWithOverdue[]>('/customers')
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
@@ -75,6 +75,12 @@ export function CustomerListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar clientes: {error}</span>
+        </div>
+      )}
+
       <input
         type="text"
         placeholder="Buscar por nome ou telefone..."

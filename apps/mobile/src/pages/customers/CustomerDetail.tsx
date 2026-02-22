@@ -10,6 +10,7 @@ interface CustomerDetail {
   doc: string | null
   address: string | null
   notes: string | null
+  type: 'PF' | 'PJ' | null
   totalOpen: number
   pendingInstallments: number
   recentSales: Array<{
@@ -23,7 +24,7 @@ interface CustomerDetail {
 export function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data: customer, loading } = useApi<CustomerDetail>(id ? `/customers/${id}` : null)
+  const { data: customer, loading, error } = useApi<CustomerDetail>(id ? `/customers/${id}` : null)
 
   const pageStyle: CSSProperties = {
     padding: 'var(--sp-4)',
@@ -78,6 +79,16 @@ export function CustomerDetailPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div className="alert alert-danger">
+          <span>Erro ao carregar cliente: {error}</span>
+        </div>
+      </div>
+    )
+  }
+
   if (!customer) {
     return (
       <div style={pageStyle}>
@@ -94,9 +105,14 @@ export function CustomerDetailPage() {
     <div style={pageStyle} className="animate-fade-in">
       {/* Info */}
       <div style={sectionStyle}>
-        <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--text-primary)', margin: 0, marginBottom: 'var(--sp-3)' }}>
-          {customer.name}
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-3)' }}>
+          <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {customer.name}
+          </h2>
+          {customer.type && (
+            <span className="badge badge-default">{customer.type}</span>
+          )}
+        </div>
         {customer.phone && (
           <div style={rowStyle}>
             <span style={labelStyle}>Telefone</span>
@@ -132,7 +148,7 @@ export function CustomerDetailPage() {
           <div style={{
             padding: 'var(--sp-3)',
             borderRadius: 'var(--radius-md)',
-            backgroundColor: customer.totalOpen > 0 ? 'var(--danger-50)' : 'var(--neutral-50)',
+            backgroundColor: (customer.totalOpen ?? 0) > 0 ? 'var(--danger-50)' : 'var(--neutral-50)',
             textAlign: 'center',
           }}>
             <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', marginBottom: 'var(--sp-1)' }}>
@@ -141,9 +157,9 @@ export function CustomerDetailPage() {
             <div style={{
               fontSize: 'var(--font-lg)',
               fontWeight: 700,
-              color: customer.totalOpen > 0 ? 'var(--danger-600)' : 'var(--text-primary)',
+              color: (customer.totalOpen ?? 0) > 0 ? 'var(--danger-600)' : 'var(--text-primary)',
             }}>
-              {formatBRL(customer.totalOpen)}
+              {formatBRL(customer.totalOpen ?? 0)}
             </div>
           </div>
           <div style={{
@@ -156,14 +172,14 @@ export function CustomerDetailPage() {
               Parcelas Pendentes
             </div>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {customer.pendingInstallments}
+              {customer.pendingInstallments ?? 0}
             </div>
           </div>
         </div>
       </div>
 
       {/* Historico de Compras */}
-      {customer.recentSales.length > 0 && (
+      {customer.recentSales && customer.recentSales.length > 0 && (
         <div style={sectionStyle}>
           <span style={sectionTitleStyle}>Compras Recentes</span>
           {customer.recentSales.map((sale) => (

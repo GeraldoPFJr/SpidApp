@@ -9,6 +9,58 @@ import { useApi } from '@/hooks/useApi'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
 
+interface SaleRawItem {
+  id: string
+  productId: string
+  unitId: string
+  qty: number
+  unitPrice: number
+  total: number
+  product?: { name: string; code?: string | null } | null
+  unit?: { nameLabel: string } | null
+  productName?: string
+  unitLabel?: string
+  code?: string
+}
+
+interface SaleRawPayment {
+  id: string
+  date: string
+  method: string
+  amount: number
+  accountId: string
+  installments: number | null
+  account?: { name: string } | null
+  accountName?: string
+}
+
+interface SaleRawReceivable {
+  id: string
+  dueDate: string
+  amount: number
+  status: string
+  kind: string
+}
+
+interface SaleRaw {
+  id: string
+  customerId: string | null
+  date: string
+  status: string
+  subtotal: number
+  discount: number
+  surcharge: number
+  freight: number
+  total: number
+  couponNumber: number | null
+  notes: string | null
+  customer?: { name: string } | null
+  customerName?: string | null
+  items: SaleRawItem[]
+  payments: SaleRawPayment[]
+  receivables: SaleRawReceivable[]
+}
+
 interface SaleDetail {
   id: string
   customerId: string | null
@@ -46,28 +98,61 @@ interface SaleDetail {
     status: string
     kind: string
   }>
-  companySettings?: {
-    name: string
-    legalName?: string
-    address?: string
-    cityState?: string
-    phones?: string
-    cnpj?: string
-    ie?: string
-    sellerName?: string
+}
+
+function mapSaleDetail(raw: SaleRaw): SaleDetail {
+  return {
+    id: raw.id,
+    customerId: raw.customerId,
+    customerName: raw.customerName ?? raw.customer?.name ?? null,
+    date: raw.date,
+    status: raw.status,
+    subtotal: Number(raw.subtotal),
+    discount: Number(raw.discount),
+    surcharge: Number(raw.surcharge),
+    freight: Number(raw.freight),
+    total: Number(raw.total),
+    couponNumber: raw.couponNumber,
+    notes: raw.notes,
+    items: raw.items.map((i) => ({
+      id: i.id,
+      productName: i.productName ?? i.product?.name ?? 'Produto',
+      unitLabel: i.unitLabel ?? i.unit?.nameLabel ?? 'Unid.',
+      code: i.code ?? i.product?.code ?? '',
+      qty: Number(i.qty),
+      unitPrice: Number(i.unitPrice),
+      total: Number(i.total),
+    })),
+    payments: raw.payments.map((p) => ({
+      id: p.id,
+      date: p.date,
+      method: p.method,
+      amount: Number(p.amount),
+      accountName: p.accountName ?? p.account?.name ?? '-',
+      installments: p.installments,
+    })),
+    receivables: raw.receivables.map((r) => ({
+      id: r.id,
+      dueDate: r.dueDate,
+      amount: Number(r.amount),
+      status: r.status,
+      kind: r.kind,
+    })),
   }
 }
 
 export default function VendaDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { data: sale, loading, refetch } = useApi<SaleDetail>(`/sales/${id}`)
+  const { data: rawSale, loading, refetch } = useApi<SaleRaw>(`/sales/${id}`)
+  const sale = rawSale ? mapSaleDetail(rawSale) : null
   const [showCoupon, setShowCoupon] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelMerchandise, setCancelMerchandise] = useState('')
   const [cancelMoney, setCancelMoney] = useState('')
   const [cancelNotes, setCancelNotes] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const receivableColumns: DataTableColumn<SaleDetail['receivables'][0]>[] = useMemo(() => [
     {
@@ -130,6 +215,7 @@ export default function VendaDetalhePage() {
 
   const handleCancel = async () => {
     setCancelling(true)
+    setCancelError(null)
     try {
       await apiClient(`/sales/${id}/cancel`, {
         method: 'POST',
@@ -142,7 +228,7 @@ export default function VendaDetalhePage() {
       setShowCancelModal(false)
       refetch()
     } catch {
-      alert('Erro ao cancelar venda')
+      setCancelError('Erro ao cancelar venda. Tente novamente.')
     } finally {
       setCancelling(false)
     }
@@ -341,16 +427,10 @@ export default function VendaDetalhePage() {
         )}
 
         {/* Coupon Preview */}
-        {showCoupon && sale.companySettings && (
+        {showCoupon && (
           <CouponPreview
             data={{
-              companyName: sale.companySettings.name,
-              companyLegalName: sale.companySettings.legalName,
-              companyAddress: sale.companySettings.address,
-              companyCityState: sale.companySettings.cityState,
-              companyPhones: sale.companySettings.phones,
-              companyCnpj: sale.companySettings.cnpj,
-              companyIe: sale.companySettings.ie,
+              companyName: 'Spid',
               customerName: sale.customerName ?? 'CONSUMIDOR FINAL',
               date: sale.date,
               couponNumber: sale.couponNumber ?? 0,
@@ -371,7 +451,6 @@ export default function VendaDetalhePage() {
                 amount: p.amount,
                 method: { CASH: 'Dinheiro', PIX: 'PIX', CREDIT_CARD: 'Credito', DEBIT_CARD: 'Debito', CREDIARIO: 'Crediario', BOLETO: 'Boleto', CHEQUE: 'Cheque' }[p.method] ?? p.method,
               })),
-              sellerName: sale.companySettings.sellerName,
             }}
           />
         )}
@@ -387,6 +466,12 @@ export default function VendaDetalhePage() {
               boxShadow: 'var(--shadow-xl)', width: '100%', maxWidth: '500px', padding: '24px',
             }} onClick={(e) => e.stopPropagation()}>
               <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 20px' }}>Cancelar Venda</h2>
+
+              {cancelError && (
+                <div style={{ padding: '10px 14px', marginBottom: '12px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+                  {cancelError}
+                </div>
+              )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>

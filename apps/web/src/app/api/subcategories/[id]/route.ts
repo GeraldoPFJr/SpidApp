@@ -10,27 +10,37 @@ const updateSubcategorySchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, updateSubcategorySchema)
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, updateSubcategorySchema)
+    if ('error' in result) return result.error
 
-  const existing = await prisma.subcategory.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Subcategory not found', 404)
+    const existing = await prisma.subcategory.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Subcategory not found', 404)
 
-  const updated = await prisma.subcategory.update({
-    where: { id },
-    data: result.data,
-  })
+    const updated = await prisma.subcategory.update({
+      where: { id },
+      data: result.data,
+    })
 
-  return NextResponse.json(updated)
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('Error in PUT /api/subcategories/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const existing = await prisma.subcategory.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Subcategory not found', 404)
+    const existing = await prisma.subcategory.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Subcategory not found', 404)
 
-  await prisma.subcategory.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+    await prisma.subcategory.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/subcategories/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

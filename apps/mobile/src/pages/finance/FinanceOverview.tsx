@@ -18,8 +18,8 @@ interface FinanceEntryWithCategory extends FinanceEntry {
 export function FinanceOverviewPage() {
   const navigate = useNavigate()
   const month = getCurrentMonth()
-  const { data: accounts, loading: loadingAccounts } = useApi<AccountSummary[]>('/accounts/summary')
-  const { data: entries, loading: loadingEntries } = useApi<FinanceEntryWithCategory[]>(`/finance/entries?month=${month}&limit=10`)
+  const { data: accounts, loading: loadingAccounts, error: errorAccounts } = useApi<AccountSummary[]>('/accounts/summary')
+  const { data: entries, loading: loadingEntries, error: errorEntries } = useApi<FinanceEntryWithCategory[]>(`/finance/entries?month=${month}&limit=10`)
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
   const sectionStyle: CSSProperties = { backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-4)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }
@@ -34,8 +34,16 @@ export function FinanceOverviewPage() {
     EXPENSE: 'Despesa', INCOME: 'Receita', APORTE: 'Aporte', RETIRADA: 'Retirada', TRANSFER: 'Transferencia',
   }
 
+  const apiError = errorAccounts || errorEntries
+
   return (
     <div style={pageStyle} className="animate-fade-in">
+      {apiError && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar dados financeiros: {apiError}</span>
+        </div>
+      )}
+
       {/* Acoes rapidas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-2)' }}>
         <button className="btn btn-danger btn-block btn-sm" onClick={() => navigate('/financeiro/lancamento?type=EXPENSE')}>

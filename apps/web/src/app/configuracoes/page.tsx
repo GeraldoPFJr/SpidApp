@@ -54,6 +54,7 @@ export default function ConfiguracoesPage() {
   const [activeSection, setActiveSection] = useState('company')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Company form
   const [company, setCompany] = useState<CompanyInfo>({
@@ -78,6 +79,7 @@ export default function ConfiguracoesPage() {
 
   const handleSave = useCallback(async () => {
     setSaving(true)
+    setSubmitError(null)
     try {
       await apiClient('/settings', {
         method: 'PUT',
@@ -86,7 +88,7 @@ export default function ConfiguracoesPage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch {
-      alert('Erro ao salvar configuracoes')
+      setSubmitError('Erro ao salvar configuracoes. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -319,6 +321,12 @@ export default function ConfiguracoesPage() {
             )}
           </button>
         </div>
+
+        {submitError && (
+          <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+            {submitError}
+          </div>
+        )}
 
         <div style={containerStyle}>
           {/* Sidebar nav */}

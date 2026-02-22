@@ -31,6 +31,7 @@ export default function MovimentacoesPage() {
   const [newReason, setNewReason] = useState('ADJUSTMENT')
   const [newNotes, setNewNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { data: products } = useApi<Array<{ id: string; name: string }>>('/products')
 
@@ -58,6 +59,7 @@ export default function MovimentacoesPage() {
   const handleSave = async () => {
     if (!newProductId || !newQty) return
     setSaving(true)
+    setSubmitError(null)
     try {
       await apiClient('/inventory/movements', {
         method: 'POST',
@@ -65,9 +67,10 @@ export default function MovimentacoesPage() {
       })
       setShowModal(false)
       setNewProductId(''); setNewQty(''); setNewNotes('')
+      setSubmitError(null)
       refetch()
     } catch {
-      alert('Erro ao criar movimentacao')
+      setSubmitError('Erro ao criar movimentacao. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -107,6 +110,11 @@ export default function MovimentacoesPage() {
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }} onClick={() => setShowModal(false)}>
             <div style={{ backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-xl)', width: '100%', maxWidth: '480px', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
               <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 20px' }}>Nova Movimentacao</h2>
+              {submitError && (
+                <div style={{ padding: '10px 14px', marginBottom: '12px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+                  {submitError}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-700)', display: 'block', marginBottom: '4px' }}>Produto *</label>

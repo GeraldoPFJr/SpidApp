@@ -24,6 +24,7 @@ export default function FechamentoPage() {
   const [countedClosing, setCountedClosing] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { data: closureData } = useApi<ClosureData>(
     accountId ? `/finance/closure-preview?month=${month}&accountId=${accountId}` : '',
@@ -36,6 +37,7 @@ export default function FechamentoPage() {
   const handleSave = useCallback(async () => {
     if (!accountId || isNaN(counted)) return
     setSaving(true)
+    setSubmitError(null)
     try {
       await apiClient('/finance/closures', {
         method: 'POST',
@@ -43,7 +45,7 @@ export default function FechamentoPage() {
       })
       router.push('/financeiro')
     } catch {
-      alert('Erro ao salvar fechamento')
+      setSubmitError('Erro ao salvar fechamento. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -86,6 +88,12 @@ export default function FechamentoPage() {
           </button>
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Fechamento Mensal</h1>
         </div>
+
+        {submitError && (
+          <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+            {submitError}
+          </div>
+        )}
 
         <div style={cardStyle}>
           <div className="form-grid-2">

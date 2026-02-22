@@ -6,61 +6,71 @@ import { errorResponse } from '@/lib/api-utils'
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const purchase = await prisma.purchase.findUnique({
-    where: { id },
-    include: {
-      supplier: true,
-      items: { include: { product: true, unit: true } },
-      costs: true,
-      payments: true,
-    },
-  })
-  if (!purchase) return errorResponse('Purchase not found', 404)
+    const purchase = await prisma.purchase.findUnique({
+      where: { id },
+      include: {
+        supplier: true,
+        items: { include: { product: true, unit: true } },
+        costs: true,
+        payments: true,
+      },
+    })
+    if (!purchase) return errorResponse('Purchase not found', 404)
 
-  return NextResponse.json(purchase)
+    return NextResponse.json(purchase)
+  } catch (error) {
+    console.error('Error in GET /api/purchases/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-
-  const existing = await prisma.purchase.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Purchase not found', 404)
-
-  let body: { notes?: string; status?: string }
   try {
-    body = await request.json()
-  } catch {
-    return errorResponse('Invalid JSON body', 400)
+    const { id } = await params
+
+    const existing = await prisma.purchase.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Purchase not found', 404)
+
+    let body: { notes?: string; status?: string }
+    try {
+      body = await request.json()
+    } catch {
+      return errorResponse('Invalid JSON body', 400)
+    }
+
+    const updated = await prisma.purchase.update({
+      where: { id },
+      data: {
+        ...(body.notes !== undefined && { notes: body.notes }),
+        ...(body.status !== undefined && { status: body.status }),
+      },
+    })
+
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('Error in PUT /api/purchases/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const updated = await prisma.purchase.update({
-    where: { id },
-    data: {
-      ...(body.notes !== undefined && { notes: body.notes }),
-      ...(body.status !== undefined && { status: body.status }),
-    },
-  })
-
-  return NextResponse.json(updated)
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-
-  const existing = await prisma.purchase.findUnique({
-    where: { id },
-    include: { items: { include: { unit: true, costLots: true } } },
-  })
-  if (!existing) return errorResponse('Purchase not found', 404)
-  if (existing.status === 'CANCELLED') {
-    return errorResponse('Purchase already cancelled', 400)
-  }
-
-  const deviceId = 'server'
-
   try {
+    const { id } = await params
+
+    const existing = await prisma.purchase.findUnique({
+      where: { id },
+      include: { items: { include: { unit: true, costLots: true } } },
+    })
+    if (!existing) return errorResponse('Purchase not found', 404)
+    if (existing.status === 'CANCELLED') {
+      return errorResponse('Purchase already cancelled', 400)
+    }
+
+    const deviceId = 'server'
+
     await prisma.$transaction(async (tx) => {
       for (const item of existing.items) {
         const qtyBase = convertToBase(item.qty, item.unit.factorToBase)
@@ -93,8 +103,9 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to cancel purchase'
+  } catch (error) {
+    console.error('Error in DELETE /api/purchases/[id]:', error)
+    const message = error instanceof Error ? error.message : 'Failed to cancel purchase'
     return errorResponse(message, 500)
   }
 }

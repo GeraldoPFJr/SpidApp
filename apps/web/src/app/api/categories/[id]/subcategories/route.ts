@@ -10,30 +10,40 @@ const createSubcategorySchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const category = await prisma.category.findUnique({ where: { id } })
-  if (!category) return errorResponse('Category not found', 404)
+    const category = await prisma.category.findUnique({ where: { id } })
+    if (!category) return errorResponse('Category not found', 404)
 
-  const subcategories = await prisma.subcategory.findMany({
-    where: { categoryId: id },
-    orderBy: { name: 'asc' },
-  })
+    const subcategories = await prisma.subcategory.findMany({
+      where: { categoryId: id },
+      orderBy: { name: 'asc' },
+    })
 
-  return NextResponse.json(subcategories)
+    return NextResponse.json(subcategories)
+  } catch (error) {
+    console.error('Error in GET /api/categories/[id]/subcategories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, createSubcategorySchema)
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, createSubcategorySchema)
+    if ('error' in result) return result.error
 
-  const category = await prisma.category.findUnique({ where: { id } })
-  if (!category) return errorResponse('Category not found', 404)
+    const category = await prisma.category.findUnique({ where: { id } })
+    if (!category) return errorResponse('Category not found', 404)
 
-  const subcategory = await prisma.subcategory.create({
-    data: { ...result.data, categoryId: id },
-  })
+    const subcategory = await prisma.subcategory.create({
+      data: { ...result.data, categoryId: id },
+    })
 
-  return NextResponse.json(subcategory, { status: 201 })
+    return NextResponse.json(subcategory, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/categories/[id]/subcategories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

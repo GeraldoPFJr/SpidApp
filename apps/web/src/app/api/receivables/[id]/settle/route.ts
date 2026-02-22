@@ -13,31 +13,31 @@ const settleSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, settleSchema)
-  if ('error' in result) return result.error
-
-  const receivable = await prisma.receivable.findUnique({
-    where: { id },
-    include: { settlements: true },
-  })
-  if (!receivable) return errorResponse('Receivable not found', 404)
-  if (receivable.status !== 'OPEN') {
-    return errorResponse('Receivable is not open', 400)
-  }
-
-  const now = new Date()
-  const totalSettled = receivable.settlements.reduce(
-    (sum, s) => sum + Number(s.amount),
-    0,
-  )
-  const remaining = Number(receivable.amount) - totalSettled
-
-  if (result.data.amount > remaining + 0.01) {
-    return errorResponse(`Amount exceeds remaining (${remaining.toFixed(2)})`, 400)
-  }
-
   try {
+    const { id } = await params
+    const result = await parseBody(request, settleSchema)
+    if ('error' in result) return result.error
+
+    const receivable = await prisma.receivable.findUnique({
+      where: { id },
+      include: { settlements: true },
+    })
+    if (!receivable) return errorResponse('Receivable not found', 404)
+    if (receivable.status !== 'OPEN') {
+      return errorResponse('Receivable is not open', 400)
+    }
+
+    const now = new Date()
+    const totalSettled = receivable.settlements.reduce(
+      (sum, s) => sum + Number(s.amount),
+      0,
+    )
+    const remaining = Number(receivable.amount) - totalSettled
+
+    if (result.data.amount > remaining + 0.01) {
+      return errorResponse(`Amount exceeds remaining (${remaining.toFixed(2)})`, 400)
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
@@ -87,8 +87,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
     return NextResponse.json(updated)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to settle receivable'
+  } catch (error) {
+    console.error('Error in POST /api/receivables/[id]/settle:', error)
+    const message = error instanceof Error ? error.message : 'Failed to settle receivable'
     return errorResponse(message, 500)
   }
 }

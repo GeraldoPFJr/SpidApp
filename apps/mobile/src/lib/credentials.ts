@@ -69,7 +69,7 @@ export function getApiUrl(): string {
   const stored = localStorage.getItem(KEY_API_URL)
   if (stored) return stored
 
-  const envUrl = import.meta.env.VITE_API_URL as string | undefined
+  const envUrl = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_API_URL
   return envUrl ?? 'http://localhost:3000/api'
 }
 

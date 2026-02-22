@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useMemo, useState } from 'react'
+import React, { type CSSProperties, useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
@@ -42,6 +42,7 @@ export default function InadimplentesPage() {
   const [payAccountId, setPayAccountId] = useState('')
   const [payMethod, setPayMethod] = useState('CASH')
   const [saving, setSaving] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
 
   const toggleExpand = useCallback((customerId: string) => {
     setExpandedId((prev) => (prev === customerId ? null : customerId))
@@ -61,6 +62,7 @@ export default function InadimplentesPage() {
     if (isNaN(parsed) || parsed <= 0) return
 
     setSaving(true)
+    setPayError(null)
     try {
       await apiClient(`/receivables/${receivableId}/settle`, {
         method: 'POST',
@@ -69,7 +71,7 @@ export default function InadimplentesPage() {
       setPayingId(null)
       refetch()
     } catch {
-      alert('Erro ao registrar recebimento')
+      setPayError('Erro ao registrar recebimento. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -373,8 +375,8 @@ export default function InadimplentesPage() {
                   </thead>
                   <tbody>
                     {customer.receivables.map((rec) => (
-                      <>
-                        <tr key={rec.id}>
+                      <React.Fragment key={rec.id}>
+                        <tr>
                           <td style={recTdStyle}>{formatDate(rec.dueDate)}</td>
                           <td style={recTdStyle}>
                             <span style={{
@@ -417,8 +419,13 @@ export default function InadimplentesPage() {
                           </td>
                         </tr>
                         {payingId === rec.id && (
-                          <tr key={`${rec.id}-pay`}>
+                          <tr>
                             <td colSpan={6} style={{ padding: '12px 16px', backgroundColor: 'var(--color-success-50)', borderBottom: '1px solid var(--color-success-100)' }}>
+                              {payError && (
+                                <div style={{ padding: '8px 12px', marginBottom: '8px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-sm)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
+                                  {payError}
+                                </div>
+                              )}
                               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
                                 <div>
                                   <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
@@ -482,7 +489,7 @@ export default function InadimplentesPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>

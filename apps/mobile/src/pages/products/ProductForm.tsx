@@ -40,8 +40,8 @@ export function ProductFormPage() {
   const { data: categories } = useApi<Category[]>('/categories')
   const { data: subcategories } = useApi<Subcategory[]>('/subcategories')
   const { data: tiers } = useApi<PriceTier[]>('/price-tiers')
-  const { data: existing } = useApi<any>(id ? `/products/${id}` : null)
-  const { execute, loading: saving } = useApiMutation(id ? `/products/${id}` : '/products')
+  const { data: existing } = useApi<Record<string, unknown>>(id ? `/products/${id}` : null)
+  const { execute, loading: saving, error: apiError } = useApiMutation(id ? `/products/${id}` : '/products')
 
   const [form, setForm] = useState<ProductFormData>({
     name: '',
@@ -57,21 +57,23 @@ export function ProductFormPage() {
 
   useEffect(() => {
     if (existing) {
+      const rawUnits = existing.units as Array<{ id: string; nameLabel: string; factorToBase: number }> | undefined
+      const rawPrices = existing.prices as PriceRow[] | undefined
       setForm({
-        name: existing.name ?? '',
-        code: existing.code ?? '',
-        categoryId: existing.categoryId ?? '',
-        subcategoryId: existing.subcategoryId ?? '',
-        minStock: existing.minStock?.toString() ?? '',
-        active: existing.active ?? true,
-        units: existing.units?.length > 0
-          ? existing.units.map((u: any) => ({
+        name: String(existing.name ?? ''),
+        code: String(existing.code ?? ''),
+        categoryId: String(existing.categoryId ?? ''),
+        subcategoryId: String(existing.subcategoryId ?? ''),
+        minStock: existing.minStock != null ? String(existing.minStock) : '',
+        active: (existing.active as boolean) ?? true,
+        units: rawUnits && rawUnits.length > 0
+          ? rawUnits.map((u) => ({
               id: u.id,
-              nameLabel: u.nameLabel,
-              factorToBase: u.factorToBase,
+              nameLabel: u.nameLabel ?? '',
+              factorToBase: u.factorToBase ?? 1,
             }))
           : [...INITIAL_UNITS],
-        prices: existing.prices ?? [],
+        prices: rawPrices ?? [],
       })
     }
   }, [existing])
@@ -80,7 +82,7 @@ export function ProductFormPage() {
     (s) => s.categoryId === form.categoryId
   ) ?? []
 
-  function updateField(field: keyof ProductFormData, value: any) {
+  function updateField(field: keyof ProductFormData, value: string | boolean | UnitRow[] | PriceRow[]) {
     setForm((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => {
@@ -91,10 +93,12 @@ export function ProductFormPage() {
     }
   }
 
-  function updateUnit(index: number, field: keyof UnitRow, value: any) {
+  function updateUnit(index: number, field: keyof UnitRow, value: string | number) {
     setForm((prev) => {
       const units = [...prev.units]
-      units[index] = { ...units[index], [field]: value }
+      const current = units[index]
+      if (!current) return prev
+      units[index] = { ...current, [field]: value }
       return { ...prev, units }
     })
   }
@@ -118,8 +122,10 @@ export function ProductFormPage() {
     if (!form.name.trim()) errs.name = 'Nome e obrigatorio'
     if (!form.categoryId) errs.categoryId = 'Categoria e obrigatoria'
     for (let i = 0; i < form.units.length; i++) {
-      if (!form.units[i].nameLabel.trim()) errs[`unit_${i}_name`] = 'Nome da unidade e obrigatorio'
-      if (form.units[i].factorToBase < 1) errs[`unit_${i}_factor`] = 'Fator deve ser >= 1'
+      const unit = form.units[i]
+      if (!unit) continue
+      if (!unit.nameLabel.trim()) errs[`unit_${i}_name`] = 'Nome da unidade e obrigatorio'
+      if (unit.factorToBase < 1) errs[`unit_${i}_factor`] = 'Fator deve ser >= 1'
     }
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -134,18 +140,24 @@ export function ProductFormPage() {
       subcategoryId: form.subcategoryId || null,
       minStock: form.minStock ? parseInt(form.minStock, 10) : null,
       active: form.active,
-      units: form.units.map((u) => ({
+      units: form.units.map((u, idx) => ({
         id: u.id,
         nameLabel: u.nameLabel.trim(),
         factorToBase: Number(u.factorToBase),
         isSellable: true,
+        sortOrder: idx,
       })),
-      prices: form.prices,
+      prices: form.prices.filter((p) => p.price !== '').map((p) => ({
+        unitId: p.unitIndex !== undefined ? (form.units[p.unitIndex]?.id ?? '') : '',
+        tierId: p.tierId,
+        price: parseFloat(p.price) || 0,
+      })),
     }
     const result = await execute(payload, isEdit ? 'PUT' : 'POST')
-    if (result) {
-      navigate(isEdit ? `/produtos/${id}` : '/produtos', { replace: true })
+    if (!result) {
+      return
     }
+    navigate(isEdit ? `/produtos/${id}` : '/produtos', { replace: true })
   }
 
   const pageStyle: CSSProperties = {
@@ -381,7 +393,7 @@ export function ProductFormPage() {
                   const priceIdx = form.prices.findIndex(
                     (p) => p.unitIndex === unitIdx && p.tierId === tier.id
                   )
-                  const priceValue = priceIdx >= 0 ? form.prices[priceIdx].price : ''
+                  const priceValue = priceIdx >= 0 ? (form.prices[priceIdx]?.price ?? '') : ''
                   return (
                     <div key={tier.id}>
                       <label style={{ ...labelStyle, fontSize: 'var(--font-xs)' }}>
@@ -398,9 +410,9 @@ export function ProductFormPage() {
                             const existing = prices.findIndex(
                               (p) => p.unitIndex === unitIdx && p.tierId === tier.id
                             )
-                            if (existing >= 0) {
+                            if (existing >= 0 && prices[existing]) {
                               prices[existing] = { ...prices[existing], price: e.target.value }
-                            } else {
+                            } else if (existing < 0) {
                               prices.push({ unitIndex: unitIdx, tierId: tier.id, price: e.target.value })
                             }
                             return { ...prev, prices }
@@ -414,6 +426,13 @@ export function ProductFormPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Erro API */}
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
         </div>
       )}
 

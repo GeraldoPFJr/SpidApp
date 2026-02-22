@@ -16,87 +16,92 @@ function getCurrentMonth(): string {
 }
 
 export async function GET(request: NextRequest) {
-  const month = request.nextUrl.searchParams.get('month') ?? getCurrentMonth()
-  const { start, end } = getMonthRange(month)
+  try {
+    const month = request.nextUrl.searchParams.get('month') ?? getCurrentMonth()
+    const { start, end } = getMonthRange(month)
 
-  const accounts = await prisma.account.findMany({
-    where: { active: true },
-    orderBy: { name: 'asc' },
-  })
+    const accounts = await prisma.account.findMany({
+      where: { active: true },
+      orderBy: { name: 'asc' },
+    })
 
-  const byAccount = await Promise.all(
-    accounts.map(async (account) => {
-      const prevClosure = await prisma.monthlyClosure.findFirst({
-        where: { accountId: account.id, month: { lt: month } },
-        orderBy: { month: 'desc' },
-      })
-      const saldoInicial = prevClosure
-        ? Number(prevClosure.countedClosing ?? prevClosure.expectedClosing)
-        : 0
+    const byAccount = await Promise.all(
+      accounts.map(async (account) => {
+        const prevClosure = await prisma.monthlyClosure.findFirst({
+          where: { accountId: account.id, month: { lt: month } },
+          orderBy: { month: 'desc' },
+        })
+        const saldoInicial = prevClosure
+          ? Number(prevClosure.countedClosing ?? prevClosure.expectedClosing)
+          : 0
 
-      const entries = await prisma.financeEntry.findMany({
-        where: { accountId: account.id, status: 'PAID', paidAt: { gte: start, lte: end } },
-        include: { category: true },
-      })
+        const entries = await prisma.financeEntry.findMany({
+          where: { accountId: account.id, status: 'PAID', paidAt: { gte: start, lte: end } },
+          include: { category: true },
+        })
 
-      let entradas = 0
-      let saidas = 0
+        let entradas = 0
+        let saidas = 0
 
-      for (const entry of entries) {
-        const amount = Number(entry.amount)
-        if (entry.type === 'INCOME' || entry.type === 'APORTE') {
-          entradas += amount
-        } else if (entry.type === 'EXPENSE' || entry.type === 'RETIRADA') {
-          saidas += amount
+        for (const entry of entries) {
+          const amount = Number(entry.amount)
+          if (entry.type === 'INCOME' || entry.type === 'APORTE') {
+            entradas += amount
+          } else if (entry.type === 'EXPENSE' || entry.type === 'RETIRADA') {
+            saidas += amount
+          }
         }
+
+        return {
+          account: { id: account.id, name: account.name, type: account.type },
+          saldoInicial: Math.round(saldoInicial * 100) / 100,
+          entradas: Math.round(entradas * 100) / 100,
+          saidas: Math.round(saidas * 100) / 100,
+          saldoFinal: Math.round((saldoInicial + entradas - saidas) * 100) / 100,
+        }
+      }),
+    )
+
+    const allPaidEntries = await prisma.financeEntry.findMany({
+      where: { status: 'PAID', paidAt: { gte: start, lte: end } },
+      include: { category: true },
+    })
+
+    const categoryMap = new Map<string, { name: string; type: string; total: number }>()
+    for (const entry of allPaidEntries) {
+      const catName = entry.category?.name ?? 'Sem categoria'
+      const catType = entry.category?.type ?? entry.type
+      const key = `${catType}:${catName}`
+      const existing = categoryMap.get(key)
+      if (existing) {
+        existing.total += Number(entry.amount)
+      } else {
+        categoryMap.set(key, { name: catName, type: catType, total: Number(entry.amount) })
       }
-
-      return {
-        account: { id: account.id, name: account.name, type: account.type },
-        saldoInicial: Math.round(saldoInicial * 100) / 100,
-        entradas: Math.round(entradas * 100) / 100,
-        saidas: Math.round(saidas * 100) / 100,
-        saldoFinal: Math.round((saldoInicial + entradas - saidas) * 100) / 100,
-      }
-    }),
-  )
-
-  const allPaidEntries = await prisma.financeEntry.findMany({
-    where: { status: 'PAID', paidAt: { gte: start, lte: end } },
-    include: { category: true },
-  })
-
-  const categoryMap = new Map<string, { name: string; type: string; total: number }>()
-  for (const entry of allPaidEntries) {
-    const catName = entry.category?.name ?? 'Sem categoria'
-    const catType = entry.category?.type ?? entry.type
-    const key = `${catType}:${catName}`
-    const existing = categoryMap.get(key)
-    if (existing) {
-      existing.total += Number(entry.amount)
-    } else {
-      categoryMap.set(key, { name: catName, type: catType, total: Number(entry.amount) })
     }
+
+    const byCategory = Array.from(categoryMap.values()).map((c) => ({
+      ...c,
+      total: Math.round(c.total * 100) / 100,
+    }))
+
+    const totalEntradas = byAccount.reduce((s, a) => s + a.entradas, 0)
+    const totalSaidas = byAccount.reduce((s, a) => s + a.saidas, 0)
+    const totalSaldoInicial = byAccount.reduce((s, a) => s + a.saldoInicial, 0)
+
+    return NextResponse.json({
+      month,
+      byAccount,
+      byCategory,
+      consolidated: {
+        saldoInicial: Math.round(totalSaldoInicial * 100) / 100,
+        entradas: Math.round(totalEntradas * 100) / 100,
+        saidas: Math.round(totalSaidas * 100) / 100,
+        saldoFinal: Math.round((totalSaldoInicial + totalEntradas - totalSaidas) * 100) / 100,
+      },
+    })
+  } catch (error) {
+    console.error('Error in GET /api/reports/cashflow:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const byCategory = Array.from(categoryMap.values()).map((c) => ({
-    ...c,
-    total: Math.round(c.total * 100) / 100,
-  }))
-
-  const totalEntradas = byAccount.reduce((s, a) => s + a.entradas, 0)
-  const totalSaidas = byAccount.reduce((s, a) => s + a.saidas, 0)
-  const totalSaldoInicial = byAccount.reduce((s, a) => s + a.saldoInicial, 0)
-
-  return NextResponse.json({
-    month,
-    byAccount,
-    byCategory,
-    consolidated: {
-      saldoInicial: Math.round(totalSaldoInicial * 100) / 100,
-      entradas: Math.round(totalEntradas * 100) / 100,
-      saidas: Math.round(totalSaidas * 100) / 100,
-      saldoFinal: Math.round((totalSaldoInicial + totalEntradas - totalSaidas) * 100) / 100,
-    },
-  })
 }

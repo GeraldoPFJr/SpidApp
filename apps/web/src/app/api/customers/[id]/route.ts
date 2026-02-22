@@ -6,56 +6,71 @@ import { errorResponse, parseBody } from '@/lib/api-utils'
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const customer = await prisma.customer.findFirst({
-    where: { id, deletedAt: null },
-  })
-  if (!customer) return errorResponse('Customer not found', 404)
+    const customer = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    })
+    if (!customer) return errorResponse('Customer not found', 404)
 
-  const receivables = await prisma.receivable.findMany({
-    where: { customerId: customer.id, status: 'OPEN' },
-    orderBy: { dueDate: 'asc' },
-  })
+    const receivables = await prisma.receivable.findMany({
+      where: { customerId: customer.id, status: 'OPEN' },
+      orderBy: { dueDate: 'asc' },
+    })
 
-  const totalOpen = receivables.reduce(
-    (sum, r) => sum + Number(r.amount),
-    0,
-  )
+    const totalOpen = receivables.reduce(
+      (sum, r) => sum + Number(r.amount),
+      0,
+    )
 
-  return NextResponse.json({ ...customer, receivables, totalOpen })
+    return NextResponse.json({ ...customer, receivables, totalOpen })
+  } catch (error) {
+    console.error('Error in GET /api/customers/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, updateCustomerSchema.omit({ id: true }))
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, updateCustomerSchema.omit({ id: true }))
+    if ('error' in result) return result.error
 
-  const existing = await prisma.customer.findFirst({
-    where: { id, deletedAt: null },
-  })
-  if (!existing) return errorResponse('Customer not found', 404)
+    const existing = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    })
+    if (!existing) return errorResponse('Customer not found', 404)
 
-  const updated = await prisma.customer.update({
-    where: { id },
-    data: result.data,
-  })
+    const updated = await prisma.customer.update({
+      where: { id },
+      data: result.data,
+    })
 
-  return NextResponse.json(updated)
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('Error in PUT /api/customers/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const existing = await prisma.customer.findFirst({
-    where: { id, deletedAt: null },
-  })
-  if (!existing) return errorResponse('Customer not found', 404)
+    const existing = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    })
+    if (!existing) return errorResponse('Customer not found', 404)
 
-  await prisma.customer.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-  })
+    await prisma.customer.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    })
 
-  return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/customers/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

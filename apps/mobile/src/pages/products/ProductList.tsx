@@ -10,7 +10,7 @@ interface ProductWithStock extends Product {
 
 export function ProductListPage() {
   const navigate = useNavigate()
-  const { data: products, loading } = useApi<ProductWithStock[]>('/products')
+  const { data: products, loading, error } = useApi<ProductWithStock[]>('/products')
   const { data: categories } = useApi<Category[]>('/categories')
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -99,6 +99,12 @@ export function ProductListPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar produtos: {error}</span>
+        </div>
+      )}
+
       <input
         type="text"
         placeholder="Buscar por nome ou codigo..."

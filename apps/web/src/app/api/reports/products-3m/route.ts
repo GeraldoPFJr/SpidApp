@@ -17,43 +17,48 @@ function getLastNMonthsRanges(n: number): Array<{ label: string; start: Date; en
 }
 
 export async function GET() {
-  const ranges = getLastNMonthsRanges(3)
-  const products = await prisma.product.findMany({
-    where: { deletedAt: null },
-    orderBy: { name: 'asc' },
-  })
+  try {
+    const ranges = getLastNMonthsRanges(3)
+    const products = await prisma.product.findMany({
+      where: { deletedAt: null },
+      orderBy: { name: 'asc' },
+    })
 
-  const result = await Promise.all(
-    products.map(async (product) => {
-      const monthlyData = await Promise.all(
-        ranges.map(async (range) => {
-          const saleItems = await prisma.saleItem.findMany({
-            where: {
-              productId: product.id,
-              sale: { status: 'CONFIRMED', date: { gte: range.start, lte: range.end } },
-            },
-            include: { sale: true },
-          })
+    const result = await Promise.all(
+      products.map(async (product) => {
+        const monthlyData = await Promise.all(
+          ranges.map(async (range) => {
+            const saleItems = await prisma.saleItem.findMany({
+              where: {
+                productId: product.id,
+                sale: { status: 'CONFIRMED', date: { gte: range.start, lte: range.end } },
+              },
+              include: { sale: true },
+            })
 
-          const faturamento = saleItems.reduce((s, i) => s + Number(i.total), 0)
-          const itensVendidos = saleItems.reduce((s, i) => s + i.qty, 0)
+            const faturamento = saleItems.reduce((s, i) => s + Number(i.total), 0)
+            const itensVendidos = saleItems.reduce((s, i) => s + i.qty, 0)
 
-          const customerIds = new Set(
-            saleItems.map((i) => i.sale.customerId).filter(Boolean),
-          )
+            const customerIds = new Set(
+              saleItems.map((i) => i.sale.customerId).filter(Boolean),
+            )
 
-          return {
-            month: range.label,
-            faturamento: Math.round(faturamento * 100) / 100,
-            itensVendidos,
-            clientesUnicos: customerIds.size,
-          }
-        }),
-      )
+            return {
+              month: range.label,
+              faturamento: Math.round(faturamento * 100) / 100,
+              itensVendidos,
+              clientesUnicos: customerIds.size,
+            }
+          }),
+        )
 
-      return { product: { id: product.id, name: product.name }, months: monthlyData }
-    }),
-  )
+        return { product: { id: product.id, name: product.name }, months: monthlyData }
+      }),
+    )
 
-  return NextResponse.json(result)
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('Error in GET /api/reports/products-3m:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

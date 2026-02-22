@@ -161,7 +161,7 @@ function ProgressBar({ received, toReceive }: { received: number; toReceive: num
 export function DashboardPage() {
   const navigate = useNavigate()
   const month = getCurrentMonth()
-  const { data, loading } = useApi<DashboardData>(`/reports/dashboard?month=${month}`)
+  const { data, loading, error } = useApi<DashboardData>(`/reports/dashboard?month=${month}`)
 
   const pageStyle: CSSProperties = {
     padding: 'var(--sp-4)',
@@ -250,6 +250,22 @@ export function DashboardPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div className="alert alert-danger">
+          <span>Erro ao carregar dashboard: {error}</span>
+        </div>
+        <button
+          style={newSaleBtnStyle}
+          onClick={() => navigate('/vendas/nova')}
+        >
+          Nova Venda
+        </button>
+      </div>
+    )
+  }
+
   const d = data ?? {
     revenue: 0,
     grossProfit: 0,
@@ -329,7 +345,7 @@ export function DashboardPage() {
           <span style={sectionTitleStyle}>Ultimas Vendas</span>
           <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginTop: 'var(--sp-2)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
             {d.recentSales.map((sale, idx) => {
-              const st = statusColors[sale.status] ?? statusColors.CONFIRMED
+              const st = statusColors[sale.status] ?? statusColors['CONFIRMED']
               return (
                 <div
                   key={sale.id}
@@ -358,8 +374,8 @@ export function DashboardPage() {
                       fontSize: 'var(--font-xs)',
                       fontWeight: 500,
                       borderRadius: 'var(--radius-full)',
-                      backgroundColor: st.bg,
-                      color: st.color,
+                      backgroundColor: st?.bg ?? 'var(--success-100)',
+                      color: st?.color ?? 'var(--success-700)',
                     }}>
                       {statusLabels[sale.status] ?? sale.status}
                     </span>

@@ -9,14 +9,24 @@ const financeCategorySchema = z.object({
 })
 
 export async function GET() {
-  const categories = await prisma.financeCategory.findMany({ orderBy: { name: 'asc' } })
-  return NextResponse.json(categories)
+  try {
+    const categories = await prisma.financeCategory.findMany({ orderBy: { name: 'asc' } })
+    return NextResponse.json(categories)
+  } catch (error) {
+    console.error('Error in GET /api/finance/categories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, financeCategorySchema)
-  if ('error' in result) return result.error
+  try {
+    const result = await parseBody(request, financeCategorySchema)
+    if ('error' in result) return result.error
 
-  const category = await prisma.financeCategory.create({ data: result.data })
-  return NextResponse.json(category, { status: 201 })
+    const category = await prisma.financeCategory.create({ data: result.data })
+    return NextResponse.json(category, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/finance/categories:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

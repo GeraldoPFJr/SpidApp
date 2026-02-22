@@ -1,10 +1,10 @@
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, type ReactNode, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 interface NavItem {
   path: string
   label: string
-  icon: JSX.Element
+  icon: ReactNode
 }
 
 const MENU_ITEMS = [

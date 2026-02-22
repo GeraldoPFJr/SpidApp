@@ -235,7 +235,7 @@ export async function getSyncCursor(db: LocalDatabase): Promise<string | null> {
   const rows = await db.query<{ value: string }>(
     "SELECT value FROM sync_state WHERE key = 'cursor'",
   )
-  return rows.length > 0 ? rows[0].value : null
+  return rows.length > 0 ? rows[0]?.value ?? null : null
 }
 
 export async function setSyncCursor(db: LocalDatabase, cursor: string): Promise<void> {
@@ -251,12 +251,11 @@ export function createLocalDatabase(): LocalDatabase {
 
   // In a real Capacitor app, this would use @capacitor-community/sqlite
   // For now, provide an in-memory stub that works in the browser
-  const store = new Map<string, unknown[]>()
 
   return {
-    async execute(sql: string, params?: unknown[]) {
+    async execute(_sql: string, _params?: unknown[]) {
       // Initialize schema on first call
-      if (!ready && sql !== SCHEMA_SQL) {
+      if (!ready && _sql !== SCHEMA_SQL) {
         // Auto-init
         ready = true
       }
@@ -264,7 +263,7 @@ export function createLocalDatabase(): LocalDatabase {
       // For browser dev, operations are no-ops or use indexedDB
     },
 
-    async query<T>(sql: string, params?: unknown[]): Promise<T[]> {
+    async query<T>(_sql: string, _params?: unknown[]): Promise<T[]> {
       // In production, this would call SQLite plugin
       return []
     },

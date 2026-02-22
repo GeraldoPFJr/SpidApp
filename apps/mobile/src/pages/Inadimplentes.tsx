@@ -1,5 +1,4 @@
 import { type CSSProperties, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
 import { formatBRL, formatDate } from '../lib/format'
 
@@ -21,8 +20,7 @@ interface OverdueCustomer {
 type SortField = 'daysOverdue' | 'totalOpen' | 'customerName'
 
 export function InadimplentesPage() {
-  const navigate = useNavigate()
-  const { data: overdues, loading } = useApi<OverdueCustomer[]>('/receivables/overdue')
+  const { data: overdues, loading, error } = useApi<OverdueCustomer[]>('/receivables/overdue')
   const [sortBy, setSortBy] = useState<SortField>('daysOverdue')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -47,6 +45,16 @@ export function InadimplentesPage() {
 
   if (loading) {
     return <div style={pageStyle}>{Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton skeleton-card" />)}</div>
+  }
+
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div className="alert alert-danger">
+          <span>Erro ao carregar inadimplentes: {error}</span>
+        </div>
+      </div>
+    )
   }
 
   if (!sorted.length) {

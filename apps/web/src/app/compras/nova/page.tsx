@@ -39,6 +39,7 @@ export default function NovaCompraPage() {
   const [paymentType, setPaymentType] = useState<'cash' | 'installment'>('cash')
   const [installments, setInstallments] = useState('1')
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const addItem = useCallback(() => {
     setItems((prev) => [...prev, { id: crypto.randomUUID(), productId: '', unitId: '', qty: '1', unitCost: '' }])
@@ -79,27 +80,33 @@ export default function NovaCompraPage() {
   const grandTotal = itemsTotal + extraTotal
 
   const handleSubmit = useCallback(async () => {
-    if (!supplierId || items.length === 0) return
+    const errs: Record<string, string> = {}
+    if (!supplierId) errs.supplierId = 'Selecione um fornecedor'
+    if (items.length === 0) errs.items = 'Adicione ao menos um item'
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) return
     setSaving(true)
     try {
       await apiClient('/purchases', {
         method: 'POST',
         body: {
           supplierId, date, notes: notes || null,
-          items: items.map((i) => ({
-            productId: i.productId, unitId: i.unitId,
-            qty: parseFloat(i.qty.replace(',', '.')) || 0,
-            unitCost: parseFloat(i.unitCost.replace(',', '.')) || 0,
-          })),
-          extraCosts: extraCosts.filter((c) => c.label && c.amount).map((c) => ({
+          items: items.map((i) => {
+            const qty = parseFloat(i.qty.replace(',', '.')) || 0
+            const unitCost = parseFloat(i.unitCost.replace(',', '.')) || 0
+            return {
+              productId: i.productId, unitId: i.unitId,
+              qty, unitCost, totalCost: qty * unitCost,
+            }
+          }),
+          costs: extraCosts.filter((c) => c.label && c.amount).map((c) => ({
             label: c.label, amount: parseFloat(c.amount.replace(',', '.')) || 0,
           })),
-          paymentType, installments: parseInt(installments, 10) || 1,
         },
       })
       router.push('/compras')
     } catch {
-      alert('Erro ao salvar compra')
+      setErrors({ submit: 'Erro ao salvar compra. Tente novamente.' })
     } finally {
       setSaving(false)
     }
@@ -128,6 +135,12 @@ export default function NovaCompraPage() {
           </button>
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Nova Compra</h1>
         </div>
+
+        {errors.submit && (
+          <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
+            {errors.submit}
+          </div>
+        )}
 
         {/* Header */}
         <div style={cardStyle}>

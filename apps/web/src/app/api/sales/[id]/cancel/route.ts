@@ -14,23 +14,23 @@ const cancelSaleSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, cancelSaleSchema)
-  if ('error' in result) return result.error
-
-  const sale = await prisma.sale.findUnique({
-    where: { id },
-    include: { items: { include: { unit: true } }, payments: true, receivables: true },
-  })
-  if (!sale) return errorResponse('Sale not found', 404)
-  if (sale.status === 'CANCELLED') {
-    return errorResponse('Sale already cancelled', 400)
-  }
-
-  const { merchandiseAction, merchandiseNotes, moneyAction, moneyNotes } = result.data
-  const deviceId = sale.deviceId
-
   try {
+    const { id } = await params
+    const result = await parseBody(request, cancelSaleSchema)
+    if ('error' in result) return result.error
+
+    const sale = await prisma.sale.findUnique({
+      where: { id },
+      include: { items: { include: { unit: true } }, payments: true, receivables: true },
+    })
+    if (!sale) return errorResponse('Sale not found', 404)
+    if (sale.status === 'CANCELLED') {
+      return errorResponse('Sale already cancelled', 400)
+    }
+
+    const { merchandiseAction, merchandiseNotes, moneyAction, moneyNotes } = result.data
+    const deviceId = sale.deviceId
+
     const updated = await prisma.$transaction(async (tx) => {
       // Handle merchandise
       if (sale.status === 'CONFIRMED') {
@@ -120,8 +120,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
     return NextResponse.json(updated)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to cancel sale'
+  } catch (error) {
+    console.error('Error in POST /api/sales/[id]/cancel:', error)
+    const message = error instanceof Error ? error.message : 'Failed to cancel sale'
     return errorResponse(message, 500)
   }
 }

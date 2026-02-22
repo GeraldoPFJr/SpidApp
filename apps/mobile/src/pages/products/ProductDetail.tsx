@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, formatDate } from '../../lib/format'
-import type { ProductUnit, ProductPrice, PriceTier, InventoryMovement } from '@spid/shared'
+import type { ProductUnit, ProductPrice, InventoryMovement } from '@spid/shared'
 
 interface ProductDetail {
   id: string
@@ -21,7 +21,7 @@ interface ProductDetail {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data: product, loading } = useApi<ProductDetail>(id ? `/products/${id}` : null)
+  const { data: product, loading, error } = useApi<ProductDetail>(id ? `/products/${id}` : null)
 
   const pageStyle: CSSProperties = {
     padding: 'var(--sp-4)',
@@ -76,6 +76,16 @@ export function ProductDetailPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div className="alert alert-danger">
+          <span>Erro ao carregar produto: {error}</span>
+        </div>
+      </div>
+    )
+  }
+
   if (!product) {
     return (
       <div style={pageStyle}>
@@ -88,7 +98,7 @@ export function ProductDetailPage() {
     )
   }
 
-  const stockIsLow = product.minStock != null && product.stockBase < product.minStock
+  const stockIsLow = product.minStock != null && (product.stockBase ?? 0) < product.minStock
 
   return (
     <div style={pageStyle} className="animate-fade-in">
@@ -177,7 +187,7 @@ export function ProductDetailPage() {
       </div>
 
       {/* Precos */}
-      {product.prices.length > 0 && (
+      {product.prices && product.prices.length > 0 && (
         <div style={sectionStyle}>
           <span style={sectionTitleStyle}>Precos</span>
           {product.prices.map((price) => (
@@ -194,7 +204,7 @@ export function ProductDetailPage() {
       )}
 
       {/* Movimentacoes Recentes */}
-      {product.recentMovements.length > 0 && (
+      {product.recentMovements && product.recentMovements.length > 0 && (
         <div style={sectionStyle}>
           <span style={sectionTitleStyle}>Movimentacoes Recentes</span>
           {product.recentMovements.map((mov) => (

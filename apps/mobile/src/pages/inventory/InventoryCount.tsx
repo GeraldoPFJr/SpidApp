@@ -18,7 +18,7 @@ interface CountRow {
 export function InventoryCountPage() {
   const navigate = useNavigate()
   const { data: products } = useApi<CountableProduct[]>('/inventory/stock')
-  const { execute, loading: saving } = useApiMutation('/inventory/count')
+  const { execute, loading: saving, error: apiError } = useApiMutation('/inventory/count')
   const [rows, setRows] = useState<CountRow[]>([])
   const [search, setSearch] = useState('')
 
@@ -61,7 +61,10 @@ export function InventoryCountPage() {
       }))
     if (adjustments.length === 0) return
     const result = await execute({ adjustments })
-    if (result) navigate('/estoque', { replace: true })
+    if (!result) {
+      return
+    }
+    navigate('/estoque', { replace: true })
   }
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
@@ -145,6 +148,12 @@ export function InventoryCountPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
         </div>
       )}
 

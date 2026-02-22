@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useState } from 'react'
+import { type CSSProperties, useCallback } from 'react'
 import { InstallmentConfig, type InstallmentPreview } from './InstallmentConfig'
 import { formatBRL } from '../lib/format'
 import type { PaymentMethod } from '@spid/shared'

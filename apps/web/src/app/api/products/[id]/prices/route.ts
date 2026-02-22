@@ -12,34 +12,39 @@ const productPriceBodySchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, productPriceBodySchema)
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, productPriceBodySchema)
+    if ('error' in result) return result.error
 
-  const product = await prisma.product.findFirst({
-    where: { id, deletedAt: null },
-  })
-  if (!product) return errorResponse('Product not found', 404)
-
-  const existing = await prisma.productPrice.findFirst({
-    where: {
-      productId: id,
-      unitId: result.data.unitId,
-      tierId: result.data.tierId,
-    },
-  })
-
-  if (existing) {
-    const updated = await prisma.productPrice.update({
-      where: { id: existing.id },
-      data: { price: result.data.price },
+    const product = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
     })
-    return NextResponse.json(updated)
+    if (!product) return errorResponse('Product not found', 404)
+
+    const existing = await prisma.productPrice.findFirst({
+      where: {
+        productId: id,
+        unitId: result.data.unitId,
+        tierId: result.data.tierId,
+      },
+    })
+
+    if (existing) {
+      const updated = await prisma.productPrice.update({
+        where: { id: existing.id },
+        data: { price: result.data.price },
+      })
+      return NextResponse.json(updated)
+    }
+
+    const created = await prisma.productPrice.create({
+      data: { ...result.data, productId: id },
+    })
+
+    return NextResponse.json(created, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/products/[id]/prices:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const created = await prisma.productPrice.create({
-    data: { ...result.data, productId: id },
-  })
-
-  return NextResponse.json(created, { status: 201 })
 }

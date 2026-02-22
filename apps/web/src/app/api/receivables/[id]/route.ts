@@ -5,17 +5,22 @@ import { errorResponse } from '@/lib/api-utils'
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const receivable = await prisma.receivable.findUnique({
-    where: { id },
-    include: {
-      customer: true,
-      sale: true,
-      settlements: { include: { payment: true } },
-    },
-  })
-  if (!receivable) return errorResponse('Receivable not found', 404)
+    const receivable = await prisma.receivable.findUnique({
+      where: { id },
+      include: {
+        customer: true,
+        sale: true,
+        settlements: { include: { payment: true } },
+      },
+    })
+    if (!receivable) return errorResponse('Receivable not found', 404)
 
-  return NextResponse.json(receivable)
+    return NextResponse.json(receivable)
+  } catch (error) {
+    console.error('Error in GET /api/receivables/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

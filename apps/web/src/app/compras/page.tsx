@@ -7,6 +7,18 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
 
+interface PurchaseRaw {
+  id: string
+  date: string
+  status: string
+  supplier?: { name: string } | null
+  supplierName?: string
+  items?: Array<{ totalCost?: number }> | null
+  costs?: Array<{ amount?: number }> | null
+  total?: number
+  itemCount?: number
+}
+
 interface PurchaseRow {
   id: string
   date: string
@@ -16,9 +28,23 @@ interface PurchaseRow {
   status: string
 }
 
+function mapPurchaseRow(raw: PurchaseRaw): PurchaseRow {
+  const itemsTotal = raw.items?.reduce((sum, i) => sum + Number(i.totalCost ?? 0), 0) ?? 0
+  const costsTotal = raw.costs?.reduce((sum, c) => sum + Number(c.amount ?? 0), 0) ?? 0
+  return {
+    id: raw.id,
+    date: raw.date,
+    supplierName: raw.supplierName ?? raw.supplier?.name ?? 'Sem fornecedor',
+    total: raw.total != null ? Number(raw.total) : itemsTotal + costsTotal,
+    itemCount: raw.itemCount ?? raw.items?.length ?? 0,
+    status: raw.status,
+  }
+}
+
 export default function ComprasPage() {
   const router = useRouter()
-  const { data, loading } = useApi<PurchaseRow[]>('/purchases')
+  const { data: rawData, loading } = useApi<PurchaseRaw[]>('/purchases')
+  const data = useMemo(() => rawData?.map(mapPurchaseRow) ?? [], [rawData])
 
   const columns: DataTableColumn<PurchaseRow>[] = useMemo(() => [
     { key: 'date', header: 'Data', width: '120px', render: (row) => formatDate(row.date) },
@@ -44,7 +70,7 @@ export default function ComprasPage() {
         </div>
         <DataTable
           columns={columns}
-          rows={data ?? []}
+          rows={data}
           keyExtractor={(row) => row.id}
           onRowClick={(row) => router.push(`/compras/${row.id}`)}
           loading={loading}

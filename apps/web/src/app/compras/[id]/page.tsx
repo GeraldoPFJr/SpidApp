@@ -6,6 +6,38 @@ import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
 
+interface PurchaseRawItem {
+  id: string
+  productId: string
+  unitId: string
+  qty: number
+  unitCost: number
+  totalCost: number
+  product?: { name: string } | null
+  unit?: { nameLabel: string } | null
+  productName?: string
+  unitLabel?: string
+}
+
+interface PurchaseRawCost {
+  id: string
+  label: string
+  amount: number
+}
+
+interface PurchaseRaw {
+  id: string
+  date: string
+  notes: string | null
+  status: string
+  total?: number
+  supplier?: { name: string } | null
+  supplierName?: string
+  items: PurchaseRawItem[]
+  costs?: PurchaseRawCost[]
+  extraCosts?: PurchaseRawCost[]
+}
+
 interface PurchaseDetail {
   id: string
   supplierName: string
@@ -28,10 +60,39 @@ interface PurchaseDetail {
   total: number
 }
 
+function mapPurchaseDetail(raw: PurchaseRaw): PurchaseDetail {
+  const items = raw.items.map((i) => ({
+    id: i.id,
+    productName: i.productName ?? i.product?.name ?? 'Produto',
+    unitLabel: i.unitLabel ?? i.unit?.nameLabel ?? 'Unid.',
+    qty: Number(i.qty),
+    unitCost: Number(i.unitCost),
+    totalCost: Number(i.totalCost),
+  }))
+  const extraCosts = (raw.extraCosts ?? raw.costs ?? []).map((c) => ({
+    id: c.id,
+    label: c.label,
+    amount: Number(c.amount),
+  }))
+  const itemsTotal = items.reduce((sum, i) => sum + i.totalCost, 0)
+  const costsTotal = extraCosts.reduce((sum, c) => sum + c.amount, 0)
+  return {
+    id: raw.id,
+    supplierName: raw.supplierName ?? raw.supplier?.name ?? 'Sem fornecedor',
+    date: raw.date,
+    notes: raw.notes,
+    status: raw.status,
+    items,
+    extraCosts,
+    total: raw.total != null ? Number(raw.total) : itemsTotal + costsTotal,
+  }
+}
+
 export default function CompraDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { data: purchase, loading } = useApi<PurchaseDetail>(`/purchases/${id}`)
+  const { data: rawPurchase, loading } = useApi<PurchaseRaw>(`/purchases/${id}`)
+  const purchase = rawPurchase ? mapPurchaseDetail(rawPurchase) : null
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)',

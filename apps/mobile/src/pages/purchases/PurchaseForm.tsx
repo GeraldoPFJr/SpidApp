@@ -31,13 +31,13 @@ export function PurchaseFormPage() {
   const navigate = useNavigate()
   const { data: suppliers } = useApi<Supplier[]>('/suppliers')
   const { data: products } = useApi<ProductWithUnits[]>('/products')
-  const { execute, loading: saving } = useApiMutation('/purchases')
+  const { execute, loading: saving, error: apiError } = useApiMutation('/purchases')
 
   const [supplierId, setSupplierId] = useState('')
   const [items, setItems] = useState<PurchaseItemForm[]>([])
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>([])
   const [paymentType, setPaymentType] = useState<'cash' | 'installment'>('cash')
-  const [installmentPreviews, setInstallmentPreviews] = useState<InstallmentPreview[]>([])
+  const [, setInstallmentPreviews] = useState<InstallmentPreview[]>([])
   const [notes, setNotes] = useState('')
 
   // Product adding
@@ -60,7 +60,7 @@ export function PurchaseFormPage() {
   function selectProduct(p: ProductWithUnits) {
     setSelectedProduct(p)
     setProductSearch(p.name)
-    if (p.units.length > 0) setSelectedUnit(p.units[0].id)
+    if (p.units.length > 0) setSelectedUnit(p.units[0]?.id ?? '')
   }
 
   function addItem() {
@@ -85,14 +85,25 @@ export function PurchaseFormPage() {
     if (!supplierId || items.length === 0) return
     const payload = {
       supplierId,
-      items: items.map((i) => ({ productId: i.productId, unitId: i.unitId, qty: i.qty, unitCost: i.unitCost })),
-      extraCosts: extraCosts.filter((c) => c.label && c.amount > 0).map((c) => ({ label: c.label, amount: c.amount })),
-      paymentType,
-      installmentPreviews: paymentType === 'installment' ? installmentPreviews : undefined,
+      date: new Date().toISOString(),
+      status: 'CONFIRMED',
       notes: notes.trim() || null,
+      items: items.map((i) => ({
+        productId: i.productId,
+        unitId: i.unitId,
+        qty: i.qty,
+        unitCost: i.unitCost,
+        totalCost: i.qty * i.unitCost,
+      })),
+      costs: extraCosts
+        .filter((c) => c.label && c.amount > 0)
+        .map((c) => ({ label: c.label, amount: c.amount })),
     }
     const result = await execute(payload)
-    if (result) navigate('/compras', { replace: true })
+    if (!result) {
+      return
+    }
+    navigate('/compras', { replace: true })
   }
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
@@ -214,6 +225,13 @@ export function PurchaseFormPage() {
         <span style={sectionTitleStyle}>Observacoes</span>
         <textarea className="form-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observacoes..." rows={2} />
       </div>
+
+      {/* Erro API */}
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
+        </div>
+      )}
 
       {/* Total + Submit */}
       <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-4)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

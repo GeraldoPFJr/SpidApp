@@ -18,7 +18,7 @@ interface PurchaseDetailData {
 
 export function PurchaseDetailPage() {
   const { id } = useParams()
-  const { data: purchase, loading } = useApi<PurchaseDetailData>(id ? `/purchases/${id}` : null)
+  const { data: purchase, loading, error } = useApi<PurchaseDetailData>(id ? `/purchases/${id}` : null)
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
   const sectionStyle: CSSProperties = { backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-4)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }
@@ -27,6 +27,10 @@ export function PurchaseDetailPage() {
 
   if (loading) {
     return <div style={pageStyle}>{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton skeleton-card" style={{ height: '100px' }} />)}</div>
+  }
+
+  if (error) {
+    return <div style={pageStyle}><div className="alert alert-danger"><span>Erro ao carregar compra: {error}</span></div></div>
   }
 
   if (!purchase) {

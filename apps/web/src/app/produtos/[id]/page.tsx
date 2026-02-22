@@ -6,7 +6,72 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { ProductUnit, ProductPrice } from '@spid/shared'
+
+interface ProductRawUnit {
+  id: string
+  nameLabel: string
+  factorToBase: number
+  isSellable: boolean
+  sortOrder: number
+}
+
+interface ProductRawPrice {
+  id: string
+  productId: string
+  unitId: string
+  tierId: string
+  price: number
+  unit?: { nameLabel: string } | null
+  tier?: { name: string } | null
+  unitLabel?: string
+  tierName?: string
+}
+
+interface ProductRaw {
+  id: string
+  name: string
+  code: string | null
+  categoryId: string
+  subcategoryId: string | null
+  minStock: number | null
+  active: boolean
+  category?: { name: string } | null
+  subcategory?: { name: string } | null
+  categoryName?: string
+  subcategoryName?: string | null
+  stockBase?: number
+  units: ProductRawUnit[]
+  prices: ProductRawPrice[]
+  recentMovements?: Array<{
+    id: string
+    date: string
+    direction: string
+    qtyBase: number
+    reasonType: string
+    notes: string | null
+  }>
+  salesLast3Months?: Array<{
+    month: string
+    revenue: number
+    qty: number
+  }>
+}
+
+interface ProductUnit {
+  id: string
+  nameLabel: string
+  factorToBase: number
+  isSellable: boolean
+  sortOrder: number
+  equivalentStock?: number
+}
+
+interface ProductPriceMapped {
+  id: string
+  unitLabel: string
+  tierName: string
+  price: number
+}
 
 interface ProductDetail {
   id: string
@@ -19,8 +84,8 @@ interface ProductDetail {
   minStock: number | null
   active: boolean
   stockBase: number
-  units: (ProductUnit & { equivalentStock?: number })[]
-  prices: (ProductPrice & { unitLabel: string; tierName: string })[]
+  units: ProductUnit[]
+  prices: ProductPriceMapped[]
   recentMovements: Array<{
     id: string
     date: string
@@ -36,10 +101,39 @@ interface ProductDetail {
   }>
 }
 
+function mapProductDetail(raw: ProductRaw): ProductDetail {
+  const stockBase = raw.stockBase ?? 0
+  return {
+    id: raw.id,
+    name: raw.name,
+    code: raw.code,
+    categoryId: raw.categoryId,
+    categoryName: raw.categoryName ?? raw.category?.name ?? '-',
+    subcategoryId: raw.subcategoryId,
+    subcategoryName: raw.subcategoryName ?? raw.subcategory?.name ?? null,
+    minStock: raw.minStock,
+    active: raw.active,
+    stockBase,
+    units: raw.units.map((u) => ({
+      ...u,
+      equivalentStock: Math.floor(stockBase / u.factorToBase),
+    })),
+    prices: raw.prices.map((p) => ({
+      id: p.id,
+      unitLabel: p.unitLabel ?? p.unit?.nameLabel ?? '-',
+      tierName: p.tierName ?? p.tier?.name ?? '-',
+      price: Number(p.price),
+    })),
+    recentMovements: raw.recentMovements ?? [],
+    salesLast3Months: raw.salesLast3Months ?? [],
+  }
+}
+
 export default function ProdutoDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { data: product, loading } = useApi<ProductDetail>(`/products/${id}`)
+  const { data: rawProduct, loading } = useApi<ProductRaw>(`/products/${id}`)
+  const product = rawProduct ? mapProductDetail(rawProduct) : null
 
   const movementColumns: DataTableColumn<ProductDetail['recentMovements'][0]>[] = useMemo(() => [
     {

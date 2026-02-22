@@ -8,6 +8,36 @@ import { StatsCard } from '@/components/StatsCard'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, formatDate } from '@/lib/format'
 
+interface CustomerRawReceivable {
+  id: string
+  saleId: string | null
+  dueDate: string
+  amount: number
+  status: string
+  kind: string
+}
+
+interface CustomerRaw {
+  id: string
+  name: string
+  phone: string | null
+  doc: string | null
+  address: string | null
+  notes: string | null
+  receivables?: CustomerRawReceivable[]
+  totalOpen?: number
+  openAmount?: number
+  pendingCount?: number
+  lastPurchaseDate?: string | null
+  sales?: Array<{
+    id: string
+    date: string
+    total: number
+    status: string
+    couponNumber: number | null
+  }>
+}
+
 interface CustomerDetail {
   id: string
   name: string
@@ -35,10 +65,32 @@ interface CustomerDetail {
   }>
 }
 
+function mapCustomerDetail(raw: CustomerRaw): CustomerDetail {
+  const receivables = (raw.receivables ?? []).map((r) => ({
+    ...r,
+    amount: Number(r.amount),
+  }))
+  const openReceivables = receivables.filter((r) => r.status === 'OPEN')
+  return {
+    id: raw.id,
+    name: raw.name,
+    phone: raw.phone,
+    doc: raw.doc,
+    address: raw.address,
+    notes: raw.notes,
+    openAmount: raw.openAmount ?? (raw.totalOpen != null ? Number(raw.totalOpen) : openReceivables.reduce((sum, r) => sum + r.amount, 0)),
+    pendingCount: raw.pendingCount ?? openReceivables.length,
+    lastPurchaseDate: raw.lastPurchaseDate ?? null,
+    sales: raw.sales ?? [],
+    receivables,
+  }
+}
+
 export default function ClienteDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { data: customer, loading } = useApi<CustomerDetail>(`/customers/${id}`)
+  const { data: rawCustomer, loading } = useApi<CustomerRaw>(`/customers/${id}`)
+  const customer = rawCustomer ? mapCustomerDetail(rawCustomer) : null
 
   const saleColumns: DataTableColumn<CustomerDetail['sales'][0]>[] = useMemo(() => [
     {

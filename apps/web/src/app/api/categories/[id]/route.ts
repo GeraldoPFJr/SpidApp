@@ -10,39 +10,54 @@ const updateCategorySchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const category = await prisma.category.findUnique({
-    where: { id },
-    include: { subcategories: true },
-  })
-  if (!category) return errorResponse('Category not found', 404)
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { subcategories: true },
+    })
+    if (!category) return errorResponse('Category not found', 404)
 
-  return NextResponse.json(category)
+    return NextResponse.json(category)
+  } catch (error) {
+    console.error('Error in GET /api/categories/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  const result = await parseBody(request, updateCategorySchema)
-  if ('error' in result) return result.error
+  try {
+    const { id } = await params
+    const result = await parseBody(request, updateCategorySchema)
+    if ('error' in result) return result.error
 
-  const existing = await prisma.category.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Category not found', 404)
+    const existing = await prisma.category.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Category not found', 404)
 
-  const updated = await prisma.category.update({
-    where: { id },
-    data: result.data,
-  })
+    const updated = await prisma.category.update({
+      where: { id },
+      data: result.data,
+    })
 
-  return NextResponse.json(updated)
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('Error in PUT /api/categories/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  const existing = await prisma.category.findUnique({ where: { id } })
-  if (!existing) return errorResponse('Category not found', 404)
+    const existing = await prisma.category.findUnique({ where: { id } })
+    if (!existing) return errorResponse('Category not found', 404)
 
-  await prisma.category.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+    await prisma.category.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/categories/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

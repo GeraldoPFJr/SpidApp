@@ -10,14 +10,24 @@ const accountSchema = z.object({
 })
 
 export async function GET() {
-  const accounts = await prisma.account.findMany({ orderBy: { name: 'asc' } })
-  return NextResponse.json(accounts)
+  try {
+    const accounts = await prisma.account.findMany({ orderBy: { name: 'asc' } })
+    return NextResponse.json(accounts)
+  } catch (error) {
+    console.error('Error in GET /api/finance/accounts:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, accountSchema)
-  if ('error' in result) return result.error
+  try {
+    const result = await parseBody(request, accountSchema)
+    if ('error' in result) return result.error
 
-  const account = await prisma.account.create({ data: result.data })
-  return NextResponse.json(account, { status: 201 })
+    const account = await prisma.account.create({ data: result.data })
+    return NextResponse.json(account, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/finance/accounts:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

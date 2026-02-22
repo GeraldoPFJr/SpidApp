@@ -18,8 +18,8 @@ export function SupplierFormPage() {
   const navigate = useNavigate()
   const isEdit = Boolean(id)
 
-  const { data: existing } = useApi<any>(id ? `/suppliers/${id}` : null)
-  const { execute, loading: saving } = useApiMutation(id ? `/suppliers/${id}` : '/suppliers')
+  const { data: existing } = useApi<SupplierFormData & { id: string }>(id ? `/suppliers/${id}` : null)
+  const { execute, loading: saving, error: apiError } = useApiMutation(id ? `/suppliers/${id}` : '/suppliers')
 
   const [form, setForm] = useState<SupplierFormData>({
     name: '',
@@ -75,9 +75,10 @@ export function SupplierFormPage() {
       notes: form.notes.trim() || null,
     }
     const result = await execute(payload, isEdit ? 'PUT' : 'POST')
-    if (result) {
-      navigate('/fornecedores', { replace: true })
+    if (!result) {
+      return
     }
+    navigate('/fornecedores', { replace: true })
   }
 
   const pageStyle: CSSProperties = {
@@ -215,6 +216,12 @@ export function SupplierFormPage() {
           />
         </div>
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
+        </div>
+      )}
 
       <button
         className="btn btn-primary btn-lg btn-block"

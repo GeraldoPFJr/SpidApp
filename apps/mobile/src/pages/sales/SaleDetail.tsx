@@ -35,7 +35,7 @@ const METHOD_LABELS: Record<string, string> = {
 export function SaleDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data: sale, loading } = useApi<SaleDetailData>(id ? `/sales/${id}` : null)
+  const { data: sale, loading, error } = useApi<SaleDetailData>(id ? `/sales/${id}` : null)
 
   const pageStyle: CSSProperties = {
     padding: 'var(--sp-4)',
@@ -82,6 +82,16 @@ export function SaleDetailPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div className="alert alert-danger">
+          <span>Erro ao carregar venda: {error}</span>
+        </div>
+      </div>
+    )
+  }
+
   if (!sale) {
     return (
       <div style={pageStyle}>
@@ -94,7 +104,7 @@ export function SaleDetailPage() {
     )
   }
 
-  const st = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG.CONFIRMED
+  const st = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG['CONFIRMED']
 
   return (
     <div style={pageStyle} className="animate-fade-in">
@@ -119,10 +129,10 @@ export function SaleDetailPage() {
             fontSize: 'var(--font-sm)',
             fontWeight: 600,
             borderRadius: 'var(--radius-full)',
-            backgroundColor: st.bg,
-            color: st.color,
+            backgroundColor: st?.bg ?? 'var(--success-100)',
+            color: st?.color ?? 'var(--success-700)',
           }}>
-            {st.label}
+            {st?.label ?? sale.status}
           </span>
         </div>
         <div style={{ fontSize: 'var(--font-3xl)', fontWeight: 700, color: 'var(--primary)', textAlign: 'center', padding: 'var(--sp-2) 0' }}>
@@ -170,7 +180,7 @@ export function SaleDetailPage() {
       </div>
 
       {/* Pagamentos */}
-      {sale.payments.length > 0 && (
+      {sale.payments && sale.payments.length > 0 && (
         <div style={sectionStyle}>
           <span style={sectionTitleStyle}>Pagamentos</span>
           {sale.payments.map((pay) => (
@@ -185,7 +195,7 @@ export function SaleDetailPage() {
       )}
 
       {/* Recebiveis */}
-      {sale.receivables.length > 0 && (
+      {sale.receivables && sale.receivables.length > 0 && (
         <div style={sectionStyle}>
           <span style={sectionTitleStyle}>Parcelas</span>
           {sale.receivables.map((rec) => (

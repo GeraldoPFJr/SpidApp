@@ -20,44 +20,54 @@ const createMovementSchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const productId = searchParams.get('product_id')
-  const direction = searchParams.get('direction')
-  const dateFrom = searchParams.get('date_from')
-  const dateTo = searchParams.get('date_to')
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const productId = searchParams.get('product_id')
+    const direction = searchParams.get('direction')
+    const dateFrom = searchParams.get('date_from')
+    const dateTo = searchParams.get('date_to')
 
-  const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = {}
 
-  if (productId) where.productId = productId
-  if (direction) where.direction = direction
-  if (dateFrom || dateTo) {
-    const dateFilter: Record<string, Date> = {}
-    if (dateFrom) dateFilter.gte = new Date(dateFrom)
-    if (dateTo) dateFilter.lte = new Date(dateTo)
-    where.date = dateFilter
+    if (productId) where.productId = productId
+    if (direction) where.direction = direction
+    if (dateFrom || dateTo) {
+      const dateFilter: Record<string, Date> = {}
+      if (dateFrom) dateFilter.gte = new Date(dateFrom)
+      if (dateTo) dateFilter.lte = new Date(dateTo)
+      where.date = dateFilter
+    }
+
+    const movements = await prisma.inventoryMovement.findMany({
+      where,
+      include: { product: true },
+      orderBy: { date: 'desc' },
+    })
+
+    return NextResponse.json(movements)
+  } catch (error) {
+    console.error('Error in GET /api/inventory/movements:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const movements = await prisma.inventoryMovement.findMany({
-    where,
-    include: { product: true },
-    orderBy: { date: 'desc' },
-  })
-
-  return NextResponse.json(movements)
 }
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, createMovementSchema)
-  if ('error' in result) return result.error
+  try {
+    const result = await parseBody(request, createMovementSchema)
+    if ('error' in result) return result.error
 
-  const product = await prisma.product.findFirst({
-    where: { id: result.data.productId, deletedAt: null },
-  })
-  if (!product) return errorResponse('Product not found', 404)
+    const product = await prisma.product.findFirst({
+      where: { id: result.data.productId, deletedAt: null },
+    })
+    if (!product) return errorResponse('Product not found', 404)
 
-  const movement = await prisma.inventoryMovement.create({
-    data: { ...result.data, deviceId: 'server' },
-  })
+    const movement = await prisma.inventoryMovement.create({
+      data: { ...result.data, deviceId: 'server' },
+    })
 
-  return NextResponse.json(movement, { status: 201 })
+    return NextResponse.json(movement, { status: 201 })
+  } catch (error) {
+    console.error('Error in POST /api/inventory/movements:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

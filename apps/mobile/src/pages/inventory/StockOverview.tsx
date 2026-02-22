@@ -12,7 +12,7 @@ interface StockItem {
 
 export function StockOverviewPage() {
   const navigate = useNavigate()
-  const { data: items, loading } = useApi<StockItem[]>('/inventory/stock')
+  const { data: items, loading, error } = useApi<StockItem[]>('/inventory/stock')
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
@@ -33,6 +33,12 @@ export function StockOverviewPage() {
 
   return (
     <div style={pageStyle}>
+      {error && (
+        <div className="alert alert-danger">
+          <span>Erro ao carregar estoque: {error}</span>
+        </div>
+      )}
+
       <div style={btnRowStyle}>
         <button className="btn btn-secondary btn-block btn-sm" onClick={() => navigate('/estoque/movimentacoes')}>
           Movimentacoes

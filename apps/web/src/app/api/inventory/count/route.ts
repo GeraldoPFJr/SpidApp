@@ -13,13 +13,13 @@ const inventoryCountSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const result = await parseBody(request, inventoryCountSchema)
-  if ('error' in result) return result.error
-
-  const deviceId = 'server'
-  const now = new Date()
-
   try {
+    const result = await parseBody(request, inventoryCountSchema)
+    if ('error' in result) return result.error
+
+    const deviceId = 'server'
+    const now = new Date()
+
     const differences = await prisma.$transaction(async (tx) => {
       const results: Array<{
         productId: string
@@ -73,8 +73,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(differences)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to process inventory count'
+  } catch (error) {
+    console.error('Error in POST /api/inventory/count:', error)
+    const message = error instanceof Error ? error.message : 'Failed to process inventory count'
     return errorResponse(message, 500)
   }
 }

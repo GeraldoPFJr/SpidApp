@@ -19,7 +19,7 @@ const MONEY_OPTIONS = [
 export function SaleCancelFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { execute, loading } = useApiMutation(`/sales/${id}/cancel`)
+  const { execute, loading, error: apiError } = useApiMutation(`/sales/${id}/cancel`)
 
   const [goodsAction, setGoodsAction] = useState('')
   const [moneyAction, setMoneyAction] = useState('')
@@ -41,9 +41,10 @@ export function SaleCancelFormPage() {
       moneyAction,
       notes: notes.trim() || null,
     })
-    if (result) {
-      navigate(`/vendas/${id}`, { replace: true })
+    if (!result) {
+      return
     }
+    navigate(`/vendas/${id}`, { replace: true })
   }
 
   const pageStyle: CSSProperties = {
@@ -188,6 +189,12 @@ export function SaleCancelFormPage() {
           rows={3}
         />
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
+        </div>
+      )}
 
       <button
         className="btn btn-danger btn-lg btn-block"

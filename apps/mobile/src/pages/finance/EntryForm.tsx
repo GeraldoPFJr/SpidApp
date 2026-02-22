@@ -17,7 +17,7 @@ export function EntryFormPage() {
 
   const { data: accounts } = useApi<Account[]>('/accounts')
   const { data: categories } = useApi<FinanceCategory[]>('/finance/categories')
-  const { execute, loading: saving } = useApiMutation('/finance/entries')
+  const { execute, loading: saving, error: apiError } = useApiMutation('/finance/entries')
 
   const [type, setType] = useState<FinanceEntryType>(preType)
   const [categoryId, setCategoryId] = useState('')
@@ -40,10 +40,15 @@ export function EntryFormPage() {
       accountId,
       amount,
       dueDate: dueDate || null,
+      status: 'PAID' as const,
+      paidAt: new Date().toISOString(),
       notes: notes.trim() || null,
     }
     const result = await execute(payload)
-    if (result) navigate('/financeiro', { replace: true })
+    if (!result) {
+      return
+    }
+    navigate('/financeiro', { replace: true })
   }
 
   const pageStyle: CSSProperties = { padding: 'var(--sp-4)', paddingBottom: '96px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }
@@ -120,6 +125,12 @@ export function EntryFormPage() {
           <textarea className="form-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observacoes..." rows={2} />
         </div>
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger" style={{ marginBottom: 0 }}>
+          <span>{apiError}</span>
+        </div>
+      )}
 
       <button className="btn btn-primary btn-lg btn-block" onClick={handleSubmit} disabled={saving || !accountId || amount <= 0}>
         {saving ? 'Salvando...' : 'Registrar Lancamento'}
