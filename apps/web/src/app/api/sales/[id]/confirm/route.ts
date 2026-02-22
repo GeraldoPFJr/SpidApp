@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'
 import { confirmSale } from '@/lib/sales-logic'
 
@@ -7,10 +8,13 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const sale = await prisma.sale.findUnique({
-      where: { id },
+    const sale = await prisma.sale.findFirst({
+      where: { id, tenantId: auth.tenantId },
       include: { items: true },
     })
     if (!sale) return errorResponse('Sale not found', 404)
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         total: Number(i.total),
       }))
 
-      await confirmSale(tx, sale.id, items, body?.payments, sale.date, sale.customerId, deviceId)
+      await confirmSale(tx, sale.id, items, body?.payments, sale.date, sale.customerId, deviceId, auth.tenantId)
 
       return tx.sale.findUnique({
         where: { id: sale.id },

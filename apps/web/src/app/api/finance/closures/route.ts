@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const closureSchema = z.object({
@@ -12,8 +13,11 @@ const closureSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const accountId = request.nextUrl.searchParams.get('account_id')
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { tenantId: auth.tenantId }
     if (accountId) where.accountId = accountId
 
     const closures = await prisma.monthlyClosure.findMany({
@@ -31,6 +35,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, closureSchema)
     if ('error' in result) return result.error
 
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
     const endOfMonth = new Date(year, monthNum, 0, 23, 59, 59, 999)
 
     const previousClosure = await prisma.monthlyClosure.findFirst({
-      where: { accountId },
+      where: { accountId, tenantId: auth.tenantId },
       orderBy: { month: 'desc' },
     })
     const openingBalance = previousClosure
@@ -53,6 +60,7 @@ export async function POST(request: NextRequest) {
     const paidEntries = await prisma.financeEntry.findMany({
       where: {
         accountId,
+        tenantId: auth.tenantId,
         status: 'PAID',
         paidAt: { gte: startOfMonth, lte: endOfMonth },
       },
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
         expectedClosing,
         countedClosing: countedClosing ?? null,
         notes: notes ?? null,
+        tenantId: auth.tenantId,
       },
       include: { account: true },
     })

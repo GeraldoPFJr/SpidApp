@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
 function getLastNMonthsRanges(n: number): Array<{ label: string; start: Date; end: Date }> {
   const now = new Date()
@@ -16,8 +17,12 @@ function getLastNMonthsRanges(n: number): Array<{ label: string; start: Date; en
   return ranges
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
+    const tenantId = auth.tenantId
     const ranges = getLastNMonthsRanges(3)
     const threeMonthsAgo = ranges[0]!.start
 
@@ -26,6 +31,7 @@ export async function GET() {
         status: 'CONFIRMED',
         date: { gte: threeMonthsAgo },
         customerId: { not: null },
+        tenantId,
       },
       include: { items: true, receivables: { include: { settlements: true } } },
     })
@@ -69,7 +75,7 @@ export async function GET() {
 
     const customerIds = Array.from(customerMap.keys())
     const customers = await prisma.customer.findMany({
-      where: { id: { in: customerIds } },
+      where: { id: { in: customerIds }, tenantId },
     })
 
     const result = customers

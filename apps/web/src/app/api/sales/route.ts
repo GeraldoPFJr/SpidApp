@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSaleSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 import { confirmSale } from '@/lib/sales-logic'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
     const customerId = searchParams.get('customer_id')
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { tenantId: auth.tenantId }
 
     if (status) where.status = status
     if (customerId) where.customerId = customerId
@@ -38,16 +42,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, createSaleSchema)
     if ('error' in result) return result.error
 
     const { items, payments, ...headerData } = result.data
+    const tenantId = auth.tenantId
     const deviceId = headerData.deviceId
 
     const sale = await prisma.$transaction(async (tx) => {
       const created = await tx.sale.create({
         data: {
           ...headerData,
+          tenantId,
           items: {
             create: items.map((i) => ({
               productId: i.productId,
@@ -55,6 +64,7 @@ export async function POST(request: NextRequest) {
               qty: i.qty,
               unitPrice: i.unitPrice,
               total: i.total,
+              tenantId,
             })),
           },
         },
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (headerData.status === 'CONFIRMED') {
-        await confirmSale(tx, created.id, items, payments, created.date, headerData.customerId, deviceId)
+        await confirmSale(tx, created.id, items, payments, created.date, headerData.customerId, deviceId, tenantId)
       }
 
       return tx.sale.findUnique({

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const updateCategorySchema = z.object({
@@ -9,12 +10,15 @@ const updateCategorySchema = z.object({
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const category = await prisma.category.findUnique({
-      where: { id },
+    const category = await prisma.category.findFirst({
+      where: { id, tenantId: auth.tenantId },
       include: { subcategories: true },
     })
     if (!category) return errorResponse('Category not found', 404)
@@ -28,11 +32,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
     const result = await parseBody(request, updateCategorySchema)
     if ('error' in result) return result.error
 
-    const existing = await prisma.category.findUnique({ where: { id } })
+    const existing = await prisma.category.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    })
     if (!existing) return errorResponse('Category not found', 404)
 
     const updated = await prisma.category.update({
@@ -47,11 +56,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const existing = await prisma.category.findUnique({ where: { id } })
+    const existing = await prisma.category.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    })
     if (!existing) return errorResponse('Category not found', 404)
 
     await prisma.category.delete({ where: { id } })

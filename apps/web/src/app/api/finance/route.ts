@@ -1,12 +1,20 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
 // Combined finance overview - used by frontend financeiro page
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const [accounts, entries] = await Promise.all([
-      prisma.account.findMany({ orderBy: { name: 'asc' } }),
+      prisma.account.findMany({
+        where: { tenantId: auth.tenantId },
+        orderBy: { name: 'asc' },
+      }),
       prisma.financeEntry.findMany({
+        where: { tenantId: auth.tenantId },
         include: { category: true, account: true },
         orderBy: { createdAt: 'desc' },
         take: 100,
@@ -17,7 +25,7 @@ export async function GET() {
     const accountsWithBalance = await Promise.all(
       accounts.map(async (account) => {
         const paidEntries = await prisma.financeEntry.findMany({
-          where: { accountId: account.id, status: 'PAID' },
+          where: { accountId: account.id, status: 'PAID', tenantId: auth.tenantId },
         })
 
         let balance = 0

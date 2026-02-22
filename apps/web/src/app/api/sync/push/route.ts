@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncPushSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
-import { validateAuth, isAuthError } from '@/lib/auth'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { parseBody } from '@/lib/api-utils'
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
@@ -77,8 +77,8 @@ function buildEntityHandlers(): Record<string, EntityHandler> {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = validateAuth(request)
-  if (isAuthError(authResult)) return authResult.error
+  const auth = await requireAuth(request)
+  if (isAuthError(auth)) return auth
 
   const result = await parseBody(request, syncPushSchema)
   if ('error' in result) return result.error
@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
               payload: op.payload as object,
               deviceId,
               syncedAt: new Date(),
+              tenantId: auth.tenantId,
             },
           })
         })

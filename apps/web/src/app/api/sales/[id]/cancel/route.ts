@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { convertToBase } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const cancelSaleSchema = z.object({
@@ -15,12 +16,17 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
+    const tenantId = auth.tenantId
+
     const result = await parseBody(request, cancelSaleSchema)
     if ('error' in result) return result.error
 
-    const sale = await prisma.sale.findUnique({
-      where: { id },
+    const sale = await prisma.sale.findFirst({
+      where: { id, tenantId },
       include: { items: { include: { unit: true } }, payments: true, receivables: true },
     })
     if (!sale) return errorResponse('Sale not found', 404)
@@ -48,6 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
                 reasonId: sale.id,
                 notes: merchandiseNotes ?? `Devolucao venda #${sale.couponNumber}`,
                 deviceId,
+                tenantId,
               },
             })
           } else if (merchandiseAction === 'loss') {
@@ -61,6 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
                 reasonId: sale.id,
                 notes: merchandiseNotes ?? `Perda venda #${sale.couponNumber}`,
                 deviceId,
+                tenantId,
               },
             })
           }
@@ -91,6 +99,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
                 status: 'PAID',
                 paidAt: new Date(),
                 notes: moneyNotes ?? `Estorno venda #${sale.couponNumber}`,
+                tenantId,
               },
             })
           }

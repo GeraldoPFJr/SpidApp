@@ -3,7 +3,7 @@
  * Automatically injects authentication headers and handles errors.
  */
 
-import { getApiUrl, getAppInstanceId, getSyncSecret } from './credentials'
+import { getApiUrl, getAppInstanceId, getAuthToken, clearAuthToken } from './credentials'
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -54,12 +54,18 @@ export async function apiClient<T>(
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'X-App-Instance-Id': getAppInstanceId(),
-        'X-Sync-Secret': getSyncSecret(),
+        ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {}),
+        'X-Device-Id': getAppInstanceId(),
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
     })
+
+    if (response.status === 401) {
+      clearAuthToken()
+      window.dispatchEvent(new Event('spid:unauthorized'))
+      throw new ApiError(401, 'Unauthorized')
+    }
 
     if (!response.ok) {
       const errorBody = await response.text().catch(() => 'Unknown error')

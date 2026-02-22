@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const overdueReceivables = await prisma.receivable.findMany({
       where: {
         status: 'OPEN',
         dueDate: { lt: new Date() },
+        tenantId: auth.tenantId,
       },
       include: { customer: true, sale: true },
       orderBy: { dueDate: 'asc' },
@@ -38,7 +43,7 @@ export async function GET() {
         existing.receivables.push(r)
       } else {
         const lastSale = await prisma.sale.findFirst({
-          where: { customerId: key, status: 'CONFIRMED' },
+          where: { customerId: key, status: 'CONFIRMED', tenantId: auth.tenantId },
           orderBy: { date: 'desc' },
           select: { date: true },
         })

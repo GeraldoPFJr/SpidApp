@@ -1,32 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ productId: string }> }
 
-async function getProductStockBase(productId: string): Promise<number> {
+async function getProductStockBase(productId: string, tenantId: string): Promise<number> {
   const inSum = await prisma.inventoryMovement.aggregate({
-    where: { productId, direction: 'IN' },
+    where: { productId, direction: 'IN', tenantId },
     _sum: { qtyBase: true },
   })
   const outSum = await prisma.inventoryMovement.aggregate({
-    where: { productId, direction: 'OUT' },
+    where: { productId, direction: 'OUT', tenantId },
     _sum: { qtyBase: true },
   })
   return (inSum._sum.qtyBase ?? 0) - (outSum._sum.qtyBase ?? 0)
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { productId } = await params
 
     const product = await prisma.product.findFirst({
-      where: { id: productId, deletedAt: null },
+      where: { id: productId, deletedAt: null, tenantId: auth.tenantId },
       include: { units: { orderBy: { sortOrder: 'asc' } } },
     })
     if (!product) return errorResponse('Product not found', 404)
 
-    const qtyBase = await getProductStockBase(product.id)
+    const qtyBase = await getProductStockBase(product.id, auth.tenantId)
 
     const units = product.units.map((unit) => ({
       unitId: unit.id,

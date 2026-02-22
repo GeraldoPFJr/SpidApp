@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const createMovementSchema = z.object({
@@ -21,13 +22,16 @@ const createMovementSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const searchParams = request.nextUrl.searchParams
     const productId = searchParams.get('product_id')
     const direction = searchParams.get('direction')
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { tenantId: auth.tenantId }
 
     if (productId) where.productId = productId
     if (direction) where.direction = direction
@@ -53,16 +57,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, createMovementSchema)
     if ('error' in result) return result.error
 
     const product = await prisma.product.findFirst({
-      where: { id: result.data.productId, deletedAt: null },
+      where: { id: result.data.productId, deletedAt: null, tenantId: auth.tenantId },
     })
     if (!product) return errorResponse('Product not found', 404)
 
     const movement = await prisma.inventoryMovement.create({
-      data: { ...result.data, deviceId: 'server' },
+      data: { ...result.data, deviceId: 'server', tenantId: auth.tenantId },
     })
 
     return NextResponse.json(movement, { status: 201 })

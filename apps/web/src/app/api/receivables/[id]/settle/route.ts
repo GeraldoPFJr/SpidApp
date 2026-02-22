@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const settleSchema = z.object({
@@ -14,12 +15,17 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
+    const tenantId = auth.tenantId
+
     const result = await parseBody(request, settleSchema)
     if ('error' in result) return result.error
 
-    const receivable = await prisma.receivable.findUnique({
-      where: { id },
+    const receivable = await prisma.receivable.findFirst({
+      where: { id, tenantId },
       include: { settlements: true },
     })
     if (!receivable) return errorResponse('Receivable not found', 404)
@@ -47,6 +53,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           amount: result.data.amount,
           accountId: result.data.accountId,
           notes: result.data.notes,
+          tenantId,
         },
       })
 
@@ -56,6 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           paymentId: payment.id,
           amount: result.data.amount,
           paidAt: now,
+          tenantId,
         },
       })
 
@@ -77,6 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           status: 'PAID',
           paidAt: now,
           notes: `Recebimento parcela #${receivable.id.slice(0, 8)}`,
+          tenantId,
         },
       })
 

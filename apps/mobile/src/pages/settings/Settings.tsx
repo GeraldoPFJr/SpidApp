@@ -1,6 +1,7 @@
 import { type CSSProperties, useCallback, useEffect, useState } from 'react'
 import { checkHealth } from '../../lib/api'
 import {
+  clearAuthToken,
   getApiUrl,
   getAppInstanceId,
   getLastSyncAt,
@@ -179,6 +180,11 @@ export function SettingsPage() {
   function handleSyncNow() {
     // Dispatch custom event that can be caught by a sync engine listener
     window.dispatchEvent(new CustomEvent('spid:sync-now'))
+  }
+
+  function handleLogout() {
+    clearAuthToken()
+    window.dispatchEvent(new Event('spid:unauthorized'))
   }
 
   return (
@@ -375,6 +381,25 @@ export function SettingsPage() {
       {/* Salvar */}
       <button className="btn btn-primary btn-lg btn-block" onClick={handleSave}>
         {saved ? 'Salvo!' : 'Salvar Configuracoes'}
+      </button>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        style={{
+          width: '100%',
+          padding: '14px',
+          backgroundColor: '#dc2626',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '16px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          marginTop: '24px',
+        }}
+      >
+        Sair da Conta
       </button>
     </div>
   )

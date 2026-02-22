@@ -1,23 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createProductSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const searchParams = request.nextUrl.searchParams
     const active = searchParams.get('active')
     const categoryId = searchParams.get('category_id')
     const search = searchParams.get('search')
 
-    const where: Record<string, unknown> = { deletedAt: null }
+    const where: Record<string, unknown> = { deletedAt: null, tenantId: auth.tenantId }
 
     if (active !== null) where.active = active === 'true'
     if (categoryId) where.categoryId = categoryId
     if (search) where.name = { contains: search, mode: 'insensitive' }
 
     // Find the default price tier
-    const defaultTier = await prisma.priceTier.findFirst({ where: { isDefault: true } })
+    const defaultTier = await prisma.priceTier.findFirst({
+      where: { isDefault: true, tenantId: auth.tenantId },
+    })
 
     const products = await prisma.product.findMany({
       where,
@@ -52,21 +58,31 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, createProductSchema)
     if ('error' in result) return result.error
 
     const { units, prices, ...productData } = result.data
+    const tenantId = auth.tenantId
 
     const product = await prisma.$transaction(async (tx) => {
-      const created = await tx.product.create({ data: productData })
+      const created = await tx.product.create({
+        data: { ...productData, tenantId },
+      })
 
       await Promise.all(
-        units.map((u) => tx.productUnit.create({ data: { ...u, productId: created.id } })),
+        units.map((u) =>
+          tx.productUnit.create({ data: { ...u, productId: created.id, tenantId } }),
+        ),
       )
 
       if (prices?.length) {
         await Promise.all(
-          prices.map((p) => tx.productPrice.create({ data: { ...p, productId: created.id } })),
+          prices.map((p) =>
+            tx.productPrice.create({ data: { ...p, productId: created.id, tenantId } }),
+          ),
         )
       }
 

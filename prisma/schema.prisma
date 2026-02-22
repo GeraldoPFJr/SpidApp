@@ -7,6 +7,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Tenant ─────────────────────────────────────────────
+
+model Tenant {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  companyName  String   @map("company_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  categories            Category[]
+  subcategories         Subcategory[]
+  products              Product[]
+  productUnits          ProductUnit[]
+  priceTiers            PriceTier[]
+  productPrices         ProductPrice[]
+  customers             Customer[]
+  suppliers             Supplier[]
+  purchases             Purchase[]
+  purchaseItems         PurchaseItem[]
+  purchaseCosts         PurchaseCost[]
+  inventoryMovements    InventoryMovement[]
+  costLots              CostLot[]
+  sales                 Sale[]
+  saleItems             SaleItem[]
+  receivables           Receivable[]
+  receivableSettlements ReceivableSettlement[]
+  payments              Payment[]
+  accounts              Account[]
+  financeCategories     FinanceCategory[]
+  financeEntries        FinanceEntry[]
+  monthlyClosures       MonthlyClosure[]
+  appSettings           AppSettings[]
+  outboxOperations      OutboxOperation[]
+  syncCursors           SyncCursor[]
+
+  @@map("tenants")
+}
+
 // ─── Catalogos ───────────────────────────────────────────
 
 model Category {
@@ -15,9 +55,13 @@ model Category {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   subcategories Subcategory[]
   products      Product[]
 
+  @@index([tenantId])
   @@map("categories")
 }
 
@@ -28,9 +72,13 @@ model Subcategory {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   category Category  @relation(fields: [categoryId], references: [id])
   products Product[]
 
+  @@index([tenantId])
   @@map("subcategories")
 }
 
@@ -46,16 +94,20 @@ model Product {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   category    Category     @relation(fields: [categoryId], references: [id])
   subcategory Subcategory? @relation(fields: [subcategoryId], references: [id])
 
-  units      ProductUnit[]
-  prices     ProductPrice[]
-  movements  InventoryMovement[]
-  costLots   CostLot[]
-  saleItems  SaleItem[]
+  units         ProductUnit[]
+  prices        ProductPrice[]
+  movements     InventoryMovement[]
+  costLots      CostLot[]
+  saleItems     SaleItem[]
   purchaseItems PurchaseItem[]
 
+  @@index([tenantId])
   @@map("products")
 }
 
@@ -69,12 +121,16 @@ model ProductUnit {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   product Product @relation(fields: [productId], references: [id])
 
   prices        ProductPrice[]
   saleItems     SaleItem[]
   purchaseItems PurchaseItem[]
 
+  @@index([tenantId])
   @@map("product_units")
 }
 
@@ -85,8 +141,12 @@ model PriceTier {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   prices ProductPrice[]
 
+  @@index([tenantId])
   @@map("price_tiers")
 }
 
@@ -99,11 +159,15 @@ model ProductPrice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   product Product     @relation(fields: [productId], references: [id])
   unit    ProductUnit @relation(fields: [unitId], references: [id])
   tier    PriceTier   @relation(fields: [tierId], references: [id])
 
   @@index([productId, tierId, unitId])
+  @@index([tenantId])
   @@map("product_prices")
 }
 
@@ -121,9 +185,13 @@ model Customer {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   sales       Sale[]
   receivables Receivable[]
 
+  @@index([tenantId])
   @@map("customers")
 }
 
@@ -141,8 +209,12 @@ model Supplier {
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   purchases Purchase[]
 
+  @@index([tenantId])
   @@map("suppliers")
 }
 
@@ -157,6 +229,9 @@ model Purchase {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   supplier Supplier @relation(fields: [supplierId], references: [id])
 
   items    PurchaseItem[]
@@ -165,6 +240,7 @@ model Purchase {
 
   @@index([date])
   @@index([supplierId])
+  @@index([tenantId])
   @@map("purchases")
 }
 
@@ -179,12 +255,16 @@ model PurchaseItem {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   purchase Purchase    @relation(fields: [purchaseId], references: [id])
   product  Product     @relation(fields: [productId], references: [id])
   unit     ProductUnit @relation(fields: [unitId], references: [id])
 
   costLots CostLot[]
 
+  @@index([tenantId])
   @@map("purchase_items")
 }
 
@@ -196,8 +276,12 @@ model PurchaseCost {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   purchase Purchase @relation(fields: [purchaseId], references: [id])
 
+  @@index([tenantId])
   @@map("purchase_costs")
 }
 
@@ -216,9 +300,13 @@ model InventoryMovement {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   product Product @relation(fields: [productId], references: [id])
 
   @@index([productId, date])
+  @@index([tenantId])
   @@map("inventory_movements")
 }
 
@@ -231,9 +319,13 @@ model CostLot {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   product      Product      @relation(fields: [productId], references: [id])
   purchaseItem PurchaseItem @relation(fields: [purchaseItemId], references: [id])
 
+  @@index([tenantId])
   @@map("cost_lots")
 }
 
@@ -255,6 +347,9 @@ model Sale {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   customer Customer? @relation(fields: [customerId], references: [id])
 
   items       SaleItem[]
@@ -264,6 +359,7 @@ model Sale {
   @@index([date])
   @@index([customerId])
   @@index([status])
+  @@index([tenantId])
   @@map("sales")
 }
 
@@ -278,10 +374,14 @@ model SaleItem {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   sale    Sale        @relation(fields: [saleId], references: [id])
   product Product     @relation(fields: [productId], references: [id])
   unit    ProductUnit @relation(fields: [unitId], references: [id])
 
+  @@index([tenantId])
   @@map("sale_items")
 }
 
@@ -298,6 +398,9 @@ model Receivable {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   sale     Sale?    @relation(fields: [saleId], references: [id])
   customer Customer @relation(fields: [customerId], references: [id])
 
@@ -305,6 +408,7 @@ model Receivable {
 
   @@index([status, dueDate])
   @@index([customerId])
+  @@index([tenantId])
   @@map("receivables")
 }
 
@@ -317,9 +421,13 @@ model ReceivableSettlement {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   receivable Receivable @relation(fields: [receivableId], references: [id])
   payment    Payment    @relation(fields: [paymentId], references: [id])
 
+  @@index([tenantId])
   @@map("receivable_settlements")
 }
 
@@ -339,12 +447,16 @@ model Payment {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   sale     Sale?    @relation(fields: [saleId], references: [id])
   purchase Purchase? @relation(fields: [purchaseId], references: [id])
   account  Account  @relation(fields: [accountId], references: [id])
 
   settlements ReceivableSettlement[]
 
+  @@index([tenantId])
   @@map("payments")
 }
 
@@ -358,10 +470,14 @@ model Account {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   payments        Payment[]
   financeEntries  FinanceEntry[]
   monthlyClosures MonthlyClosure[]
 
+  @@index([tenantId])
   @@map("accounts")
 }
 
@@ -372,8 +488,12 @@ model FinanceCategory {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   entries FinanceEntry[]
 
+  @@index([tenantId])
   @@map("finance_categories")
 }
 
@@ -390,9 +510,13 @@ model FinanceEntry {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   category FinanceCategory? @relation(fields: [categoryId], references: [id])
   account  Account          @relation(fields: [accountId], references: [id])
 
+  @@index([tenantId])
   @@map("finance_entries")
 }
 
@@ -407,17 +531,24 @@ model MonthlyClosure {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   account Account @relation(fields: [accountId], references: [id])
 
+  @@index([tenantId])
   @@map("monthly_closures")
 }
 
 // ─── Configuracoes ───────────────────────────────────────
 
 model AppSettings {
-  id        String   @id @default("singleton")
+  id        String   @id @default(uuid())
+  tenantId  String   @unique @map("tenant_id")
   data      Json     @default("{}")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("app_settings")
 }
@@ -434,6 +565,10 @@ model OutboxOperation {
   deviceId    String    @map("device_id")
   createdAt   DateTime  @default(now()) @map("created_at")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@map("outbox_operations")
 }
 
@@ -442,5 +577,9 @@ model SyncCursor {
   deviceId   String   @unique @map("device_id")
   lastCursor DateTime @map("last_cursor")
 
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@map("sync_cursors")
 }

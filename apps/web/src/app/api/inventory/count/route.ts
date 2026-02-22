@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const inventoryCountItemSchema = z.object({
@@ -14,9 +15,13 @@ const inventoryCountSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, inventoryCountSchema)
     if ('error' in result) return result.error
 
+    const tenantId = auth.tenantId
     const deviceId = 'server'
     const now = new Date()
 
@@ -31,16 +36,16 @@ export async function POST(request: NextRequest) {
 
       for (const item of result.data.items) {
         const product = await tx.product.findFirst({
-          where: { id: item.productId, deletedAt: null },
+          where: { id: item.productId, deletedAt: null, tenantId },
         })
         if (!product) continue
 
         const inSum = await tx.inventoryMovement.aggregate({
-          where: { productId: item.productId, direction: 'IN' },
+          where: { productId: item.productId, direction: 'IN', tenantId },
           _sum: { qtyBase: true },
         })
         const outSum = await tx.inventoryMovement.aggregate({
-          where: { productId: item.productId, direction: 'OUT' },
+          where: { productId: item.productId, direction: 'OUT', tenantId },
           _sum: { qtyBase: true },
         })
         const currentQtyBase = (inSum._sum.qtyBase ?? 0) - (outSum._sum.qtyBase ?? 0)
@@ -56,6 +61,7 @@ export async function POST(request: NextRequest) {
               reasonType: 'INVENTORY_COUNT',
               notes: `Inventario: contado ${item.countedQtyBase}, sistema ${currentQtyBase}`,
               deviceId,
+              tenantId,
             },
           })
         }

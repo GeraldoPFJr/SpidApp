@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
     const customerId = searchParams.get('customer_id')
@@ -10,7 +14,7 @@ export async function GET(request: NextRequest) {
     const dueDateTo = searchParams.get('due_date_to')
     const overdue = searchParams.get('overdue')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { tenantId: auth.tenantId }
 
     if (status) where.status = status
     if (customerId) where.customerId = customerId

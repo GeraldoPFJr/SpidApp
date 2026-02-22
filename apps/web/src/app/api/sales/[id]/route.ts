@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const sale = await prisma.sale.findUnique({
-      where: { id },
+    const sale = await prisma.sale.findFirst({
+      where: { id, tenantId: auth.tenantId },
       include: {
         customer: true,
         items: { include: { product: true, unit: true } },
@@ -28,9 +32,15 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
 
-    const sale = await prisma.sale.findUnique({ where: { id } })
+    const { id } = await params
+    const tenantId = auth.tenantId
+
+    const sale = await prisma.sale.findFirst({
+      where: { id, tenantId },
+    })
     if (!sale) return errorResponse('Sale not found', 404)
     if (sale.status !== 'DRAFT') {
       return errorResponse('Only draft sales can be updated', 400)
@@ -57,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (body.items) {
         await tx.saleItem.deleteMany({ where: { saleId: sale.id } })
         for (const item of body.items) {
-          await tx.saleItem.create({ data: { ...item, saleId: sale.id } })
+          await tx.saleItem.create({ data: { ...item, saleId: sale.id, tenantId } })
         }
       }
 

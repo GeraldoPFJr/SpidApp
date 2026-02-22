@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createFinanceEntrySchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { parseBody } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type')
     const status = searchParams.get('status')
@@ -12,7 +16,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { tenantId: auth.tenantId }
 
     if (type) where.type = type
     if (status) where.status = status
@@ -40,11 +44,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, createFinanceEntrySchema)
     if ('error' in result) return result.error
 
     const entry = await prisma.financeEntry.create({
-      data: result.data,
+      data: { ...result.data, tenantId: auth.tenantId },
       include: { category: true, account: true },
     })
 

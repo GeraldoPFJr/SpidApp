@@ -1,21 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateCustomerSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
     const customer = await prisma.customer.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId: auth.tenantId },
     })
     if (!customer) return errorResponse('Customer not found', 404)
 
     const receivables = await prisma.receivable.findMany({
-      where: { customerId: customer.id, status: 'OPEN' },
+      where: { customerId: customer.id, status: 'OPEN', tenantId: auth.tenantId },
       orderBy: { dueDate: 'asc' },
     })
 
@@ -33,12 +37,15 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
     const result = await parseBody(request, updateCustomerSchema.omit({ id: true }))
     if ('error' in result) return result.error
 
     const existing = await prisma.customer.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId: auth.tenantId },
     })
     if (!existing) return errorResponse('Customer not found', 404)
 
@@ -54,12 +61,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
     const existing = await prisma.customer.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId: auth.tenantId },
     })
     if (!existing) return errorResponse('Customer not found', 404)
 

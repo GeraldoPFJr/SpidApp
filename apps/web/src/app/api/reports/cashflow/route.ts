@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
 function getMonthRange(monthStr: string): { start: Date; end: Date } {
   const [yearStr, mStr] = monthStr.split('-')
@@ -17,18 +18,22 @@ function getCurrentMonth(): string {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
+    const tenantId = auth.tenantId
     const month = request.nextUrl.searchParams.get('month') ?? getCurrentMonth()
     const { start, end } = getMonthRange(month)
 
     const accounts = await prisma.account.findMany({
-      where: { active: true },
+      where: { active: true, tenantId },
       orderBy: { name: 'asc' },
     })
 
     const byAccount = await Promise.all(
       accounts.map(async (account) => {
         const prevClosure = await prisma.monthlyClosure.findFirst({
-          where: { accountId: account.id, month: { lt: month } },
+          where: { accountId: account.id, month: { lt: month }, tenantId },
           orderBy: { month: 'desc' },
         })
         const saldoInicial = prevClosure
@@ -36,7 +41,7 @@ export async function GET(request: NextRequest) {
           : 0
 
         const entries = await prisma.financeEntry.findMany({
-          where: { accountId: account.id, status: 'PAID', paidAt: { gte: start, lte: end } },
+          where: { accountId: account.id, status: 'PAID', paidAt: { gte: start, lte: end }, tenantId },
           include: { category: true },
         })
 
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest) {
     )
 
     const allPaidEntries = await prisma.financeEntry.findMany({
-      where: { status: 'PAID', paidAt: { gte: start, lte: end } },
+      where: { status: 'PAID', paidAt: { gte: start, lte: end }, tenantId },
       include: { category: true },
     })
 

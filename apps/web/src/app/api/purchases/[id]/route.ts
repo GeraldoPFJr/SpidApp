@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { convertToBase } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const purchase = await prisma.purchase.findUnique({
-      where: { id },
+    const purchase = await prisma.purchase.findFirst({
+      where: { id, tenantId: auth.tenantId },
       include: {
         supplier: true,
         items: { include: { product: true, unit: true } },
@@ -29,9 +33,14 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const existing = await prisma.purchase.findUnique({ where: { id } })
+    const existing = await prisma.purchase.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    })
     if (!existing) return errorResponse('Purchase not found', 404)
 
     let body: { notes?: string; status?: string }
@@ -56,12 +65,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
 
-    const existing = await prisma.purchase.findUnique({
-      where: { id },
+    const { id } = await params
+    const tenantId = auth.tenantId
+
+    const existing = await prisma.purchase.findFirst({
+      where: { id, tenantId: auth.tenantId },
       include: { items: { include: { unit: true, costLots: true } } },
     })
     if (!existing) return errorResponse('Purchase not found', 404)
@@ -85,6 +98,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
             reasonId: existing.id,
             notes: `Cancelamento compra #${existing.id.slice(0, 8)}`,
             deviceId,
+            tenantId,
           },
         })
 

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateProductSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
     const product = await prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId: auth.tenantId },
       include: {
         units: { orderBy: { sortOrder: 'asc' } },
         prices: { include: { tier: true, unit: true } },
@@ -29,7 +33,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
+    const tenantId = auth.tenantId
 
     let body: unknown
     try {
@@ -42,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
     const existing = await prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId },
       include: { units: true },
     })
     if (!existing) return errorResponse('Product not found', 404)
@@ -76,7 +84,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             await tx.productUnit.update({ where: { id: unitId }, data: unitData })
           } else {
             await tx.productUnit.create({
-              data: { ...unitData, productId: id, ...(unitId ? { id: unitId } : {}) },
+              data: { ...unitData, productId: id, tenantId, ...(unitId ? { id: unitId } : {}) },
             })
           }
         }
@@ -87,7 +95,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         await tx.productPrice.deleteMany({ where: { productId: id } })
         if (prices.length > 0) {
           await tx.productPrice.createMany({
-            data: prices.map((p) => ({ ...p, productId: id })),
+            data: prices.map((p) => ({ ...p, productId: id, tenantId })),
           })
         }
       }
@@ -105,12 +113,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
     const existing = await prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId: auth.tenantId },
     })
     if (!existing) return errorResponse('Product not found', 404)
 

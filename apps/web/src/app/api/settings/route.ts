@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { parseBody } from '@/lib/api-utils'
-
-const SINGLETON_ID = 'singleton'
 
 const companySchema = z.object({
   tradeName: z.string().default(''),
@@ -39,9 +38,14 @@ const defaultSettings: SettingsData = {
   defaultPriceTierId: '',
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const row = await prisma.appSettings.findUnique({ where: { id: SINGLETON_ID } })
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
+    const row = await prisma.appSettings.findFirst({
+      where: { tenantId: auth.tenantId },
+    })
     const data = row ? (row.data as SettingsData) : defaultSettings
 
     return NextResponse.json({
@@ -58,12 +62,15 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, settingsSchema)
     if ('error' in result) return result.error
 
     const row = await prisma.appSettings.upsert({
-      where: { id: SINGLETON_ID },
-      create: { id: SINGLETON_ID, data: result.data },
+      where: { tenantId: auth.tenantId },
+      create: { tenantId: auth.tenantId, data: result.data },
       update: { data: result.data },
     })
 

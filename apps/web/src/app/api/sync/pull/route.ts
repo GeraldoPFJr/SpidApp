@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { validateAuth, isAuthError } from '@/lib/auth'
+import { requireAuth, isAuthError } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
-  const authResult = validateAuth(request)
-  if (isAuthError(authResult)) return authResult.error
+  const auth = await requireAuth(request)
+  if (isAuthError(auth)) return auth
 
   try {
     const searchParams = request.nextUrl.searchParams
@@ -12,18 +12,20 @@ export async function GET(request: NextRequest) {
     const since = searchParams.get('since')
     const sinceDate = since ? new Date(since) : new Date(0)
 
+    const tenantFilter = { tenantId: auth.tenantId, updatedAt: { gt: sinceDate } }
+
     const [products, customers, suppliers, categories, subcategories, sales, receivables] =
       await Promise.all([
-        prisma.product.findMany({ where: { updatedAt: { gt: sinceDate } } }),
-        prisma.customer.findMany({ where: { updatedAt: { gt: sinceDate } } }),
-        prisma.supplier.findMany({ where: { updatedAt: { gt: sinceDate } } }),
-        prisma.category.findMany({ where: { updatedAt: { gt: sinceDate } } }),
-        prisma.subcategory.findMany({ where: { updatedAt: { gt: sinceDate } } }),
+        prisma.product.findMany({ where: tenantFilter }),
+        prisma.customer.findMany({ where: tenantFilter }),
+        prisma.supplier.findMany({ where: tenantFilter }),
+        prisma.category.findMany({ where: tenantFilter }),
+        prisma.subcategory.findMany({ where: tenantFilter }),
         prisma.sale.findMany({
-          where: { updatedAt: { gt: sinceDate } },
+          where: tenantFilter,
           include: { items: true, payments: true },
         }),
-        prisma.receivable.findMany({ where: { updatedAt: { gt: sinceDate } } }),
+        prisma.receivable.findMany({ where: tenantFilter }),
       ])
 
     const now = new Date().toISOString()
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
       await prisma.syncCursor.upsert({
         where: { deviceId },
         update: { lastCursor: new Date() },
-        create: { deviceId, lastCursor: new Date() },
+        create: { deviceId, lastCursor: new Date(), tenantId: auth.tenantId },
       })
     }
 

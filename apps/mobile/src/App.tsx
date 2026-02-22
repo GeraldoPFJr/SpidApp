@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { MobileLayout } from './components/MobileLayout'
 import { OverdueModal } from './components/OverdueModal'
 import { apiClient } from './lib/api'
-import { initializeCredentials } from './lib/credentials'
+import { initializeCredentials, isAuthenticated, clearAuthToken } from './lib/credentials'
 
 // Initialize credentials on first app open (idempotent)
 initializeCredentials()
@@ -51,6 +51,10 @@ import { MonthlyClosurePage } from './pages/finance/MonthlyClosure'
 import { InadimplentesPage } from './pages/Inadimplentes'
 import { SettingsPage } from './pages/settings/Settings'
 
+// Auth
+import { LoginPage } from './pages/auth/Login'
+import { RegisterPage } from './pages/auth/Register'
+
 const OVERDUE_DISMISSED_KEY = 'spid_overdue_dismissed'
 
 interface OverdueItem {
@@ -59,6 +63,19 @@ interface OverdueItem {
 }
 
 export function App() {
+  const [authState, setAuthState] = useState<'login' | 'register' | 'app'>(
+    isAuthenticated() ? 'app' : 'login'
+  )
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      clearAuthToken()
+      setAuthState('login')
+    }
+    window.addEventListener('spid:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('spid:unauthorized', handleUnauthorized)
+  }, [])
+
   const [overdueItems, setOverdueItems] = useState<OverdueItem[]>([])
   const [showOverdue, setShowOverdue] = useState(false)
 
@@ -81,6 +98,24 @@ export function App() {
   function handleDismissOverdue() {
     setShowOverdue(false)
     sessionStorage.setItem(OVERDUE_DISMISSED_KEY, '1')
+  }
+
+  if (authState === 'login') {
+    return (
+      <LoginPage
+        onLogin={() => setAuthState('app')}
+        onGoToRegister={() => setAuthState('register')}
+      />
+    )
+  }
+
+  if (authState === 'register') {
+    return (
+      <RegisterPage
+        onRegister={() => setAuthState('app')}
+        onGoToLogin={() => setAuthState('login')}
+      />
+    )
   }
 
   return (

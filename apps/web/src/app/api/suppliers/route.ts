@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupplierSchema } from '@spid/shared'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { parseBody } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const search = request.nextUrl.searchParams.get('search')
-    const where: Record<string, unknown> = { deletedAt: null }
+    const where: Record<string, unknown> = { deletedAt: null, tenantId: auth.tenantId }
 
     if (search) where.name = { contains: search, mode: 'insensitive' }
 
@@ -24,10 +28,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const result = await parseBody(request, createSupplierSchema)
     if ('error' in result) return result.error
 
-    const supplier = await prisma.supplier.create({ data: result.data })
+    const supplier = await prisma.supplier.create({
+      data: { ...result.data, tenantId: auth.tenantId },
+    })
     return NextResponse.json(supplier, { status: 201 })
   } catch (error) {
     console.error('Error in POST /api/suppliers:', error)

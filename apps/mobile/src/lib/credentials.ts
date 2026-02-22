@@ -83,6 +83,26 @@ export function setApiUrl(value: string): void {
   localStorage.setItem(KEY_API_URL, value)
 }
 
+// ── Auth Token ────────────────────────────────────────────
+
+const KEY_AUTH_TOKEN = 'spid_auth_token'
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(KEY_AUTH_TOKEN)
+}
+
+export function setAuthToken(token: string): void {
+  localStorage.setItem(KEY_AUTH_TOKEN, token)
+}
+
+export function clearAuthToken(): void {
+  localStorage.removeItem(KEY_AUTH_TOKEN)
+}
+
+export function isAuthenticated(): boolean {
+  return !!localStorage.getItem(KEY_AUTH_TOKEN)
+}
+
 // ── Utilities ─────────────────────────────────────────────
 
 export function getLastSyncAt(): string | null {

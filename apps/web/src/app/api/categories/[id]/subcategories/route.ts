@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const createSubcategorySchema = z.object({
@@ -9,15 +10,20 @@ const createSubcategorySchema = z.object({
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
 
-    const category = await prisma.category.findUnique({ where: { id } })
+    const category = await prisma.category.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    })
     if (!category) return errorResponse('Category not found', 404)
 
     const subcategories = await prisma.subcategory.findMany({
-      where: { categoryId: id },
+      where: { categoryId: id, tenantId: auth.tenantId },
       orderBy: { name: 'asc' },
     })
 
@@ -30,15 +36,20 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const auth = await requireAuth(request)
+    if (isAuthError(auth)) return auth
+
     const { id } = await params
     const result = await parseBody(request, createSubcategorySchema)
     if ('error' in result) return result.error
 
-    const category = await prisma.category.findUnique({ where: { id } })
+    const category = await prisma.category.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    })
     if (!category) return errorResponse('Category not found', 404)
 
     const subcategory = await prisma.subcategory.create({
-      data: { ...result.data, categoryId: id },
+      data: { ...result.data, categoryId: id, tenantId: auth.tenantId },
     })
 
     return NextResponse.json(subcategory, { status: 201 })

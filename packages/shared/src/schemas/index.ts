@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export * from './auth'
+
 // ─── Produtos ────────────────────────────────────────────
 
 const productUnitSchema = z.object({

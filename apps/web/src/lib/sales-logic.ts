@@ -26,9 +26,9 @@ interface SalePayment {
   installmentIntervalDays?: number | null
 }
 
-async function getNextCouponNumber(tx: TxClient): Promise<number> {
+async function getNextCouponNumber(tx: TxClient, tenantId: string): Promise<number> {
   const lastSale = await tx.sale.findFirst({
-    where: { couponNumber: { not: null } },
+    where: { couponNumber: { not: null }, tenantId },
     orderBy: { couponNumber: 'desc' },
     select: { couponNumber: true },
   })
@@ -71,6 +71,7 @@ async function processImmediatePayment(
   saleDate: Date,
   couponNumber: number,
   pmt: SalePayment,
+  tenantId: string,
 ) {
   await tx.payment.create({
     data: {
@@ -80,6 +81,7 @@ async function processImmediatePayment(
       amount: pmt.amount,
       accountId: pmt.accountId,
       cardType: pmt.cardType,
+      tenantId,
     },
   })
 
@@ -91,6 +93,7 @@ async function processImmediatePayment(
       status: 'PAID',
       paidAt: saleDate,
       notes: `Venda cupom #${couponNumber}`,
+      tenantId,
     },
   })
 }
@@ -101,6 +104,7 @@ async function processCardInstallments(
   customerId: string,
   saleDate: Date,
   pmt: SalePayment,
+  tenantId: string,
 ) {
   const installments = generateInstallments(
     pmt.amount,
@@ -118,6 +122,7 @@ async function processCardInstallments(
         amount: inst.amount,
         status: 'OPEN',
         kind: 'CARD_INSTALLMENT',
+        tenantId,
       },
     })
   }
@@ -129,6 +134,7 @@ async function processCreditPayment(
   customerId: string,
   saleDate: Date,
   pmt: SalePayment,
+  tenantId: string,
 ) {
   const count = pmt.installments ?? 1
   const intervalDays = pmt.installmentIntervalDays ?? 30
@@ -149,6 +155,7 @@ async function processCreditPayment(
         amount: inst.amount,
         status: 'OPEN',
         kind: kindMap[pmt.method] ?? 'CREDIARIO',
+        tenantId,
       },
     })
   }
@@ -162,6 +169,7 @@ export async function confirmSale(
   saleDate: Date,
   customerId: string | null | undefined,
   deviceId: string,
+  tenantId: string,
 ) {
   // 1. Inventory movements + FIFO for each item
   for (const item of items) {
@@ -179,6 +187,7 @@ export async function confirmSale(
         reasonType: 'SALE',
         reasonId: saleId,
         deviceId,
+        tenantId,
       },
     })
 
@@ -186,7 +195,7 @@ export async function confirmSale(
   }
 
   // 2. Generate coupon number
-  const couponNumber = await getNextCouponNumber(tx)
+  const couponNumber = await getNextCouponNumber(tx, tenantId)
   await tx.sale.update({
     where: { id: saleId },
     data: { status: 'CONFIRMED', couponNumber },
@@ -201,13 +210,13 @@ export async function confirmSale(
       && (!pmt.installments || pmt.installments <= 1)
 
     if (isImmediate || isCreditNoInstallments) {
-      await processImmediatePayment(tx, saleId, saleDate, couponNumber, pmt)
+      await processImmediatePayment(tx, saleId, saleDate, couponNumber, pmt, tenantId)
     } else if (pmt.method === 'CREDIT_CARD' && pmt.installments && pmt.installments > 1) {
       if (!customerId) throw new Error('Customer required for installment payments')
-      await processCardInstallments(tx, saleId, customerId, saleDate, pmt)
+      await processCardInstallments(tx, saleId, customerId, saleDate, pmt, tenantId)
     } else {
       if (!customerId) throw new Error('Customer required for credit payments')
-      await processCreditPayment(tx, saleId, customerId, saleDate, pmt)
+      await processCreditPayment(tx, saleId, customerId, saleDate, pmt, tenantId)
     }
   }
 }
