@@ -655,12 +655,13 @@ export default function NovaVendaPage() {
               <button onClick={() => router.back()} style={navButtonStyle('secondary')}>Cancelar</button>
               <button
                 onClick={() => {
-                  if (payments.length === 0 && accounts && accounts.length > 0) {
+                  const firstAccount = accounts?.[0]
+                  if (payments.length === 0 && firstAccount) {
                     setPayments([{
                       id: crypto.randomUUID(),
                       method: 'CASH',
                       amount: total.toFixed(2).replace('.', ','),
-                      accountId: accounts![0].id,
+                      accountId: firstAccount.id,
                       installments: 1,
                     }])
                   }
