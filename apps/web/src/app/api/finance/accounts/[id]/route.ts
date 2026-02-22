@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const accountSchema = z.object({
@@ -14,16 +13,11 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const auth = await requireAuth(request)
-    if (isAuthError(auth)) return auth
-
     const { id } = await params
     const result = await parseBody(request, accountSchema.partial())
     if ('error' in result) return result.error
 
-    const existing = await prisma.account.findFirst({
-      where: { id, tenantId: auth.tenantId },
-    })
+    const existing = await prisma.account.findUnique({ where: { id } })
     if (!existing) return errorResponse('Account not found', 404)
 
     const updated = await prisma.account.update({
@@ -38,16 +32,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const auth = await requireAuth(request)
-    if (isAuthError(auth)) return auth
-
     const { id } = await params
 
-    const existing = await prisma.account.findFirst({
-      where: { id, tenantId: auth.tenantId },
-    })
+    const existing = await prisma.account.findUnique({ where: { id } })
     if (!existing) return errorResponse('Account not found', 404)
 
     await prisma.account.update({ where: { id }, data: { active: false } })
