@@ -531,7 +531,7 @@ export default function NovaVendaPage() {
                             updateItem(item.id, 'unitId', e.target.value)
                             if (unit) {
                               updateItem(item.id, 'unitLabel', unit.nameLabel)
-                              if (unit.price) updateItem(item.id, 'unitPrice', String(unit.price))
+                              if (unit.price != null) updateItem(item.id, 'unitPrice', String(unit.price))
                             }
                           }}
                           style={miniInputStyle}
@@ -645,7 +645,18 @@ export default function NovaVendaPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button onClick={() => router.back()} style={navButtonStyle('secondary')}>Cancelar</button>
               <button
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  if (payments.length === 0 && accounts && accounts.length > 0) {
+                    setPayments([{
+                      id: crypto.randomUUID(),
+                      method: 'CASH',
+                      amount: total.toFixed(2).replace('.', ','),
+                      accountId: accounts[0].id,
+                      installments: 1,
+                    }])
+                  }
+                  setStep(2)
+                }}
                 disabled={items.length === 0}
                 style={{ ...navButtonStyle('primary'), opacity: items.length === 0 ? 0.5 : 1, cursor: items.length === 0 ? 'not-allowed' : 'pointer' }}
               >

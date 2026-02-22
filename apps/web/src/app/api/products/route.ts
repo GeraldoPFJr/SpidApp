@@ -16,13 +16,34 @@ export async function GET(request: NextRequest) {
     if (categoryId) where.categoryId = categoryId
     if (search) where.name = { contains: search, mode: 'insensitive' }
 
+    // Find the default price tier
+    const defaultTier = await prisma.priceTier.findFirst({ where: { isDefault: true } })
+
     const products = await prisma.product.findMany({
       where,
-      include: { units: true, prices: true, category: true, subcategory: true },
+      include: {
+        units: { include: { prices: { include: { tier: true } } } },
+        prices: true,
+        category: true,
+        subcategory: true,
+      },
       orderBy: { name: 'asc' },
     })
 
-    return NextResponse.json(products)
+    // Enrich each unit with the default tier price
+    const enriched = products.map((product) => ({
+      ...product,
+      units: product.units.map((unit) => {
+        const defaultPrice = unit.prices.find((p) => p.tierId === defaultTier?.id)
+        return {
+          ...unit,
+          price: defaultPrice ? Number(defaultPrice.price) : null,
+          prices: unit.prices,
+        }
+      }),
+    }))
+
+    return NextResponse.json(enriched)
   } catch (error) {
     console.error('Error in GET /api/products:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
