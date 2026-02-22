@@ -43,15 +43,59 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const existing = await prisma.product.findFirst({
       where: { id, deletedAt: null },
+      include: { units: true },
     })
     if (!existing) return errorResponse('Product not found', 404)
 
-    const { id: _id, units: _units, prices: _prices, ...data } = parsed.data
+    const { id: _id, units, prices, ...data } = parsed.data
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data,
-      include: { units: true, prices: true, category: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      // 1. Update basic product fields
+      await tx.product.update({ where: { id }, data })
+
+      // 2. Sync units if provided
+      if (units) {
+        const incomingIds = units.filter((u) => u.id).map((u) => u.id as string)
+        const existingIds = existing.units.map((u) => u.id)
+
+        // Delete units that were removed (only if no FK references)
+        const removedIds = existingIds.filter((eid) => !incomingIds.includes(eid))
+        for (const rid of removedIds) {
+          const saleRefs = await tx.saleItem.count({ where: { unitId: rid } })
+          const purchaseRefs = await tx.purchaseItem.count({ where: { unitId: rid } })
+          if (saleRefs === 0 && purchaseRefs === 0) {
+            await tx.productPrice.deleteMany({ where: { unitId: rid } })
+            await tx.productUnit.delete({ where: { id: rid } })
+          }
+        }
+
+        // Upsert units
+        for (const u of units) {
+          const { id: unitId, ...unitData } = u
+          if (unitId && existingIds.includes(unitId)) {
+            await tx.productUnit.update({ where: { id: unitId }, data: unitData })
+          } else {
+            await tx.productUnit.create({
+              data: { ...unitData, productId: id, ...(unitId ? { id: unitId } : {}) },
+            })
+          }
+        }
+      }
+
+      // 3. Sync prices if provided
+      if (prices) {
+        await tx.productPrice.deleteMany({ where: { productId: id } })
+        if (prices.length > 0) {
+          await tx.productPrice.createMany({
+            data: prices.map((p) => ({ ...p, productId: id })),
+          })
+        }
+      }
+
+      return tx.product.findUnique({
+        where: { id },
+        include: { units: true, prices: true, category: true },
+      })
     })
 
     return NextResponse.json(updated)

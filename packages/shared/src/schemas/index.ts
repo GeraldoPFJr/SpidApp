@@ -26,8 +26,14 @@ export const createProductSchema = z.object({
   prices: z.array(productPriceSchema).optional(),
 })
 
+const productUnitUpdateSchema = productUnitSchema.extend({
+  id: z.string().uuid().optional(),
+})
+
 export const updateProductSchema = createProductSchema.partial().extend({
   id: z.string().uuid(),
+  units: z.array(productUnitUpdateSchema).optional(),
+  prices: z.array(productPriceSchema).optional(),
 })
 
 // ─── Clientes ────────────────────────────────────────────

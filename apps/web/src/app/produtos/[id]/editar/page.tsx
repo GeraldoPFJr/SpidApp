@@ -165,6 +165,7 @@ export default function EditarProdutoPage() {
           minStock: minStock ? parseInt(minStock, 10) : null,
           active,
           units: units.map((u) => ({
+            id: u.id,
             nameLabel: u.nameLabel,
             factorToBase: u.factorToBase,
             isSellable: u.isSellable,
