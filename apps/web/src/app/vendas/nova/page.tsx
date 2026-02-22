@@ -60,20 +60,6 @@ export default function NovaVendaPage() {
     intervalMode: 'days' as 'days' | 'sameDay',
   })
 
-  // Auto-fill default payment when entering step 2
-  useEffect(() => {
-    const firstAccount = accounts?.[0]
-    if (step === 2 && payments.length === 0 && firstAccount) {
-      setPayments([{
-        id: crypto.randomUUID(),
-        method: 'CASH',
-        amount: total.toFixed(2).replace('.', ','),
-        accountId: firstAccount.id,
-        installments: 1,
-      }])
-    }
-  }, [step, payments.length, accounts, total])
-
   // Step 3: confirmation
   const [saving, setSaving] = useState(false)
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null)
@@ -99,6 +85,20 @@ export default function NovaVendaPage() {
   const surchargeValue = parseFloat(surcharge.replace(',', '.')) || 0
   const freightValue = parseFloat(freight.replace(',', '.')) || 0
   const total = subtotal - discountValue + surchargeValue + freightValue
+
+  // Auto-fill default payment when entering step 2
+  useEffect(() => {
+    const firstAccount = accounts?.[0]
+    if (step === 2 && payments.length === 0 && firstAccount) {
+      setPayments([{
+        id: crypto.randomUUID(),
+        method: 'CASH',
+        amount: total.toFixed(2).replace('.', ','),
+        accountId: firstAccount.id,
+        installments: 1,
+      }])
+    }
+  }, [step, payments.length, accounts, total])
 
   const selectedCustomer = customers?.find((c) => c.id === customerId)
 
