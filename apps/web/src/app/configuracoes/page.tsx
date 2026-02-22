@@ -27,6 +27,13 @@ interface PriceTier {
   isDefault: boolean
 }
 
+interface AccountInfo {
+  id: string
+  name: string
+  type: 'CASH' | 'BANK' | 'OTHER'
+  active: boolean
+}
+
 interface PrinterProfile {
   id: string
   name: string
@@ -49,6 +56,7 @@ interface AppSettings {
 export default function ConfiguracoesPage() {
   const { data: settings, loading } = useApi<AppSettings>('/settings')
   const { data: priceTiers, refetch: refetchTiers } = useApi<PriceTier[]>('/price-tiers')
+  const { data: accounts, refetch: refetchAccounts } = useApi<AccountInfo[]>('/finance/accounts')
   const { data: printers } = useApi<PrinterProfile[]>('/settings/printers')
 
   const [activeSection, setActiveSection] = useState('company')
@@ -74,6 +82,15 @@ export default function ConfiguracoesPage() {
   const [editingTierId, setEditingTierId] = useState<string | null>(null)
   const [editingTierName, setEditingTierName] = useState('')
   const [tierError, setTierError] = useState<string | null>(null)
+
+  // Account CRUD
+  const [newAccountName, setNewAccountName] = useState('')
+  const [newAccountType, setNewAccountType] = useState<'CASH' | 'BANK' | 'OTHER'>('CASH')
+  const [addingAccount, setAddingAccount] = useState(false)
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null)
+  const [editingAccountName, setEditingAccountName] = useState('')
+  const [editingAccountType, setEditingAccountType] = useState<'CASH' | 'BANK' | 'OTHER'>('CASH')
+  const [accountError, setAccountError] = useState<string | null>(null)
 
   // Initialize from API
   useEffect(() => {
@@ -158,6 +175,62 @@ export default function ConfiguracoesPage() {
       }
     }
   }, [defaultPriceTierId, refetchTiers])
+
+  // ─── Account handlers ────────────────────────────────
+
+  const accountTypeLabel = (type: string) => {
+    if (type === 'CASH') return 'Dinheiro'
+    if (type === 'BANK') return 'Banco'
+    return 'Outro'
+  }
+
+  const handleAddAccount = useCallback(async () => {
+    const name = newAccountName.trim()
+    if (!name) return
+    setAddingAccount(true)
+    setAccountError(null)
+    try {
+      await apiClient('/finance/accounts', {
+        method: 'POST',
+        body: { name, type: newAccountType },
+      })
+      setNewAccountName('')
+      setNewAccountType('CASH')
+      refetchAccounts()
+    } catch {
+      setAccountError('Erro ao criar conta.')
+    } finally {
+      setAddingAccount(false)
+    }
+  }, [newAccountName, newAccountType, refetchAccounts])
+
+  const handleRenameAccount = useCallback(async (id: string) => {
+    const name = editingAccountName.trim()
+    if (!name) return
+    setAccountError(null)
+    try {
+      await apiClient(`/finance/accounts/${id}`, {
+        method: 'PUT',
+        body: { name, type: editingAccountType },
+      })
+      setEditingAccountId(null)
+      setEditingAccountName('')
+      refetchAccounts()
+    } catch {
+      setAccountError('Erro ao atualizar conta.')
+    }
+  }, [editingAccountName, editingAccountType, refetchAccounts])
+
+  const handleDeleteAccount = useCallback(async (id: string, name: string) => {
+    if (!confirm(`Desativar a conta "${name}"? Ela nao aparecera mais nas opcoes de pagamento.`)) return
+    setAccountError(null)
+    try {
+      await apiClient(`/finance/accounts/${id}`, { method: 'DELETE' })
+      refetchAccounts()
+    } catch {
+      setAccountError('Erro ao desativar conta.')
+    }
+  }, [refetchAccounts])
 
   // ─── Styles ────────────────────────────────────────
 
@@ -324,6 +397,7 @@ export default function ConfiguracoesPage() {
     { id: 'company', label: 'Dados do Cupom', icon: 'M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm8 8h-6v-2h6v2zm0-4h-6v-2h6v2zm0-4h-6V7h6v2z' },
     { id: 'cost', label: 'Metodo de Custo', icon: 'M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 14l2 2 4-4' },
     { id: 'pricing', label: 'Tabela de Precos', icon: 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6' },
+    { id: 'accounts', label: 'Contas', icon: 'M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7zm0 3h20' },
     { id: 'printing', label: 'Impressao', icon: 'M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z' },
     { id: 'sync', label: 'Sincronizacao', icon: 'M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2' },
   ]
@@ -672,6 +746,184 @@ export default function ConfiguracoesPage() {
                   <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-100)' }}>
                     <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-primary-700)', margin: 0 }}>
                       <strong>Dica:</strong> Selecione a tabela padrao clicando no circulo a esquerda. Os precos de cada produto sao configurados na tela de cadastro/edicao do produto, na secao &quot;Precos&quot;.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Accounts */}
+            {activeSection === 'accounts' && (
+              <>
+                <div style={cardStyle}>
+                  <h2 style={sectionTitleStyle}>Contas Financeiras</h2>
+                  <p style={sectionDescStyle}>Contas usadas nos pagamentos de vendas e lancamentos financeiros (ex: Caixa, Banco do Brasil, Pix)</p>
+
+                  {accountError && (
+                    <div style={{ padding: '10px 14px', marginBottom: '16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
+                      {accountError}
+                    </div>
+                  )}
+
+                  {/* Add new account */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <input
+                      type="text"
+                      value={newAccountName}
+                      onChange={(e) => setNewAccountName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddAccount() }}
+                      placeholder="Nome da conta (ex: Caixa, Pix Nubank)"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                    <select
+                      value={newAccountType}
+                      onChange={(e) => setNewAccountType(e.target.value as 'CASH' | 'BANK' | 'OTHER')}
+                      style={{
+                        padding: '8px 12px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)',
+                        backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
+                        borderRadius: 'var(--radius-md)', outline: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      <option value="CASH">Dinheiro</option>
+                      <option value="BANK">Banco</option>
+                      <option value="OTHER">Outro</option>
+                    </select>
+                    <button
+                      onClick={handleAddAccount}
+                      disabled={addingAccount || !newAccountName.trim()}
+                      style={{
+                        padding: '8px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
+                        color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                        border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                        opacity: addingAccount || !newAccountName.trim() ? 0.5 : 1,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {addingAccount ? 'Criando...' : '+ Adicionar'}
+                    </button>
+                  </div>
+
+                  {/* List accounts */}
+                  {accounts && accounts.filter(a => a.active).length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {accounts.filter(a => a.active).map((acc) => (
+                        <div
+                          key={acc.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-neutral-200)',
+                            backgroundColor: 'var(--color-white)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            {editingAccountId === acc.id ? (
+                              <div style={{ display: 'flex', gap: '6px', flex: 1, alignItems: 'center' }}>
+                                <input
+                                  type="text"
+                                  value={editingAccountName}
+                                  onChange={(e) => setEditingAccountName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRenameAccount(acc.id)
+                                    if (e.key === 'Escape') { setEditingAccountId(null); setEditingAccountName('') }
+                                  }}
+                                  autoFocus
+                                  style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 'var(--font-sm)' }}
+                                />
+                                <select
+                                  value={editingAccountType}
+                                  onChange={(e) => setEditingAccountType(e.target.value as 'CASH' | 'BANK' | 'OTHER')}
+                                  style={{
+                                    padding: '4px 8px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-700)',
+                                    backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
+                                    borderRadius: 'var(--radius-md)', outline: 'none', cursor: 'pointer',
+                                  }}
+                                >
+                                  <option value="CASH">Dinheiro</option>
+                                  <option value="BANK">Banco</option>
+                                  <option value="OTHER">Outro</option>
+                                </select>
+                                <button
+                                  onClick={() => handleRenameAccount(acc.id)}
+                                  style={{
+                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                    color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                  }}
+                                >
+                                  Salvar
+                                </button>
+                                <button
+                                  onClick={() => { setEditingAccountId(null); setEditingAccountName('') }}
+                                  style={{
+                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                    color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
+                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                  }}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                <span style={{ fontWeight: 500, color: 'var(--color-neutral-800)', fontSize: 'var(--font-sm)' }}>
+                                  {acc.name}
+                                </span>
+                                <span style={{
+                                  display: 'inline-flex', padding: '1px 8px',
+                                  fontSize: 'var(--font-xs)', fontWeight: 500,
+                                  borderRadius: 'var(--radius-full)',
+                                  backgroundColor: acc.type === 'CASH' ? 'var(--color-success-100)' : acc.type === 'BANK' ? 'var(--color-primary-100)' : 'var(--color-neutral-100)',
+                                  color: acc.type === 'CASH' ? 'var(--color-success-700)' : acc.type === 'BANK' ? 'var(--color-primary-700)' : 'var(--color-neutral-600)',
+                                }}>
+                                  {accountTypeLabel(acc.type)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {editingAccountId !== acc.id && (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                onClick={() => { setEditingAccountId(acc.id); setEditingAccountName(acc.name); setEditingAccountType(acc.type) }}
+                                title="Editar"
+                                style={{
+                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-neutral-500)',
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAccount(acc.id, acc.name)}
+                                title="Desativar"
+                                style={{
+                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-danger-500)',
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-neutral-300)' }}>
+                      Nenhuma conta cadastrada. Crie uma acima para usar nos pagamentos.
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-100)' }}>
+                    <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-primary-700)', margin: 0 }}>
+                      <strong>Dica:</strong> Crie pelo menos uma conta (ex: &quot;Caixa&quot;) para que ela apareca nas opcoes de pagamento ao registrar uma venda.
                     </p>
                   </div>
                 </div>
