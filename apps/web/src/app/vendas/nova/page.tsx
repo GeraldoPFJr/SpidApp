@@ -37,7 +37,16 @@ export default function NovaVendaPage() {
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [customerSearch, setCustomerSearch] = useState('')
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
-  const [items, setItems] = useState<SaleItem[]>([])
+  const [items, setItems] = useState<SaleItem[]>([{
+    id: crypto.randomUUID(),
+    productId: '',
+    productName: '',
+    unitId: '',
+    unitLabel: '',
+    qty: '1',
+    unitPrice: '',
+    subtotal: 0,
+  }])
   const [discount, setDiscount] = useState('')
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('fixed')
   const [surcharge, setSurcharge] = useState('')
@@ -657,8 +666,8 @@ export default function NovaVendaPage() {
                   }
                   setStep(2)
                 }}
-                disabled={items.length === 0}
-                style={{ ...navButtonStyle('primary'), opacity: items.length === 0 ? 0.5 : 1, cursor: items.length === 0 ? 'not-allowed' : 'pointer' }}
+                disabled={!items.some((i) => i.productId)}
+                style={{ ...navButtonStyle('primary'), opacity: !items.some((i) => i.productId) ? 0.5 : 1, cursor: !items.some((i) => i.productId) ? 'not-allowed' : 'pointer' }}
               >
                 Proximo: Pagamento
               </button>
@@ -834,7 +843,16 @@ export default function NovaVendaPage() {
               <button
                 onClick={() => {
                   setStep(1)
-                  setItems([])
+                  setItems([{
+                    id: crypto.randomUUID(),
+                    productId: '',
+                    productName: '',
+                    unitId: '',
+                    unitLabel: '',
+                    qty: '1',
+                    unitPrice: '',
+                    subtotal: 0,
+                  }])
                   setPayments([])
                   setCustomerId(null)
                   setDiscount('')
