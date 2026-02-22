@@ -12,6 +12,13 @@ dist/
 build/
 .next/
 out/
+*.tsbuildinfo
+
+# Shared package build artifacts
+packages/shared/src/**/*.js
+packages/shared/src/**/*.js.map
+packages/shared/src/**/*.d.ts
+packages/shared/src/**/*.d.ts.map
 
 # Prisma
 prisma/*.db
@@ -39,3 +46,4 @@ coverage/
 
 # Session states (temporary)
 .docs/sessions/*.md
+.vercel

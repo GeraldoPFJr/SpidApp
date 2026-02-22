@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Spid** — Sistema de vendas offline-first para vendedor autônomo de ovos e mercearia (porta a porta + WhatsApp). Operação 100% offline no celular Android com sincronização posterior para Neon Postgres.
 
-**Status**: Especificação completa, sem código implementado. Documentação de referência em `descritivo.md`, `diretrizes.md`, `inicio.md` e `tasklist.md`.
+**Status**: MVP funcional deployado. Web + API em produção no Vercel, banco Neon Postgres, APK Android gerado.
+
+**URLs de Produção**:
+- Web/API: `https://spid-web-six.vercel.app`
+- Neon Project: `super-smoke-72989991` (org: `org-bitter-brook-21514304`)
 
 ## Stack
 
@@ -14,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |--------|-----------|
 | Mobile (Android) | React + TypeScript + Capacitor + SQLite local |
 | Web (PC) | Next.js (React + TypeScript) |
-| Backend/API | Node.js + TypeScript + Fastify |
+| Backend/API | Next.js API Routes (migrado de Fastify) |
 | ORM | Prisma |
 | Banco | Neon Postgres |
 | Validação | Zod |
@@ -24,15 +28,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 /apps
-  /api         — Backend Fastify + Prisma
-  /web         — Next.js (PC)
-  /mobile      — React + Capacitor (Android)
+  /api         — Backend Fastify (legado, substituído por Next.js API Routes)
+  /web         — Next.js (PC + API Routes em src/app/api/)
+  /mobile      — React + Vite + Capacitor (Android)
 /packages
   /shared      — Tipos TS, validações Zod, regras de negócio
   /ui          — Componentes React reutilizáveis
-/prisma        — Schema e migrations
+/prisma        — Schema e migrations (22 tabelas no Neon)
 /.docs         — Documentação do projeto
 ```
+
+## Deploy
+
+- **Vercel**: projeto `spid-web`, deploy automático via `vercel --prod`
+- **vercel.json**: build com `prisma generate` + `next build`
+- **Neon Postgres**: conexão pooled via `DATABASE_URL` (env var no Vercel)
+- **Sem CORS**: API e frontend no mesmo domínio (Next.js API Routes)
+- **Auth**: `SYNC_SECRET` como env var no Vercel
 
 ## Comandos de Desenvolvimento
 
