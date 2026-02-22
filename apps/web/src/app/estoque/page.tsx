@@ -6,6 +6,15 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 
+interface ApiStockRow {
+  productId: string
+  productName: string
+  qtyBase: number
+  minStock: number | null
+  belowMin: boolean
+  units: Array<{ unitId: string; nameLabel: string; factorToBase: number; available: number }>
+}
+
 interface StockRow {
   id: string
   productName: string
@@ -14,8 +23,23 @@ interface StockRow {
   units: Array<{ label: string; factor: number; equivalent: number }>
 }
 
+function mapStockRow(row: ApiStockRow): StockRow {
+  return {
+    id: row.productId,
+    productName: row.productName,
+    stockBase: row.qtyBase ?? 0,
+    minStock: row.minStock,
+    units: (row.units ?? []).map((u) => ({
+      label: u.nameLabel,
+      factor: u.factorToBase,
+      equivalent: u.available,
+    })),
+  }
+}
+
 export default function EstoquePage() {
-  const { data, loading } = useApi<StockRow[]>('/inventory')
+  const { data: rawData, loading } = useApi<ApiStockRow[]>('/inventory')
+  const data = useMemo(() => (rawData ?? []).map(mapStockRow), [rawData])
 
   const columns: DataTableColumn<StockRow>[] = useMemo(() => [
     {
@@ -28,14 +52,14 @@ export default function EstoquePage() {
       header: 'Saldo Base',
       width: '120px',
       align: 'right',
-      render: (row) => <span style={{ fontWeight: 600 }}>{row.stockBase.toLocaleString('pt-BR')}</span>,
+      render: (row) => <span style={{ fontWeight: 600 }}>{(row.stockBase ?? 0).toLocaleString('pt-BR')}</span>,
     },
     {
       key: 'units',
       header: 'Equivalentes',
       render: (row) => (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {row.units.map((u) => (
+          {(row.units ?? []).map((u) => (
             <span key={u.label} style={{
               display: 'inline-flex', padding: '2px 8px', fontSize: 'var(--font-xs)',
               backgroundColor: 'var(--color-neutral-100)', borderRadius: 'var(--radius-sm)',
@@ -62,7 +86,7 @@ export default function EstoquePage() {
       sortable: false,
       render: (row) => {
         if (row.minStock == null) return <span style={{ color: 'var(--color-neutral-400)' }}>-</span>
-        const isLow = row.stockBase < row.minStock
+        const isLow = (row.stockBase ?? 0) < row.minStock
         return (
           <span style={{
             display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
@@ -105,7 +129,7 @@ export default function EstoquePage() {
         </div>
         <DataTable
           columns={columns}
-          rows={data ?? []}
+          rows={data}
           keyExtractor={(row) => row.id}
           loading={loading}
           searchPlaceholder="Buscar produto..."

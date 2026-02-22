@@ -6,21 +6,49 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { formatCurrency, getCurrentMonth } from '@/lib/format'
 
-// ─── Types ──────────────────────────────────────────────
+// ─── API response types ──────────────────────────────────
 
 type Tab = 'products' | 'customers' | 'cashflow'
+
+interface ApiProduct3m {
+  product: { id: string; name: string }
+  months: Array<{ month: string; faturamento: number; itensVendidos: number; clientesUnicos: number }>
+}
+
+interface ApiCustomer3m {
+  customer: { id: string; name: string }
+  totalComprado: number
+  qtdVendas: number
+  prazoMedioPagamento: number
+}
+
+interface ApiCashFlow {
+  month: string
+  byAccount: Array<{
+    account: { id: string; name: string; type: string }
+    saldoInicial: number
+    entradas: number
+    saidas: number
+    saldoFinal: number
+  }>
+  byCategory: Array<{ name: string; type: string; total: number }>
+  consolidated: {
+    saldoInicial: number
+    entradas: number
+    saidas: number
+    saldoFinal: number
+  }
+}
+
+// ─── Display row types ──────────────────────────────────
 
 interface Product3mRow {
   productId: string
   productName: string
   m2Revenue: number
-  m2Profit: number
   m1Revenue: number
-  m1Profit: number
   m0Revenue: number
-  m0Profit: number
   totalRevenue: number
-  totalProfit: number
   totalQty: number
 }
 
@@ -28,32 +56,37 @@ interface CustomerRankRow {
   customerId: string
   customerName: string
   totalPurchased: number
-  totalProfit: number
   salesCount: number
   avgPaymentDays: number
 }
 
-interface CashFlowRow {
-  categoryName: string
-  type: 'IN' | 'OUT'
-  amount: number
+// ─── Mappers ──────────────────────────────────────────
+
+function mapProducts(raw: ApiProduct3m[]): Product3mRow[] {
+  return raw.map((item) => {
+    const m2 = item.months[0]
+    const m1 = item.months[1]
+    const m0 = item.months[2]
+    return {
+      productId: item.product.id,
+      productName: item.product.name,
+      m2Revenue: m2?.faturamento ?? 0,
+      m1Revenue: m1?.faturamento ?? 0,
+      m0Revenue: m0?.faturamento ?? 0,
+      totalRevenue: (m2?.faturamento ?? 0) + (m1?.faturamento ?? 0) + (m0?.faturamento ?? 0),
+      totalQty: (m2?.itensVendidos ?? 0) + (m1?.itensVendidos ?? 0) + (m0?.itensVendidos ?? 0),
+    }
+  })
 }
 
-interface CashFlowData {
-  accounts: Array<{
-    accountId: string
-    accountName: string
-    openingBalance: number
-    totalIn: number
-    totalOut: number
-    closingBalance: number
-  }>
-  consolidated: {
-    totalIn: number
-    totalOut: number
-    netFlow: number
-  }
-  byCategory: CashFlowRow[]
+function mapCustomers(raw: ApiCustomer3m[]): CustomerRankRow[] {
+  return raw.map((item) => ({
+    customerId: item.customer.id,
+    customerName: item.customer.name,
+    totalPurchased: item.totalComprado ?? 0,
+    salesCount: item.qtdVendas ?? 0,
+    avgPaymentDays: item.prazoMedioPagamento ?? 0,
+  }))
 }
 
 // ─── Component ──────────────────────────────────────────
@@ -61,11 +94,13 @@ interface CashFlowData {
 export default function RelatoriosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('products')
   const [month, setMonth] = useState(getCurrentMonth)
-  const [viewMode, setViewMode] = useState<'revenue' | 'profit'>('revenue')
 
-  const { data: productsData, loading: productsLoading } = useApi<Product3mRow[]>('/reports/products-3m')
-  const { data: customersData, loading: customersLoading } = useApi<CustomerRankRow[]>('/reports/customers-3m')
-  const { data: cashFlowData, loading: cashFlowLoading } = useApi<CashFlowData>(`/reports/cashflow?month=${month}`)
+  const { data: rawProducts, loading: productsLoading } = useApi<ApiProduct3m[]>('/reports/products-3m')
+  const { data: rawCustomers, loading: customersLoading } = useApi<ApiCustomer3m[]>('/reports/customers-3m')
+  const { data: cashFlowData, loading: cashFlowLoading } = useApi<ApiCashFlow>(`/reports/cashflow?month=${month}`)
+
+  const productsData = useMemo(() => mapProducts(rawProducts ?? []), [rawProducts])
+  const customersData = useMemo(() => mapCustomers(rawCustomers ?? []), [rawCustomers])
 
   // ─── Month labels ──────────────────────────────
 
@@ -98,7 +133,7 @@ export default function RelatoriosPage() {
       width: '130px',
       render: (row) => (
         <span style={{ fontWeight: 500 }}>
-          {formatCurrency(viewMode === 'revenue' ? row.m2Revenue : row.m2Profit)}
+          {formatCurrency(row.m2Revenue)}
         </span>
       ),
     },
@@ -109,7 +144,7 @@ export default function RelatoriosPage() {
       width: '130px',
       render: (row) => (
         <span style={{ fontWeight: 500 }}>
-          {formatCurrency(viewMode === 'revenue' ? row.m1Revenue : row.m1Profit)}
+          {formatCurrency(row.m1Revenue)}
         </span>
       ),
     },
@@ -120,7 +155,7 @@ export default function RelatoriosPage() {
       width: '130px',
       render: (row) => (
         <span style={{ fontWeight: 600 }}>
-          {formatCurrency(viewMode === 'revenue' ? row.m0Revenue : row.m0Profit)}
+          {formatCurrency(row.m0Revenue)}
         </span>
       ),
     },
@@ -131,7 +166,7 @@ export default function RelatoriosPage() {
       width: '140px',
       render: (row) => (
         <span style={{ fontWeight: 700, color: 'var(--color-primary-700)' }}>
-          {formatCurrency(viewMode === 'revenue' ? row.totalRevenue : row.totalProfit)}
+          {formatCurrency(row.totalRevenue)}
         </span>
       ),
     },
@@ -140,9 +175,9 @@ export default function RelatoriosPage() {
       header: 'Qtd Vendida',
       align: 'right',
       width: '120px',
-      render: (row) => <span style={{ color: 'var(--color-neutral-500)' }}>{row.totalQty.toLocaleString('pt-BR')}</span>,
+      render: (row) => <span style={{ color: 'var(--color-neutral-500)' }}>{(row.totalQty ?? 0).toLocaleString('pt-BR')}</span>,
     },
-  ], [viewMode, monthLabels])
+  ], [monthLabels])
 
   // ─── Customer Ranking columns ──────────────────
 
@@ -175,17 +210,6 @@ export default function RelatoriosPage() {
       align: 'right',
       width: '150px',
       render: (row) => <span style={{ fontWeight: 600 }}>{formatCurrency(row.totalPurchased)}</span>,
-    },
-    {
-      key: 'totalProfit',
-      header: 'Lucro',
-      align: 'right',
-      width: '130px',
-      render: (row) => (
-        <span style={{ fontWeight: 600, color: row.totalProfit >= 0 ? 'var(--color-success-600)' : 'var(--color-danger-600)' }}>
-          {formatCurrency(row.totalProfit)}
-        </span>
-      ),
     },
     {
       key: 'salesCount',
@@ -231,18 +255,6 @@ export default function RelatoriosPage() {
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
     boxShadow: active ? 'var(--shadow-sm)' : 'none',
-  })
-
-  const toggleBtnStyle = (active: boolean): CSSProperties => ({
-    padding: '6px 14px',
-    fontSize: 'var(--font-xs)',
-    fontWeight: active ? 600 : 400,
-    color: active ? 'var(--color-primary-700)' : 'var(--color-neutral-500)',
-    backgroundColor: active ? 'var(--color-primary-50)' : 'var(--color-white)',
-    border: `1px solid ${active ? 'var(--color-primary-300)' : 'var(--color-neutral-300)'}`,
-    borderRadius: 'var(--radius-md)',
-    cursor: 'pointer',
-    transition: 'all var(--transition-fast)',
   })
 
   const cardStyle: CSSProperties = {
@@ -329,23 +341,13 @@ export default function RelatoriosPage() {
         {activeTab === 'products' && (
           <DataTable
             columns={productColumns}
-            rows={productsData ?? []}
+            rows={productsData}
             keyExtractor={(row) => row.productId}
             loading={productsLoading}
             searchPlaceholder="Buscar produto..."
             searchKeys={['productName']}
             emptyTitle="Nenhum dado disponivel"
             emptyDescription="Sem vendas registradas nos ultimos 3 meses"
-            actions={
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button style={toggleBtnStyle(viewMode === 'revenue')} onClick={() => setViewMode('revenue')}>
-                  Faturamento
-                </button>
-                <button style={toggleBtnStyle(viewMode === 'profit')} onClick={() => setViewMode('profit')}>
-                  Lucro
-                </button>
-              </div>
-            }
           />
         )}
 
@@ -353,7 +355,7 @@ export default function RelatoriosPage() {
         {activeTab === 'customers' && (
           <DataTable
             columns={customerColumns}
-            rows={customersData ?? []}
+            rows={customersData}
             keyExtractor={(row) => row.customerId}
             loading={customersLoading}
             searchPlaceholder="Buscar cliente..."
@@ -377,61 +379,65 @@ export default function RelatoriosPage() {
                   <div style={cardStyle}>
                     <p style={cfLabelStyle}>Total Entradas</p>
                     <p style={{ ...cfValueStyle, color: 'var(--color-success-600)' }}>
-                      {formatCurrency(cashFlowData.consolidated.totalIn)}
+                      {formatCurrency(cashFlowData.consolidated?.entradas)}
                     </p>
                   </div>
                   <div style={cardStyle}>
                     <p style={cfLabelStyle}>Total Saidas</p>
                     <p style={{ ...cfValueStyle, color: 'var(--color-danger-600)' }}>
-                      {formatCurrency(cashFlowData.consolidated.totalOut)}
+                      {formatCurrency(cashFlowData.consolidated?.saidas)}
                     </p>
                   </div>
                   <div style={cardStyle}>
                     <p style={cfLabelStyle}>Fluxo Liquido</p>
                     <p style={{
                       ...cfValueStyle,
-                      color: cashFlowData.consolidated.netFlow >= 0 ? 'var(--color-success-600)' : 'var(--color-danger-600)',
+                      color: ((cashFlowData.consolidated?.entradas ?? 0) - (cashFlowData.consolidated?.saidas ?? 0)) >= 0
+                        ? 'var(--color-success-600)' : 'var(--color-danger-600)',
                     }}>
-                      {cashFlowData.consolidated.netFlow >= 0 ? '+' : ''}{formatCurrency(cashFlowData.consolidated.netFlow)}
+                      {(() => {
+                        const net = (cashFlowData.consolidated?.entradas ?? 0) - (cashFlowData.consolidated?.saidas ?? 0)
+                        return `${net >= 0 ? '+' : ''}${formatCurrency(net)}`
+                      })()}
                     </p>
                   </div>
                 </div>
 
                 {/* Per account */}
-                {cashFlowData.accounts.length > 0 && (
+                {(cashFlowData.byAccount ?? []).length > 0 && (
                   <div style={cardStyle}>
                     <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
                       Por Conta
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-                      {cashFlowData.accounts.map((acc) => (
-                        <div key={acc.accountId} style={accountCardStyle}>
+                      {(cashFlowData.byAccount ?? []).map((acc) => (
+                        <div key={acc.account.id} style={accountCardStyle}>
                           <p style={{ fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 12px', fontSize: 'var(--font-sm)' }}>
-                            {acc.accountName}
+                            {acc.account.name}
                           </p>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                             <div>
                               <p style={{ ...cfLabelStyle, fontSize: '0.65rem' }}>Saldo Inicial</p>
                               <p style={{ fontWeight: 600, color: 'var(--color-neutral-700)', margin: 0, fontSize: 'var(--font-sm)' }}>
-                                {formatCurrency(acc.openingBalance)}
+                                {formatCurrency(acc.saldoInicial)}
                               </p>
                             </div>
                             <div>
                               <p style={{ ...cfLabelStyle, fontSize: '0.65rem' }}>Saldo Final</p>
                               <p style={{ fontWeight: 600, color: 'var(--color-neutral-900)', margin: 0, fontSize: 'var(--font-sm)' }}>
-                                {formatCurrency(acc.closingBalance)}
+                                {formatCurrency(acc.saldoFinal)}
                               </p>
                             </div>
                             <div>
                               <p style={{ ...cfLabelStyle, fontSize: '0.65rem' }}>Entradas</p>
                               <p style={{ fontWeight: 500, color: 'var(--color-success-600)', margin: 0, fontSize: 'var(--font-sm)' }}>
-                                +{formatCurrency(acc.totalIn)}
+                                +{formatCurrency(acc.entradas)}
                               </p>
                             </div>
                             <div>
                               <p style={{ ...cfLabelStyle, fontSize: '0.65rem' }}>Saidas</p>
                               <p style={{ fontWeight: 500, color: 'var(--color-danger-600)', margin: 0, fontSize: 'var(--font-sm)' }}>
-                                -{formatCurrency(acc.totalOut)}
+                                -{formatCurrency(acc.saidas)}
                               </p>
                             </div>
                           </div>
@@ -442,7 +448,7 @@ export default function RelatoriosPage() {
                 )}
 
                 {/* By category */}
-                {cashFlowData.byCategory.length > 0 && (
+                {(cashFlowData.byCategory ?? []).length > 0 && (
                   <div style={cardStyle}>
                     <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
                       Por Categoria
@@ -480,30 +486,33 @@ export default function RelatoriosPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {cashFlowData.byCategory.map((cat, i) => (
-                            <tr key={`${cat.categoryName}-${cat.type}-${i}`}>
-                              <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>
-                                {cat.categoryName}
-                              </td>
-                              <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'center' }}>
-                                <span style={{
-                                  display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-                                  fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
-                                  backgroundColor: cat.type === 'IN' ? 'var(--color-success-100)' : 'var(--color-danger-100)',
-                                  color: cat.type === 'IN' ? 'var(--color-success-700)' : 'var(--color-danger-700)',
+                          {(cashFlowData.byCategory ?? []).map((cat, i) => {
+                            const isIncome = cat.type === 'INCOME' || cat.type === 'APORTE'
+                            return (
+                              <tr key={`${cat.name}-${cat.type}-${i}`}>
+                                <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>
+                                  {cat.name}
+                                </td>
+                                <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'center' }}>
+                                  <span style={{
+                                    display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
+                                    fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
+                                    backgroundColor: isIncome ? 'var(--color-success-100)' : 'var(--color-danger-100)',
+                                    color: isIncome ? 'var(--color-success-700)' : 'var(--color-danger-700)',
+                                  }}>
+                                    {isIncome ? 'Entrada' : 'Saida'}
+                                  </span>
+                                </td>
+                                <td style={{
+                                  padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)',
+                                  textAlign: 'right', fontWeight: 600,
+                                  color: isIncome ? 'var(--color-success-600)' : 'var(--color-danger-600)',
                                 }}>
-                                  {cat.type === 'IN' ? 'Entrada' : 'Saida'}
-                                </span>
-                              </td>
-                              <td style={{
-                                padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)',
-                                textAlign: 'right', fontWeight: 600,
-                                color: cat.type === 'IN' ? 'var(--color-success-600)' : 'var(--color-danger-600)',
-                              }}>
-                                {cat.type === 'IN' ? '+' : '-'}{formatCurrency(cat.amount)}
-                              </td>
-                            </tr>
-                          ))}
+                                  {isIncome ? '+' : '-'}{formatCurrency(cat.total)}
+                                </td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
