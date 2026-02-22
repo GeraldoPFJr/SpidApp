@@ -660,7 +660,7 @@ export default function NovaVendaPage() {
                       id: crypto.randomUUID(),
                       method: 'CASH',
                       amount: total.toFixed(2).replace('.', ','),
-                      accountId: accounts[0].id,
+                      accountId: accounts![0].id,
                       installments: 1,
                     }])
                   }
