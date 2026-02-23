@@ -116,13 +116,13 @@ export default function NovaVendaPage() {
   // ─── Auto-fill Payment ────────────────────────────
 
   useEffect(() => {
-    const firstAccount = accounts?.[0]
-    if (payments.length === 0 && firstAccount && total > 0) {
+    if (payments.length === 0 && accounts?.length && total > 0) {
+      const cashAccount = accounts.find((a) => a.defaultPaymentMethods?.includes('CASH'))
       setPayments([{
         id: crypto.randomUUID(),
         method: 'CASH',
         amount: total.toFixed(2).replace('.', ','),
-        accountId: firstAccount.id,
+        accountId: cashAccount?.id ?? accounts[0]?.id ?? '',
         installments: 1,
         dueDays: 30,
       }])
@@ -1053,7 +1053,7 @@ export default function NovaVendaPage() {
             payments={payments}
             onChange={setPayments}
             total={total}
-            accounts={accounts?.map((a) => ({ id: a.id, name: a.name })) ?? []}
+            accounts={accounts?.map((a) => ({ id: a.id, name: a.name, defaultPaymentMethods: a.defaultPaymentMethods })) ?? []}
           />
 
           {payments.some((p) => ['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method) && p.installments > 1) && (

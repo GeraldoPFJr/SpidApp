@@ -33,6 +33,7 @@ interface AccountInfo {
   name: string
   type: 'CASH' | 'BANK' | 'OTHER'
   active: boolean
+  defaultPaymentMethods: string[]
 }
 
 interface PrinterProfile {
@@ -92,7 +93,19 @@ export default function ConfiguracoesPage() {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null)
   const [editingAccountName, setEditingAccountName] = useState('')
   const [editingAccountType, setEditingAccountType] = useState<'CASH' | 'BANK' | 'OTHER'>('CASH')
+  const [newAccountPaymentMethods, setNewAccountPaymentMethods] = useState<string[]>([])
+  const [editingAccountPaymentMethods, setEditingAccountPaymentMethods] = useState<string[]>([])
   const [accountError, setAccountError] = useState<string | null>(null)
+
+  const PAYMENT_METHODS_OPTIONS = [
+    { value: 'CASH', label: 'Dinheiro' },
+    { value: 'PIX', label: 'PIX' },
+    { value: 'CREDIT_CARD', label: 'Cartao Credito' },
+    { value: 'DEBIT_CARD', label: 'Cartao Debito' },
+    { value: 'CREDIARIO', label: 'Crediario' },
+    { value: 'BOLETO', label: 'Boleto' },
+    { value: 'CHEQUE', label: 'Cheque' },
+  ]
 
   // Initialize from API
   useEffect(() => {
@@ -194,17 +207,18 @@ export default function ConfiguracoesPage() {
     try {
       await apiClient('/finance/accounts', {
         method: 'POST',
-        body: { name, type: newAccountType },
+        body: { name, type: newAccountType, defaultPaymentMethods: newAccountPaymentMethods },
       })
       setNewAccountName('')
       setNewAccountType('CASH')
+      setNewAccountPaymentMethods([])
       refetchAccounts()
     } catch {
       setAccountError('Erro ao criar conta.')
     } finally {
       setAddingAccount(false)
     }
-  }, [newAccountName, newAccountType, refetchAccounts])
+  }, [newAccountName, newAccountType, newAccountPaymentMethods, refetchAccounts])
 
   const handleRenameAccount = useCallback(async (id: string) => {
     const name = editingAccountName.trim()
@@ -213,7 +227,7 @@ export default function ConfiguracoesPage() {
     try {
       await apiClient(`/finance/accounts/${id}`, {
         method: 'PUT',
-        body: { name, type: editingAccountType },
+        body: { name, type: editingAccountType, defaultPaymentMethods: editingAccountPaymentMethods },
       })
       setEditingAccountId(null)
       setEditingAccountName('')
@@ -221,7 +235,7 @@ export default function ConfiguracoesPage() {
     } catch {
       setAccountError('Erro ao atualizar conta.')
     }
-  }, [editingAccountName, editingAccountType, refetchAccounts])
+  }, [editingAccountName, editingAccountType, editingAccountPaymentMethods, refetchAccounts])
 
   const handleDeleteAccount = useCallback(async (id: string, name: string) => {
     if (!confirm(`Desativar a conta "${name}"? Ela nao aparecera mais nas opcoes de pagamento.`)) return
@@ -820,6 +834,28 @@ export default function ConfiguracoesPage() {
                     </div>
                   </div>
 
+                  {newAccountName.trim() && (
+                    <div style={{ marginBottom: '8px', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-neutral-200)', backgroundColor: 'var(--color-neutral-50)' }}>
+                      <div style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', marginBottom: '8px' }}>Formas de pagamento vinculadas:</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {PAYMENT_METHODS_OPTIONS.map((m) => (
+                          <label key={m.value} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={newAccountPaymentMethods.includes(m.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) setNewAccountPaymentMethods(prev => [...prev, m.value])
+                                else setNewAccountPaymentMethods(prev => prev.filter(v => v !== m.value))
+                              }}
+                              style={{ accentColor: 'var(--color-primary-600)' }}
+                            />
+                            {m.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* List accounts */}
                   {accounts && accounts.filter(a => a.active).length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -860,6 +896,22 @@ export default function ConfiguracoesPage() {
                                   <option value="BANK">Banco</option>
                                   <option value="OTHER">Outro</option>
                                 </select>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', width: '100%' }}>
+                                  {PAYMENT_METHODS_OPTIONS.map((m) => (
+                                    <label key={m.value} style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={editingAccountPaymentMethods.includes(m.value)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) setEditingAccountPaymentMethods(prev => [...prev, m.value])
+                                          else setEditingAccountPaymentMethods(prev => prev.filter(v => v !== m.value))
+                                        }}
+                                        style={{ accentColor: 'var(--color-primary-600)' }}
+                                      />
+                                      {m.label}
+                                    </label>
+                                  ))}
+                                </div>
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                   <button
                                     onClick={() => handleRenameAccount(acc.id)}
@@ -897,6 +949,24 @@ export default function ConfiguracoesPage() {
                                 }}>
                                   {accountTypeLabel(acc.type)}
                                 </span>
+                                {acc.defaultPaymentMethods && acc.defaultPaymentMethods.length > 0 && (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginLeft: isMobile ? '0' : '4px' }}>
+                                    {acc.defaultPaymentMethods.map((pm: string) => {
+                                      const label = PAYMENT_METHODS_OPTIONS.find(m => m.value === pm)?.label || pm
+                                      return (
+                                        <span key={pm} style={{
+                                          display: 'inline-flex', padding: '0px 6px',
+                                          fontSize: '10px', fontWeight: 500,
+                                          borderRadius: 'var(--radius-full)',
+                                          backgroundColor: 'var(--color-neutral-100)',
+                                          color: 'var(--color-neutral-500)',
+                                        }}>
+                                          {label}
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -904,7 +974,7 @@ export default function ConfiguracoesPage() {
                           {editingAccountId !== acc.id && (
                             <div style={{ display: 'flex', gap: '4px' }}>
                               <button
-                                onClick={() => { setEditingAccountId(acc.id); setEditingAccountName(acc.name); setEditingAccountType(acc.type) }}
+                                onClick={() => { setEditingAccountId(acc.id); setEditingAccountName(acc.name); setEditingAccountType(acc.type); setEditingAccountPaymentMethods(acc.defaultPaymentMethods || []) }}
                                 title="Editar"
                                 style={{
                                   padding: '8px', backgroundColor: 'transparent', border: 'none',
@@ -944,7 +1014,7 @@ export default function ConfiguracoesPage() {
 
                   <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-100)' }}>
                     <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-primary-700)', margin: 0 }}>
-                      <strong>Dica:</strong> Crie pelo menos uma conta (ex: &quot;Caixa&quot;) para que ela apareca nas opcoes de pagamento ao registrar uma venda.
+                      <strong>Dica:</strong> Vincule formas de pagamento as contas para que, ao selecionar uma forma na venda, a conta ja venha preenchida automaticamente.
                     </p>
                   </div>
                 </div>

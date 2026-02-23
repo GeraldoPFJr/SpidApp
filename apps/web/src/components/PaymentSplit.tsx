@@ -18,7 +18,7 @@ interface PaymentSplitProps {
   payments: PaymentEntry[]
   onChange: (payments: PaymentEntry[]) => void
   total: number
-  accounts: Array<{ id: string; name: string }>
+  accounts: Array<{ id: string; name: string; defaultPaymentMethods?: string[] }>
 }
 
 const PAYMENT_METHODS = [
@@ -34,27 +34,40 @@ const PAYMENT_METHODS = [
 export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSplitProps) {
   const { isMobile } = useMediaQuery()
 
+  const findAccountForMethod = useCallback((method: string) => {
+    const match = accounts.find((a) => a.defaultPaymentMethods?.includes(method))
+    return match?.id ?? accounts[0]?.id ?? ''
+  }, [accounts])
+
   const addPayment = useCallback(() => {
+    const method = 'CASH'
     onChange([
       ...payments,
       {
         id: crypto.randomUUID(),
-        method: 'CASH',
+        method,
         amount: '',
-        accountId: accounts[0]?.id ?? '',
+        accountId: findAccountForMethod(method),
         installments: 1,
         dueDays: 30,
       },
     ])
-  }, [payments, onChange, accounts])
+  }, [payments, onChange, findAccountForMethod])
 
   const removePayment = useCallback((id: string) => {
     onChange(payments.filter((p) => p.id !== id))
   }, [payments, onChange])
 
   const updatePayment = useCallback((id: string, field: keyof PaymentEntry, value: string | number) => {
-    onChange(payments.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
-  }, [payments, onChange])
+    onChange(payments.map((p) => {
+      if (p.id !== id) return p
+      const updated = { ...p, [field]: value }
+      if (field === 'method') {
+        updated.accountId = findAccountForMethod(value as string)
+      }
+      return updated
+    }))
+  }, [payments, onChange, findAccountForMethod])
 
   const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount.replace(',', '.')) || 0), 0)
   const remaining = total - totalPaid

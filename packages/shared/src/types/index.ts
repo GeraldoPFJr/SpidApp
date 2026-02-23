@@ -260,6 +260,7 @@ export interface Account {
   name: string
   type: AccountType
   active: boolean
+  defaultPaymentMethods: string[]
   createdAt: Date
   updatedAt: Date
 }

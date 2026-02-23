@@ -463,12 +463,13 @@ model Payment {
 // ─── Financeiro ──────────────────────────────────────────
 
 model Account {
-  id        String   @id @default(uuid())
-  name      String
-  type      String   // CASH | BANK | OTHER
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  name                  String
+  type                  String   // CASH | BANK | OTHER
+  active                Boolean  @default(true)
+  defaultPaymentMethods String[] @default([]) @map("default_payment_methods")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id])

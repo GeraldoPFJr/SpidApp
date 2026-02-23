@@ -32,11 +32,18 @@ export async function POST(request: NextRequest) {
         data: { name: 'Padrão', isDefault: true, tenantId: tenant.id },
       })
 
-      await tx.account.createMany({
-        data: [
-          { name: 'Dinheiro', type: 'CASH', tenantId: tenant.id },
-          { name: 'Banco', type: 'BANK', tenantId: tenant.id },
-        ],
+      await tx.account.create({
+        data: {
+          name: 'Carteira', type: 'CASH', tenantId: tenant.id,
+          defaultPaymentMethods: ['CASH', 'CHEQUE'],
+        },
+      })
+
+      await tx.account.create({
+        data: {
+          name: 'Banco', type: 'BANK', tenantId: tenant.id,
+          defaultPaymentMethods: ['PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'CREDIARIO', 'BOLETO'],
+        },
       })
 
       await tx.appSettings.create({

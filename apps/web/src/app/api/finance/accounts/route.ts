@@ -8,6 +8,7 @@ const accountSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(['CASH', 'BANK', 'OTHER']),
   active: z.boolean().default(true),
+  defaultPaymentMethods: z.array(z.enum(['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'CREDIARIO', 'BOLETO', 'CHEQUE'])).default([]),
 })
 
 export async function GET(request: NextRequest) {
