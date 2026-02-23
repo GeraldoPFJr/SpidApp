@@ -28,7 +28,7 @@ export function StatsCard({
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: isMobile ? '14px 16px' : '20px 24px',
+    padding: isMobile ? '12px 14px' : '20px 24px',
     display: 'flex',
     flexDirection: 'column',
     gap: isMobile ? '4px' : '8px',
