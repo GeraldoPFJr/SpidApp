@@ -1,7 +1,7 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
-import type { Customer } from '@spid/shared'
+import type { Customer } from '@xpid/shared'
 
 interface CustomerWithOverdue extends Customer {
   overdueAmount?: number

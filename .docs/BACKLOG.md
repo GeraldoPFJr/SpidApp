@@ -1,4 +1,4 @@
-# BACKLOG — Spid
+# BACKLOG — Xpid
 
 ## Historico
 - 2026-02-21: Especificacao tecnica completa (v1.0)

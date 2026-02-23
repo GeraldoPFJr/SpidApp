@@ -1,4 +1,4 @@
-# TECNICO — Spid
+# TECNICO — Xpid
 
 ## Stack
 - **Mobile**: React + TypeScript + Capacitor + SQLite

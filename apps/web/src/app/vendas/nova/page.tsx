@@ -9,7 +9,7 @@ import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
-import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
+import type { Customer, Product, ProductUnit, Account } from '@xpid/shared'
 
 // ─── Types ──────────────────────────────────────────
 
@@ -304,7 +304,7 @@ export default function NovaVendaPage() {
     border: '1px solid var(--color-border)',
     padding: isMobile ? '16px' : '20px 24px',
     boxShadow: 'var(--shadow-sm)',
-    animation: 'spid-fade-in 0.3s ease',
+    animation: 'xpid-fade-in 0.3s ease',
   }
 
   const sectionTitleStyle: CSSProperties = {
@@ -385,7 +385,7 @@ export default function NovaVendaPage() {
           minHeight: '60vh',
           gap: '20px',
           padding: isMobile ? '24px 16px' : '24px',
-          animation: 'spid-scale-in 0.3s ease',
+          animation: 'xpid-scale-in 0.3s ease',
         }}>
           <div style={{
             width: '72px',
@@ -535,7 +535,7 @@ export default function NovaVendaPage() {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            animation: 'spid-fade-in 0.2s ease',
+            animation: 'xpid-fade-in 0.2s ease',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
@@ -985,7 +985,7 @@ export default function NovaVendaPage() {
         </div>
 
         {/* ─── SECTION: Pagamento ─── */}
-        <div style={{ animation: 'spid-fade-in 0.3s ease 0.1s both' }}>
+        <div style={{ animation: 'xpid-fade-in 0.3s ease 0.1s both' }}>
           {/* Adjustments: Desconto, Acrescimo, Frete */}
           {validItems.length > 0 && (
             <div style={{

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateSupplierSchema } from '@spid/shared'
+import { updateSupplierSchema } from '@xpid/shared'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'

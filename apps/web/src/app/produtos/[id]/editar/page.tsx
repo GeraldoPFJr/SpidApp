@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
-import type { Category, Subcategory } from '@spid/shared'
+import type { Category, Subcategory } from '@xpid/shared'
 
 interface UnitRow {
   id: string

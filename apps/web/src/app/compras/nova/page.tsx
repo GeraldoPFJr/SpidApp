@@ -7,7 +7,7 @@ import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
-import type { Supplier, Product, ProductUnit } from '@spid/shared'
+import type { Supplier, Product, ProductUnit } from '@xpid/shared'
 
 interface PurchaseItemRow {
   id: string

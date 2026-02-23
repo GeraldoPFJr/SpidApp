@@ -169,46 +169,46 @@ img {
 }
 
 /* ─── Keyframes ────────────────────────────────────── */
-@keyframes spid-spin {
+@keyframes xpid-spin {
   to { transform: rotate(360deg); }
 }
 
-@keyframes spid-fade-in {
+@keyframes xpid-fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes spid-slide-in-left {
+@keyframes xpid-slide-in-left {
   from { opacity: 0; transform: translateX(-16px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes spid-slide-in-right {
+@keyframes xpid-slide-in-right {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
 
-@keyframes spid-slide-out-left {
+@keyframes xpid-slide-out-left {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
 }
 
-@keyframes spid-scale-in {
+@keyframes xpid-scale-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes spid-skeleton {
+@keyframes xpid-skeleton {
   0% { background-position: -200px 0; }
   100% { background-position: calc(200px + 100%) 0; }
 }
 
-@keyframes spid-pulse {
+@keyframes xpid-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
 
-@keyframes spid-backdrop-in {
+@keyframes xpid-backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -222,7 +222,7 @@ img {
     var(--color-neutral-100) 75%
   );
   background-size: 200px 100%;
-  animation: spid-skeleton 1.5s ease-in-out infinite;
+  animation: xpid-skeleton 1.5s ease-in-out infinite;
   border-radius: var(--radius-md);
 }
 
@@ -359,11 +359,11 @@ textarea {
 }
 
 .fade-in {
-  animation: spid-fade-in 0.3s var(--transition-apple) forwards;
+  animation: xpid-fade-in 0.3s var(--transition-apple) forwards;
 }
 
 .page-enter {
-  animation: spid-fade-in 0.4s var(--transition-apple) forwards;
+  animation: xpid-fade-in 0.4s var(--transition-apple) forwards;
 }
 
 /* ─── Responsive Utilities ────────────────────────── */
@@ -442,7 +442,7 @@ textarea {
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: 99;
-    animation: spid-backdrop-in 0.2s ease forwards;
+    animation: xpid-backdrop-in 0.2s ease forwards;
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
   }

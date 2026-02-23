@@ -51,7 +51,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-/* ─── CSS Variables (from @spid/ui theme) ────────────────── */
+/* ─── CSS Variables (from @xpid/ui theme) ────────────────── */
 :root {
   /* Colors - Primary */
   --primary-50: #EFF6FF;
@@ -869,7 +869,7 @@ h1, h2, h3, h4, h5, h6 {
   100% { background-position: -200% 0; }
 }
 
-@keyframes spid-spin {
+@keyframes xpid-spin {
   to { transform: rotate(360deg); }
 }
 

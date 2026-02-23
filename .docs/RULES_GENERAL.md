@@ -1,4 +1,4 @@
-# RULES_GENERAL — Spid
+# RULES_GENERAL — Xpid
 
 ## Git
 - Git flow: main → dev → feat/<slug>, fix/<slug>

@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import type { Supplier } from '@spid/shared'
+import type { Supplier } from '@xpid/shared'
 
 export default function FornecedoresPage() {
   const router = useRouter()

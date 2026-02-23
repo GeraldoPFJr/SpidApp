@@ -1,7 +1,7 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
-import type { Product, Category } from '@spid/shared'
+import type { Product, Category } from '@xpid/shared'
 
 interface ProductWithStock extends Product {
   categoryName?: string

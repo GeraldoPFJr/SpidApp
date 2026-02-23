@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, formatDate } from '../../lib/format'
-import type { SaleItem, Payment, Receivable, SaleStatus } from '@spid/shared'
+import type { SaleItem, Payment, Receivable, SaleStatus } from '@xpid/shared'
 
 interface SaleDetailData {
   id: string

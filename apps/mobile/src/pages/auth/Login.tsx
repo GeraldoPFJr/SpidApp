@@ -95,7 +95,7 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
     <div style={containerStyle}>
       <div style={cardStyle}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Spid</h1>
+          <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Xpid</h1>
           <p style={{ fontSize: '15px', color: '#64748b', marginTop: '8px' }}>Sistema de Vendas</p>
         </div>
 

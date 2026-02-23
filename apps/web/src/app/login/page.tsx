@@ -61,7 +61,7 @@ export default function LoginPage() {
         padding: isMobile ? '32px 20px' : '40px 32px',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Spid</h1>
+          <h1 style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Xpid</h1>
           <p style={{ fontSize: '16px', color: '#64748b', marginTop: '8px' }}>Sistema de Vendas</p>
         </div>
 

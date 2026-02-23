@@ -8,7 +8,7 @@ import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { Account } from '@spid/shared'
+import type { Account } from '@xpid/shared'
 
 // Types
 

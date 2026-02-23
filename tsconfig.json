@@ -17,10 +17,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
-      "@spid/shared": ["./packages/shared/src"],
-      "@spid/shared/*": ["./packages/shared/src/*"],
-      "@spid/ui": ["./packages/ui/src"],
-      "@spid/ui/*": ["./packages/ui/src/*"]
+      "@xpid/shared": ["./packages/shared/src"],
+      "@xpid/shared/*": ["./packages/shared/src/*"],
+      "@xpid/ui": ["./packages/ui/src"],
+      "@xpid/ui/*": ["./packages/ui/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", ".next", "build"]

@@ -23,7 +23,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 // ── JWT ──────────────────────────────────────────────────
 
 const JWT_SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'spid-dev-jwt-secret-change-in-production'
+  process.env.JWT_SECRET || 'xpid-dev-jwt-secret-change-in-production'
 )
 
 const JWT_EXPIRATION = '30d'
@@ -48,7 +48,7 @@ export async function verifyToken(token: string): Promise<{ tenantId: string } |
 
 // ── Cookie Management ────────────────────────────────────
 
-const COOKIE_NAME = 'spid_token'
+const COOKIE_NAME = 'xpid_token'
 
 export function setAuthCookie(response: NextResponse, token: string): void {
   response.cookies.set(COOKIE_NAME, token, {

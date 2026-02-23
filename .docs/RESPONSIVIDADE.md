@@ -1,4 +1,4 @@
-# Responsividade — Spid Web App
+# Responsividade — Xpid Web App
 
 ## Breakpoints
 
@@ -37,7 +37,7 @@ function MyComponent() {
 ### Layout Shell
 - **Desktop**: `marginLeft: var(--sidebar-width)`, padding 32px
 - **Mobile**: `marginLeft: 0`, padding 16px
-- Header mostra hamburger button no mobile + titulo "Spid"
+- Header mostra hamburger button no mobile + titulo "Xpid"
 
 ## Classes CSS Responsivas
 

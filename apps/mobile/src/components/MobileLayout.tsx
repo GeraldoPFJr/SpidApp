@@ -9,7 +9,7 @@ interface MobileLayoutProps {
 const ROOT_PATHS = ['/', '/vendas', '/clientes']
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Spid',
+  '/': 'Xpid',
   '/vendas': 'Vendas',
   '/vendas/nova': 'Nova Venda',
   '/clientes': 'Clientes',
@@ -39,7 +39,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/fornecedores/')) return 'Fornecedor'
   if (pathname.startsWith('/vendas/')) return 'Venda'
   if (pathname.startsWith('/compras/')) return 'Compra'
-  return 'Spid'
+  return 'Xpid'
 }
 
 function isRootPath(pathname: string): boolean {

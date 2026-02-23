@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@spid/shared', '@spid/ui'],
+  transpilePackages: ['@xpid/shared', '@xpid/ui'],
   serverExternalPackages: ['@prisma/client'],
 }
 

@@ -132,7 +132,7 @@ export function Sidebar({ mobileOpen, onMobileClose, isMobile }: SidebarProps) {
               letterSpacing: '-0.025em',
               color: 'var(--color-white)',
             }}>
-              Spid
+              Xpid
             </span>
             <button
               onClick={onMobileClose}
@@ -348,8 +348,8 @@ export function Sidebar({ mobileOpen, onMobileClose, isMobile }: SidebarProps) {
   return (
     <aside style={sidebarStyle}>
       <div style={logoContainerStyle}>
-        <span style={logoStyle}>Spid</span>
-        <span style={logoIconStyle}>S</span>
+        <span style={logoStyle}>Xpid</span>
+        <span style={logoIconStyle}>X</span>
         <button
           style={collapseButtonStyle}
           onClick={() => setCollapsed(!collapsed)}

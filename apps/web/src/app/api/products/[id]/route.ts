@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateProductSchema } from '@spid/shared'
+import { updateProductSchema } from '@xpid/shared'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-utils'

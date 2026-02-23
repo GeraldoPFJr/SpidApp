@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { InstallmentConfig, type InstallmentPreview } from '../../components/InstallmentConfig'
 import { formatBRL } from '../../lib/format'
-import type { Supplier, Product, ProductUnit } from '@spid/shared'
+import type { Supplier, Product, ProductUnit } from '@xpid/shared'
 
 interface ProductWithUnits extends Product {
   units: ProductUnit[]

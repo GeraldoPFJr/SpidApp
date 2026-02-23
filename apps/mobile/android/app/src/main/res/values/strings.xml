@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Spid</string>
-    <string name="title_activity_main">Spid</string>
-    <string name="package_name">com.spid.app</string>
-    <string name="custom_url_scheme">com.spid.app</string>
+    <string name="app_name">Xpid</string>
+    <string name="title_activity_main">Xpid</string>
+    <string name="package_name">com.xpid.app</string>
+    <string name="custom_url_scheme">com.xpid.app</string>
 </resources>

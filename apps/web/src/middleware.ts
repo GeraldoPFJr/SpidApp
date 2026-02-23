@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
 const JWT_SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'spid-dev-jwt-secret-change-in-production'
+  process.env.JWT_SECRET || 'xpid-dev-jwt-secret-change-in-production'
 )
 
-const COOKIE_NAME = 'spid_token'
+const COOKIE_NAME = 'xpid_token'
 
 // Rotas que NAO precisam de auth
 const PUBLIC_PATHS = ['/login', '/registro', '/api/auth/', '/api/health']

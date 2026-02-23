@@ -1,5 +1,5 @@
 /**
- * API client for communicating with the Spid backend.
+ * API client for communicating with the Xpid backend.
  * Automatically injects authentication headers and handles errors.
  */
 
@@ -63,7 +63,7 @@ export async function apiClient<T>(
 
     if (response.status === 401) {
       clearAuthToken()
-      window.dispatchEvent(new Event('spid:unauthorized'))
+      window.dispatchEvent(new Event('xpid:unauthorized'))
       throw new ApiError(401, 'Unauthorized')
     }
 

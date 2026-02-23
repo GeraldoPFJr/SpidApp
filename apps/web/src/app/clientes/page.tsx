@@ -7,7 +7,7 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency } from '@/lib/format'
-import type { Customer } from '@spid/shared'
+import type { Customer } from '@xpid/shared'
 
 interface CustomerRow extends Customer {
   openAmount?: number

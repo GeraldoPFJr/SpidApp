@@ -110,7 +110,7 @@ export function Layout({ children, title }: LayoutProps) {
                 color: 'var(--color-neutral-800)',
                 letterSpacing: '-0.01em',
               }}>
-                Spid
+                Xpid
               </span>
             ) : null}
           </header>

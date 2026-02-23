@@ -2,7 +2,7 @@ import { type CSSProperties, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, formatDate } from '../../lib/format'
-import type { Sale } from '@spid/shared'
+import type { Sale } from '@xpid/shared'
 
 interface SaleWithCustomer extends Sale {
   customerName: string | null

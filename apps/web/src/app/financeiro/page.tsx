@@ -8,7 +8,7 @@ import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
-import type { FinanceEntry, Account } from '@spid/shared'
+import type { FinanceEntry, Account } from '@xpid/shared'
 
 interface FinanceOverview {
   accounts: Array<Account & { balance: number }>

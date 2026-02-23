@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
-import type { Account, FinanceCategory } from '@spid/shared'
+import type { Account, FinanceCategory } from '@xpid/shared'
 
 export default function LancamentoPage() {
   return (

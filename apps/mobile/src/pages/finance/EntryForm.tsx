@@ -1,7 +1,7 @@
 import { type CSSProperties, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApi, useApiMutation } from '../../hooks/useApi'
-import type { Account, FinanceCategory, FinanceEntryType } from '@spid/shared'
+import type { Account, FinanceCategory, FinanceEntryType } from '@xpid/shared'
 
 const TYPE_OPTIONS: { value: FinanceEntryType; label: string }[] = [
   { value: 'EXPENSE', label: 'Despesa' },

@@ -55,7 +55,7 @@ import { SettingsPage } from './pages/settings/Settings'
 import { LoginPage } from './pages/auth/Login'
 import { RegisterPage } from './pages/auth/Register'
 
-const OVERDUE_DISMISSED_KEY = 'spid_overdue_dismissed'
+const OVERDUE_DISMISSED_KEY = 'xpid_overdue_dismissed'
 
 interface OverdueItem {
   customerName: string
@@ -72,8 +72,8 @@ export function App() {
       clearAuthToken()
       setAuthState('login')
     }
-    window.addEventListener('spid:unauthorized', handleUnauthorized)
-    return () => window.removeEventListener('spid:unauthorized', handleUnauthorized)
+    window.addEventListener('xpid:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('xpid:unauthorized', handleUnauthorized)
   }, [])
 
   const [overdueItems, setOverdueItems] = useState<OverdueItem[]>([])

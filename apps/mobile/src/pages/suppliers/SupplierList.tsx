@@ -1,7 +1,7 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
-import type { Supplier } from '@spid/shared'
+import type { Supplier } from '@xpid/shared'
 
 export function SupplierListPage() {
   const navigate = useNavigate()

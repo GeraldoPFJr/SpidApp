@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import type { Product } from '@spid/shared'
+import type { Product } from '@xpid/shared'
 
 interface ProductRow extends Product {
   categoryName?: string

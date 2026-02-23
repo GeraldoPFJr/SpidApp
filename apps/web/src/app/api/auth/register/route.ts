@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, createToken, setAuthCookie } from '@/lib/auth'
-import { registerSchema } from '@spid/shared'
+import { registerSchema } from '@xpid/shared'
 
 export async function POST(request: NextRequest) {
   try {

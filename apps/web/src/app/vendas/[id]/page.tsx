@@ -8,7 +8,7 @@ import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
-import type { Account } from '@spid/shared'
+import type { Account } from '@xpid/shared'
 
 interface SaleRawItem {
   id: string
@@ -785,7 +785,7 @@ export default function VendaDetalhePage() {
         {showCoupon && (
           <CouponPreview
             data={{
-              companyName: 'Spid',
+              companyName: 'Xpid',
               customerName: sale.customerName ?? 'CONSUMIDOR FINAL',
               date: sale.date,
               couponNumber: sale.couponNumber ?? 0,

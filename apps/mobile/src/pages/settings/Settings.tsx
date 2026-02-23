@@ -35,7 +35,7 @@ type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'disconnected'
 // ── Helpers ───────────────────────────────────────────────
 
 function loadSettings(): SettingsData {
-  const stored = localStorage.getItem('spid_settings')
+  const stored = localStorage.getItem('xpid_settings')
   const defaults: SettingsData = {
     razaoSocial: '', nomeFantasia: '', cnpj: '', ie: '',
     endereco: '', cidade: '', uf: '', cep: '', telefone1: '', telefone2: '',
@@ -53,7 +53,7 @@ function loadSettings(): SettingsData {
 }
 
 function saveSettingsToStorage(data: SettingsData): void {
-  localStorage.setItem('spid_settings', JSON.stringify(data))
+  localStorage.setItem('xpid_settings', JSON.stringify(data))
 }
 
 // ── Styles ────────────────────────────────────────────────
@@ -179,12 +179,12 @@ export function SettingsPage() {
 
   function handleSyncNow() {
     // Dispatch custom event that can be caught by a sync engine listener
-    window.dispatchEvent(new CustomEvent('spid:sync-now'))
+    window.dispatchEvent(new CustomEvent('xpid:sync-now'))
   }
 
   function handleLogout() {
     clearAuthToken()
-    window.dispatchEvent(new Event('spid:unauthorized'))
+    window.dispatchEvent(new Event('xpid:unauthorized'))
   }
 
   return (
@@ -348,7 +348,7 @@ export function SettingsPage() {
               style={{ ...INPUT, flex: 1, fontSize: 'var(--font-sm)' }}
               value={apiUrl}
               onChange={(e) => setApiUrlLocal(e.target.value)}
-              placeholder="https://spid-web.vercel.app/api"
+              placeholder="https://xpid.vercel.app/api"
             />
             <button
               className="btn btn-secondary"

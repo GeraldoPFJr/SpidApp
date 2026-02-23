@@ -1,4 +1,4 @@
-# PRODUTO — Spid
+# PRODUTO — Xpid
 
 ## Modulos/Telas Principais
 1. **Dashboard** — faturamento, lucro bruto/liquido, vendas, ticket medio, recebido vs a receber

@@ -1,7 +1,7 @@
 import { type CSSProperties, useState } from 'react'
 import { useApi, useApiMutation } from '../../hooks/useApi'
 import { formatBRL } from '../../lib/format'
-import type { Account } from '@spid/shared'
+import type { Account } from '@xpid/shared'
 
 interface AccountWithBalance extends Account {
   balance: number

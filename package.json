@@ -1,18 +1,18 @@
 {
-  "name": "spid",
+  "name": "xpid",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel -r run dev",
-    "dev:api": "pnpm --filter @spid/api dev",
-    "dev:web": "pnpm --filter @spid/web dev",
-    "dev:mobile": "pnpm --filter @spid/mobile dev",
+    "dev:api": "pnpm --filter @xpid/api dev",
+    "dev:web": "pnpm --filter @xpid/web dev",
+    "dev:mobile": "pnpm --filter @xpid/mobile dev",
     "build": "pnpm -r run build",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "test": "pnpm -r run test",
-    "db:migrate": "pnpm --filter @spid/api exec prisma migrate dev",
-    "db:generate": "pnpm --filter @spid/api exec prisma generate",
-    "db:studio": "pnpm --filter @spid/api exec prisma studio"
+    "db:migrate": "pnpm --filter @xpid/api exec prisma migrate dev",
+    "db:generate": "pnpm --filter @xpid/api exec prisma generate",
+    "db:studio": "pnpm --filter @xpid/api exec prisma studio"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

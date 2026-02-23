@@ -29,7 +29,7 @@ importers:
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
-      '@spid/shared':
+      '@xpid/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       fastify:
@@ -63,10 +63,10 @@ importers:
       '@capacitor/preferences':
         specifier: ^7.0.0
         version: 7.0.4(@capacitor/core@7.5.0)
-      '@spid/shared':
+      '@xpid/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@spid/ui':
+      '@xpid/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       react:
@@ -103,10 +103,10 @@ importers:
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
-      '@spid/shared':
+      '@xpid/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@spid/ui':
+      '@xpid/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       jose:

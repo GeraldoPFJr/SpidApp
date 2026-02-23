@@ -4,7 +4,7 @@ import { useApi, useApiMutation } from '../../hooks/useApi'
 import { PaymentSplit, type PaymentEntry } from '../../components/PaymentSplit'
 import { formatBRL } from '../../lib/format'
 import { getAppInstanceId } from '../../lib/credentials'
-import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
+import type { Customer, Product, ProductUnit, Account } from '@xpid/shared'
 
 // ─── Types ─────────────────────────────────────────────────
 interface ProductWithUnits extends Product {

@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, formatDate } from '../../lib/format'
-import type { ProductUnit, ProductPrice, InventoryMovement } from '@spid/shared'
+import type { ProductUnit, ProductPrice, InventoryMovement } from '@xpid/shared'
 
 interface ProductDetail {
   id: string

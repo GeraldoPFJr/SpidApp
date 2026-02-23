@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { formatBRL, getCurrentMonth, formatMonthLabel } from '../../lib/format'
-import type { Account, FinanceEntry } from '@spid/shared'
+import type { Account, FinanceEntry } from '@xpid/shared'
 
 interface AccountSummary extends Account {
   balance: number

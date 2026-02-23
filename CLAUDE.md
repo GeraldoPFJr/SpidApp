@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projeto
 
-**Spid** — Sistema de vendas offline-first para vendedor autônomo de ovos e mercearia (porta a porta + WhatsApp). Operação 100% offline no celular Android com sincronização posterior para Neon Postgres.
+**Xpid** — Sistema de vendas offline-first para vendedor autônomo de ovos e mercearia (porta a porta + WhatsApp). Operação 100% offline no celular Android com sincronização posterior para Neon Postgres.
 
 **Status**: MVP funcional deployado. Web + API em produção no Vercel, banco Neon Postgres, APK Android gerado.
 
@@ -40,7 +40,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Deploy
 
-- **Vercel**: projeto `spid-web`, deploy automático via `vercel --prod`
+- **Vercel**: projeto `xpid-web`, deploy automatico via `vercel --prod`
 - **vercel.json**: build com `prisma generate` + `next build`
 - **Neon Postgres**: conexão pooled via `DATABASE_URL` (env var no Vercel)
 - **Sem CORS**: API e frontend no mesmo domínio (Next.js API Routes)

@@ -1,5 +1,5 @@
 {
-  "name": "@spid/api",
+  "name": "@xpid/api",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "@prisma/client": "^6.4.1",
-    "@spid/shared": "workspace:*",
+    "@xpid/shared": "workspace:*",
     "fastify": "^5.2.1",
     "zod": "^3.24.2"
   },

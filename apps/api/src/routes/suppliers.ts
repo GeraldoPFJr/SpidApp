@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { createSupplierSchema, updateSupplierSchema } from '@spid/shared/schemas/index.js'
+import { createSupplierSchema, updateSupplierSchema } from '@xpid/shared/schemas/index.js'
 import { prisma } from '../lib/prisma.js'
 
 export async function suppliersRoutes(app: FastifyInstance) {

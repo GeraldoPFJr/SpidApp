@@ -5,11 +5,11 @@
 
 // ── Storage Keys ──────────────────────────────────────────
 
-const KEY_INSTANCE_ID = 'spid_app_instance_id'
-const KEY_SYNC_SECRET = 'spid_sync_secret'
-const KEY_API_URL = 'spid_api_url'
+const KEY_INSTANCE_ID = 'xpid_app_instance_id'
+const KEY_SYNC_SECRET = 'xpid_sync_secret'
+const KEY_API_URL = 'xpid_api_url'
 
-const DEFAULT_SYNC_SECRET = 'spid-sync-secret-2026'
+const DEFAULT_SYNC_SECRET = 'xpid-sync-secret-2026'
 
 // ── UUID v4 Generator ─────────────────────────────────────
 
@@ -33,7 +33,7 @@ function generateUUIDv4(): string {
  * Migrates from legacy keys if present. Call once at app startup (idempotent).
  */
 export function initializeCredentials(): void {
-  // Migrate legacy keys (APP_INSTANCE_ID -> spid_app_instance_id)
+  // Migrate legacy keys (APP_INSTANCE_ID -> xpid_app_instance_id)
   migrateLegacyKey('APP_INSTANCE_ID', KEY_INSTANCE_ID)
   migrateLegacyKey('SYNC_SECRET', KEY_SYNC_SECRET)
 
@@ -85,7 +85,7 @@ export function setApiUrl(value: string): void {
 
 // ── Auth Token ────────────────────────────────────────────
 
-const KEY_AUTH_TOKEN = 'spid_auth_token'
+const KEY_AUTH_TOKEN = 'xpid_auth_token'
 
 export function getAuthToken(): string | null {
   return localStorage.getItem(KEY_AUTH_TOKEN)
