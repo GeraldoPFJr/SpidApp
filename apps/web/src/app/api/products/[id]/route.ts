@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         _sum: { qtyBase: true },
       }),
       prisma.inventoryMovement.findMany({
-        where: { productId: id, direction: 'IN', tenantId },
+        where: { productId: id, tenantId },
         orderBy: { date: 'desc' },
         take: 20,
         select: { id: true, date: true, direction: true, qtyBase: true, reasonType: true, notes: true },
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           tenantId,
           sale: { status: 'CONFIRMED', date: { gte: threeMonthsAgo } },
         },
-        select: { qty: true, total: true, sale: { select: { date: true } } },
+        select: { qty: true, total: true, unit: { select: { factorToBase: true } }, sale: { select: { date: true } } },
       }),
     ])
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const entry = monthlyMap.get(monthKey)
       if (entry) {
         entry.revenue += Number(item.total)
-        entry.qty += item.qty
+        entry.qty += item.qty * (item.unit?.factorToBase ?? 1)
       }
     }
     const salesLast3Months = Array.from(monthlyMap.entries()).map(([month, data]) => ({

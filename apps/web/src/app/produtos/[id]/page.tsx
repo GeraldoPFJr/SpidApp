@@ -147,9 +147,14 @@ export default function ProdutoDetalhePage() {
       header: 'Quantidade',
       width: '120px',
       align: 'right',
-      render: (row) => (
-        <span style={{ fontWeight: 500 }}>{row.qtyBase.toLocaleString('pt-BR')}</span>
-      ),
+      render: (row) => {
+        const isOut = row.direction === 'OUT'
+        return (
+          <span style={{ fontWeight: 500, color: isOut ? 'var(--color-danger-600)' : 'var(--color-success-600)' }}>
+            {isOut ? '-' : '+'}{row.qtyBase.toLocaleString('pt-BR')}
+          </span>
+        )
+      },
     },
     {
       key: 'reasonType',
@@ -157,6 +162,7 @@ export default function ProdutoDetalhePage() {
       render: (row) => {
         const reasonMap: Record<string, string> = {
           PURCHASE: 'Compra',
+          SALE: 'Venda',
           ADJUSTMENT: 'Ajuste',
           RETURN: 'Devolucao',
           INVENTORY_COUNT: 'Inventario',
@@ -427,7 +433,7 @@ export default function ProdutoDetalhePage() {
                     {formatCurrency(m.revenue)}
                   </p>
                   <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', margin: 0 }}>
-                    {m.qty} unidade{m.qty !== 1 ? 's' : ''}
+                    {m.qty.toLocaleString('pt-BR')} un. base
                   </p>
                 </div>
               ))}
