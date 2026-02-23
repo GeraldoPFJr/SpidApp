@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { type CSSProperties, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { type CSSProperties, useState, useEffect } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4' },
@@ -38,7 +38,24 @@ function NavIcon({ path }: { path: string }) {
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [companyName, setCompanyName] = useState('')
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.companyName) setCompanyName(data.companyName) })
+      .catch(() => {})
+  }, [])
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    router.push('/login')
+    router.refresh()
+  }
 
   const sidebarWidth = collapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)'
 
@@ -174,6 +191,52 @@ export function Sidebar() {
           )
         })}
       </nav>
+      <div style={{
+        borderTop: '1px solid var(--color-neutral-700)',
+        padding: collapsed ? '16px 8px' : '16px 12px',
+      }}>
+        {!collapsed && companyName && (
+          <div style={{
+            fontSize: 'var(--font-xs, 12px)',
+            color: 'var(--color-neutral-400)',
+            marginBottom: '8px',
+            padding: '0 12px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {companyName}
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          title={collapsed ? 'Sair' : undefined}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: collapsed ? '0' : '12px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: collapsed ? '10px' : '10px 12px',
+            borderRadius: 'var(--radius-md, 8px)',
+            fontSize: 'var(--font-sm, 14px)',
+            fontWeight: 400,
+            color: 'var(--color-neutral-400)',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: loggingOut ? 'not-allowed' : 'pointer',
+            width: '100%',
+            textAlign: 'left',
+            transition: 'all 150ms ease',
+            opacity: loggingOut ? 0.5 : 1,
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          {!collapsed && <span>{loggingOut ? 'Saindo...' : 'Sair'}</span>}
+        </button>
+      </div>
     </aside>
   )
 }
