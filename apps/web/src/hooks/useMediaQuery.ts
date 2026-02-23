@@ -1,22 +1,19 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
-
-function subscribe(callback: () => void) {
-  window.addEventListener('resize', callback)
-  return () => window.removeEventListener('resize', callback)
-}
-
-function getSnapshot() {
-  return window.innerWidth
-}
-
-function getServerSnapshot() {
-  return 1024 // default to desktop for SSR
-}
+import { useState, useEffect } from 'react'
 
 export function useWindowWidth() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const [width, setWidth] = useState(1024)
+
+  useEffect(() => {
+    setWidth(window.innerWidth)
+
+    const handleResize = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  return width
 }
 
 export function useMediaQuery() {
