@@ -3,9 +3,10 @@
 import { type CSSProperties, useCallback, useEffect, useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 
-// ─── Types ──────────────────────────────────────────────
+// Types
 
 interface CompanyInfo {
   tradeName: string
@@ -51,9 +52,10 @@ interface AppSettings {
   instanceId: string
 }
 
-// ─── Component ──────────────────────────────────────────
+// Component
 
 export default function ConfiguracoesPage() {
+  const { isMobile } = useMediaQuery()
   const { data: settings, loading } = useApi<AppSettings>('/settings')
   const { data: priceTiers, refetch: refetchTiers } = useApi<PriceTier[]>('/price-tiers')
   const { data: accounts, refetch: refetchAccounts } = useApi<AccountInfo[]>('/finance/accounts')
@@ -176,7 +178,7 @@ export default function ConfiguracoesPage() {
     }
   }, [defaultPriceTierId, refetchTiers])
 
-  // ─── Account handlers ────────────────────────────────
+  // Account handlers
 
   const accountTypeLabel = (type: string) => {
     if (type === 'CASH') return 'Dinheiro'
@@ -232,27 +234,13 @@ export default function ConfiguracoesPage() {
     }
   }, [refetchAccounts])
 
-  // ─── Styles ────────────────────────────────────────
-
-  const containerStyle: CSSProperties = {
-    display: 'flex',
-    gap: '24px',
-    maxWidth: '1000px',
-  }
-
-  const sidebarStyle: CSSProperties = {
-    width: '220px',
-    flexShrink: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  }
+  // Styles
 
   const navBtnStyle = (active: boolean): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    padding: '10px 14px',
+    padding: isMobile ? '10px 14px' : '10px 14px',
     fontSize: 'var(--font-sm)',
     fontWeight: active ? 600 : 400,
     color: active ? 'var(--color-primary-700)' : 'var(--color-neutral-600)',
@@ -260,23 +248,19 @@ export default function ConfiguracoesPage() {
     border: 'none',
     borderRadius: 'var(--radius-md)',
     cursor: 'pointer',
-    textAlign: 'left',
+    textAlign: 'left' as const,
     transition: 'all var(--transition-fast)',
-    width: '100%',
+    width: isMobile ? 'auto' : '100%',
+    whiteSpace: 'nowrap' as const,
+    flexShrink: 0,
+    minHeight: '44px',
   })
-
-  const contentStyle: CSSProperties = {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
-  }
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '24px',
+    padding: isMobile ? '16px' : '24px',
     boxShadow: 'var(--shadow-sm)',
   }
 
@@ -303,7 +287,7 @@ export default function ConfiguracoesPage() {
 
   const inputStyle: CSSProperties = {
     width: '100%',
-    padding: '8px 12px',
+    padding: isMobile ? '10px 12px' : '8px 12px',
     fontSize: 'var(--font-base)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)',
@@ -311,6 +295,7 @@ export default function ConfiguracoesPage() {
     borderRadius: 'var(--radius-md)',
     outline: 'none',
     transition: 'border-color var(--transition-fast)',
+    minHeight: isMobile ? '44px' : 'auto',
   }
 
   const radioGroupStyle: CSSProperties = {
@@ -323,7 +308,7 @@ export default function ConfiguracoesPage() {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '14px 16px',
+    padding: isMobile ? '16px' : '14px 16px',
     borderRadius: 'var(--radius-md)',
     border: `1px solid ${selected ? 'var(--color-primary-300)' : 'var(--color-neutral-200)'}`,
     backgroundColor: selected ? 'var(--color-primary-50)' : 'var(--color-white)',
@@ -352,8 +337,10 @@ export default function ConfiguracoesPage() {
 
   const printerCardStyle: CSSProperties = {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: isMobile ? 'flex-start' : 'center',
     justifyContent: 'space-between',
+    flexDirection: isMobile ? 'column' : 'row',
+    gap: isMobile ? '8px' : '0',
     padding: '16px',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--color-neutral-200)',
@@ -364,7 +351,7 @@ export default function ConfiguracoesPage() {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '8px 20px',
+    padding: isMobile ? '10px 20px' : '8px 20px',
     fontSize: 'var(--font-sm)',
     fontWeight: active ? 600 : 400,
     color: active ? 'var(--color-primary-700)' : 'var(--color-neutral-600)',
@@ -373,11 +360,14 @@ export default function ConfiguracoesPage() {
     borderRadius: 'var(--radius-md)',
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
+    minHeight: '44px',
+    flex: isMobile ? '1' : 'none',
   })
 
   const saveBtnStyle: CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '8px',
     padding: '10px 24px',
     fontSize: 'var(--font-sm)',
@@ -389,9 +379,11 @@ export default function ConfiguracoesPage() {
     cursor: saving ? 'not-allowed' : 'pointer',
     opacity: saving ? 0.7 : 1,
     transition: 'all var(--transition-fast)',
+    minHeight: '44px',
+    width: isMobile ? '100%' : 'auto',
   }
 
-  // ─── Navigation items ────────────────────────────
+  // Navigation items
 
   const sections = [
     { id: 'company', label: 'Dados do Cupom', icon: 'M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm8 8h-6v-2h6v2zm0-4h-6v-2h6v2zm0-4h-6V7h6v2z' },
@@ -402,7 +394,7 @@ export default function ConfiguracoesPage() {
     { id: 'sync', label: 'Sincronizacao', icon: 'M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2' },
   ]
 
-  // ─── Render skeleton ────────────────────────────
+  // Render skeleton
 
   if (loading) {
     return (
@@ -412,10 +404,12 @@ export default function ConfiguracoesPage() {
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Configuracoes</h1>
             <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Preferencias do sistema</p>
           </div>
-          <div style={{ display: 'flex', gap: '24px' }}>
-            <div style={{ width: '220px' }}>
-              {Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton skeleton-text" style={{ height: '40px', marginBottom: '4px', borderRadius: 'var(--radius-md)' }} />)}
-            </div>
+          <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row' }}>
+            {!isMobile && (
+              <div style={{ width: '220px' }}>
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton skeleton-text" style={{ height: '40px', marginBottom: '4px', borderRadius: 'var(--radius-md)' }} />)}
+              </div>
+            )}
             <div style={{ flex: 1 }}>
               <div className="skeleton skeleton-card" style={{ height: '400px', borderRadius: 'var(--radius-lg)' }} />
             </div>
@@ -425,13 +419,19 @@ export default function ConfiguracoesPage() {
     )
   }
 
-  // ─── Render ────────────────────────────────────────
+  // Render
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '1000px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isMobile ? '12px' : '16px',
+        }}>
           <div>
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Configuracoes</h1>
             <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Preferencias do sistema</p>
@@ -463,16 +463,29 @@ export default function ConfiguracoesPage() {
           </div>
         )}
 
-        <div style={containerStyle}>
-          {/* Sidebar nav */}
-          <nav style={sidebarStyle}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '16px' : '24px',
+          maxWidth: '1000px',
+        }}>
+          {/* Navigation - horizontal scrollable on mobile, sidebar on desktop */}
+          <nav style={isMobile ? {
+            display: 'flex', gap: '4px', overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: '4px',
+            margin: '0 -16px', padding: '0 16px 4px',
+          } : {
+            width: '220px', flexShrink: 0,
+            display: 'flex', flexDirection: 'column', gap: '4px',
+          }}>
             {sections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
                 style={navBtnStyle(activeSection === s.id)}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <path d={s.icon} />
                 </svg>
                 {s.label}
@@ -481,7 +494,7 @@ export default function ConfiguracoesPage() {
           </nav>
 
           {/* Content */}
-          <div style={contentStyle}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
             {/* Company Info */}
             {activeSection === 'company' && (
               <div style={cardStyle}>
@@ -513,7 +526,7 @@ export default function ConfiguracoesPage() {
                     <label style={labelStyle}>Cidade</label>
                     <input type="text" value={company.city} onChange={(e) => updateCompany('city', e.target.value)} style={inputStyle} />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-grid-2" style={{ gap: '12px' }}>
                     <div>
                       <label style={labelStyle}>UF</label>
                       <input type="text" value={company.state} onChange={(e) => updateCompany('state', e.target.value)} style={inputStyle} maxLength={2} placeholder="SP" />
@@ -602,7 +615,7 @@ export default function ConfiguracoesPage() {
                   )}
 
                   {/* Add new tier */}
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '8px', marginBottom: '16px' }}>
                     <input
                       type="text"
                       value={newTierName}
@@ -615,11 +628,11 @@ export default function ConfiguracoesPage() {
                       onClick={handleAddTier}
                       disabled={addingTier || !newTierName.trim()}
                       style={{
-                        padding: '8px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
+                        padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
                         color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
                         border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
                         opacity: addingTier || !newTierName.trim() ? 0.5 : 1,
-                        whiteSpace: 'nowrap',
+                        whiteSpace: 'nowrap', minHeight: '44px',
                       }}
                     >
                       {addingTier ? 'Criando...' : '+ Adicionar'}
@@ -634,13 +647,13 @@ export default function ConfiguracoesPage() {
                           key={tier.id}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                            padding: isMobile ? '14px 12px' : '12px 16px', borderRadius: 'var(--radius-md)',
                             border: `1px solid ${defaultPriceTierId === tier.id ? 'var(--color-primary-300)' : 'var(--color-neutral-200)'}`,
                             backgroundColor: defaultPriceTierId === tier.id ? 'var(--color-primary-50)' : 'var(--color-white)',
+                            flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '8px' : '0',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                            {/* Radio for default selection */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                             <div
                               onClick={() => setDefaultPriceTierId(tier.id)}
                               style={{ ...radioCircleStyle(defaultPriceTierId === tier.id), cursor: 'pointer' }}
@@ -649,7 +662,7 @@ export default function ConfiguracoesPage() {
                             </div>
 
                             {editingTierId === tier.id ? (
-                              <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                              <div style={{ display: 'flex', gap: '6px', flex: 1, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                                 <input
                                   type="text"
                                   value={editingTierName}
@@ -659,35 +672,37 @@ export default function ConfiguracoesPage() {
                                     if (e.key === 'Escape') { setEditingTierId(null); setEditingTierName('') }
                                   }}
                                   autoFocus
-                                  style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 'var(--font-sm)' }}
+                                  style={{ ...inputStyle, flex: 1, padding: '6px 8px', fontSize: 'var(--font-sm)' }}
                                 />
-                                <button
-                                  onClick={() => handleRenameTier(tier.id)}
-                                  style={{
-                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
-                                    color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
-                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                  }}
-                                >
-                                  Salvar
-                                </button>
-                                <button
-                                  onClick={() => { setEditingTierId(null); setEditingTierName('') }}
-                                  style={{
-                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
-                                    color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
-                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                  }}
-                                >
-                                  Cancelar
-                                </button>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <button
+                                    onClick={() => handleRenameTier(tier.id)}
+                                    style={{
+                                      padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                      color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                                      border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '36px',
+                                    }}
+                                  >
+                                    Salvar
+                                  </button>
+                                  <button
+                                    onClick={() => { setEditingTierId(null); setEditingTierName('') }}
+                                    style={{
+                                      padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                      color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
+                                      border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '36px',
+                                    }}
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <div
-                                style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, cursor: 'pointer' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, cursor: 'pointer', minWidth: 0 }}
                                 onClick={() => setDefaultPriceTierId(tier.id)}
                               >
-                                <span style={{ fontWeight: 500, color: 'var(--color-neutral-800)', fontSize: 'var(--font-sm)' }}>
+                                <span style={{ fontWeight: 500, color: 'var(--color-neutral-800)', fontSize: 'var(--font-sm)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {tier.name}
                                 </span>
                                 {defaultPriceTierId === tier.id && (
@@ -696,6 +711,7 @@ export default function ConfiguracoesPage() {
                                     fontSize: 'var(--font-xs)', fontWeight: 500,
                                     borderRadius: 'var(--radius-full)',
                                     backgroundColor: 'var(--color-primary-100)', color: 'var(--color-primary-700)',
+                                    flexShrink: 0,
                                   }}>
                                     Padrao
                                   </span>
@@ -710,8 +726,9 @@ export default function ConfiguracoesPage() {
                                 onClick={() => { setEditingTierId(tier.id); setEditingTierName(tier.name) }}
                                 title="Renomear"
                                 style={{
-                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  padding: '8px', backgroundColor: 'transparent', border: 'none',
                                   borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-neutral-500)',
+                                  minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -723,8 +740,9 @@ export default function ConfiguracoesPage() {
                                 onClick={() => handleDeleteTier(tier.id, tier.name)}
                                 title="Excluir"
                                 style={{
-                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  padding: '8px', backgroundColor: 'transparent', border: 'none',
                                   borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-danger-500)',
+                                  minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -766,7 +784,7 @@ export default function ConfiguracoesPage() {
                   )}
 
                   {/* Add new account */}
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '8px', marginBottom: '16px' }}>
                     <input
                       type="text"
                       value={newAccountName}
@@ -775,32 +793,33 @@ export default function ConfiguracoesPage() {
                       placeholder="Nome da conta (ex: Caixa, Pix Nubank)"
                       style={{ ...inputStyle, flex: 1 }}
                     />
-                    <select
-                      value={newAccountType}
-                      onChange={(e) => setNewAccountType(e.target.value as 'CASH' | 'BANK' | 'OTHER')}
-                      style={{
-                        padding: '8px 12px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)',
-                        backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
-                        borderRadius: 'var(--radius-md)', outline: 'none', cursor: 'pointer',
-                      }}
-                    >
-                      <option value="CASH">Dinheiro</option>
-                      <option value="BANK">Banco</option>
-                      <option value="OTHER">Outro</option>
-                    </select>
-                    <button
-                      onClick={handleAddAccount}
-                      disabled={addingAccount || !newAccountName.trim()}
-                      style={{
-                        padding: '8px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
-                        color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
-                        border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                        opacity: addingAccount || !newAccountName.trim() ? 0.5 : 1,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {addingAccount ? 'Criando...' : '+ Adicionar'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        value={newAccountType}
+                        onChange={(e) => setNewAccountType(e.target.value as 'CASH' | 'BANK' | 'OTHER')}
+                        style={{
+                          ...inputStyle, width: isMobile ? '50%' : 'auto', flex: isMobile ? 1 : 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <option value="CASH">Dinheiro</option>
+                        <option value="BANK">Banco</option>
+                        <option value="OTHER">Outro</option>
+                      </select>
+                      <button
+                        onClick={handleAddAccount}
+                        disabled={addingAccount || !newAccountName.trim()}
+                        style={{
+                          padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 600,
+                          color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                          border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                          opacity: addingAccount || !newAccountName.trim() ? 0.5 : 1,
+                          whiteSpace: 'nowrap', minHeight: '44px',
+                        }}
+                      >
+                        {addingAccount ? 'Criando...' : '+ Adicionar'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* List accounts */}
@@ -811,14 +830,15 @@ export default function ConfiguracoesPage() {
                           key={acc.id}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                            padding: isMobile ? '14px 12px' : '12px 16px', borderRadius: 'var(--radius-md)',
                             border: '1px solid var(--color-neutral-200)',
                             backgroundColor: 'var(--color-white)',
+                            flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '8px' : '0',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                             {editingAccountId === acc.id ? (
-                              <div style={{ display: 'flex', gap: '6px', flex: 1, alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '6px', flex: 1, alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                                 <input
                                   type="text"
                                   value={editingAccountName}
@@ -828,41 +848,42 @@ export default function ConfiguracoesPage() {
                                     if (e.key === 'Escape') { setEditingAccountId(null); setEditingAccountName('') }
                                   }}
                                   autoFocus
-                                  style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 'var(--font-sm)' }}
+                                  style={{ ...inputStyle, flex: 1, padding: '6px 8px', fontSize: 'var(--font-sm)' }}
                                 />
                                 <select
                                   value={editingAccountType}
                                   onChange={(e) => setEditingAccountType(e.target.value as 'CASH' | 'BANK' | 'OTHER')}
                                   style={{
-                                    padding: '4px 8px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-700)',
-                                    backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
-                                    borderRadius: 'var(--radius-md)', outline: 'none', cursor: 'pointer',
+                                    ...inputStyle, width: 'auto', padding: '6px 8px', fontSize: 'var(--font-xs)',
+                                    cursor: 'pointer',
                                   }}
                                 >
                                   <option value="CASH">Dinheiro</option>
                                   <option value="BANK">Banco</option>
                                   <option value="OTHER">Outro</option>
                                 </select>
-                                <button
-                                  onClick={() => handleRenameAccount(acc.id)}
-                                  style={{
-                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
-                                    color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
-                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                  }}
-                                >
-                                  Salvar
-                                </button>
-                                <button
-                                  onClick={() => { setEditingAccountId(null); setEditingAccountName('') }}
-                                  style={{
-                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
-                                    color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
-                                    border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                                  }}
-                                >
-                                  Cancelar
-                                </button>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <button
+                                    onClick={() => handleRenameAccount(acc.id)}
+                                    style={{
+                                      padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                      color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+                                      border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '36px',
+                                    }}
+                                  >
+                                    Salvar
+                                  </button>
+                                  <button
+                                    onClick={() => { setEditingAccountId(null); setEditingAccountName('') }}
+                                    style={{
+                                      padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                      color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-neutral-100)',
+                                      border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '36px',
+                                    }}
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
@@ -888,8 +909,9 @@ export default function ConfiguracoesPage() {
                                 onClick={() => { setEditingAccountId(acc.id); setEditingAccountName(acc.name); setEditingAccountType(acc.type) }}
                                 title="Editar"
                                 style={{
-                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  padding: '8px', backgroundColor: 'transparent', border: 'none',
                                   borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-neutral-500)',
+                                  minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -901,8 +923,9 @@ export default function ConfiguracoesPage() {
                                 onClick={() => handleDeleteAccount(acc.id, acc.name)}
                                 title="Desativar"
                                 style={{
-                                  padding: '6px', backgroundColor: 'transparent', border: 'none',
+                                  padding: '8px', backgroundColor: 'transparent', border: 'none',
                                   borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-danger-500)',
+                                  minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -956,7 +979,11 @@ export default function ConfiguracoesPage() {
                 </div>
 
                 <div style={cardStyle}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div style={{
+                    display: 'flex', alignItems: isMobile ? 'flex-start' : 'center',
+                    justifyContent: 'space-between', marginBottom: '16px',
+                    flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '4px' : '0',
+                  }}>
                     <div>
                       <h2 style={sectionTitleStyle}>Impressoras</h2>
                       <p style={{ ...sectionDescStyle, margin: 0 }}>Perfis de impressora configurados</p>
@@ -971,7 +998,7 @@ export default function ConfiguracoesPage() {
                             <div style={{
                               width: '40px', height: '40px', borderRadius: 'var(--radius-md)',
                               backgroundColor: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                             }}>
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" />
@@ -1018,9 +1045,13 @@ export default function ConfiguracoesPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    alignItems: isMobile ? 'flex-start' : 'center',
+                    justifyContent: 'space-between',
                     padding: '16px', borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--color-neutral-200)', backgroundColor: 'var(--color-neutral-50)',
+                    gap: isMobile ? '8px' : '0',
                   }}>
                     <div>
                       <p style={{ fontWeight: 500, color: 'var(--color-neutral-800)', margin: 0, fontSize: 'var(--font-sm)' }}>
@@ -1048,7 +1079,7 @@ export default function ConfiguracoesPage() {
                         type="text"
                         value={settings?.instanceId ?? ''}
                         readOnly
-                        style={{ ...inputStyle, backgroundColor: 'var(--color-neutral-50)', color: 'var(--color-neutral-500)', fontFamily: 'monospace', fontSize: 'var(--font-sm)' }}
+                        style={{ ...inputStyle, backgroundColor: 'var(--color-neutral-50)', color: 'var(--color-neutral-500)', fontFamily: 'monospace', fontSize: 'var(--font-sm)', flex: 1 }}
                       />
                       <button
                         onClick={() => {
@@ -1060,7 +1091,7 @@ export default function ConfiguracoesPage() {
                           padding: '8px 14px', fontSize: 'var(--font-xs)', fontWeight: 500,
                           color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
                           border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
-                          cursor: 'pointer', whiteSpace: 'nowrap',
+                          cursor: 'pointer', whiteSpace: 'nowrap', minHeight: '44px',
                         }}
                       >
                         Copiar

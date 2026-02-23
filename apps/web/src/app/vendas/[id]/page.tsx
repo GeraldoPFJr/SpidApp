@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { CouponPreview } from '@/components/CouponPreview'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
 
@@ -141,9 +142,20 @@ function mapSaleDetail(raw: SaleRaw): SaleDetail {
   }
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  CASH: 'Dinheiro',
+  PIX: 'PIX',
+  CREDIT_CARD: 'Cartao Credito',
+  DEBIT_CARD: 'Cartao Debito',
+  CREDIARIO: 'Crediario',
+  BOLETO: 'Boleto',
+  CHEQUE: 'Cheque',
+}
+
 export default function VendaDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: rawSale, loading, refetch } = useApi<SaleRaw>(`/sales/${id}`)
   const sale = rawSale ? mapSaleDetail(rawSale) : null
   const [showCoupon, setShowCoupon] = useState(false)
@@ -238,7 +250,7 @@ export default function VendaDetalhePage() {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '24px',
+    padding: isMobile ? '16px' : '24px',
     boxShadow: 'var(--shadow-sm)',
   }
 
@@ -255,7 +267,7 @@ export default function VendaDetalhePage() {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="skeleton" style={{ height: '32px', width: '300px' }} />
+          <div className="skeleton" style={{ height: '32px', width: isMobile ? '200px' : '300px' }} />
           <div className="skeleton skeleton-card" style={{ height: '200px' }} />
         </div>
       </Layout>
@@ -279,22 +291,31 @@ export default function VendaDetalhePage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1100px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '1100px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button onClick={() => router.back()} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+              width: isMobile ? '40px' : '36px', height: isMobile ? '40px' : '36px',
+              borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
+              flexShrink: 0,
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
                   Venda #{String(sale.couponNumber ?? 0).padStart(4, '0')}
                 </h1>
                 <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)', backgroundColor: st.bg, color: st.color }}>
@@ -307,18 +328,37 @@ export default function VendaDetalhePage() {
             </div>
           </div>
           {sale.status === 'CONFIRMED' && (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              ...(isMobile && {
+                width: '100%',
+                flexDirection: 'column' as const,
+              }),
+            }}>
               <button onClick={() => setShowCoupon(!showCoupon)} style={{
-                padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
-                color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
-                border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                padding: isMobile ? '12px 16px' : '8px 16px',
+                fontSize: 'var(--font-sm)',
+                fontWeight: 500,
+                color: 'var(--color-neutral-600)',
+                backgroundColor: 'var(--color-white)',
+                border: '1px solid var(--color-neutral-300)',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                ...(isMobile && { width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center' }),
               }}>
                 {showCoupon ? 'Esconder Cupom' : 'Ver Cupom'}
               </button>
               <button onClick={() => setShowCancelModal(true)} style={{
-                padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
-                color: 'var(--color-danger-600)', backgroundColor: 'var(--color-white)',
-                border: '1px solid var(--color-danger-200)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                padding: isMobile ? '12px 16px' : '8px 16px',
+                fontSize: 'var(--font-sm)',
+                fontWeight: 500,
+                color: 'var(--color-danger-600)',
+                backgroundColor: 'var(--color-white)',
+                border: '1px solid var(--color-danger-200)',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                ...(isMobile && { width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center' }),
               }}>
                 Cancelar Venda
               </button>
@@ -328,7 +368,11 @@ export default function VendaDetalhePage() {
 
         {/* Info */}
         <div style={cardStyle}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: isMobile ? '16px' : '20px',
+          }}>
             <div><p style={infoLabelStyle}>Cliente</p><p style={infoValueStyle}>{sale.customerName ?? 'Consumidor Final'}</p></div>
             <div><p style={infoLabelStyle}>Data</p><p style={infoValueStyle}>{formatDateTime(sale.date)}</p></div>
             <div><p style={infoLabelStyle}>Subtotal</p><p style={infoValueStyle}>{formatCurrency(sale.subtotal)}</p></div>
@@ -342,73 +386,142 @@ export default function VendaDetalhePage() {
         {/* Items */}
         <div style={cardStyle}>
           <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Itens</h2>
-          <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-              <thead>
-                <tr>
-                  {['Codigo', 'Produto', 'Unidade', 'Qtd', 'Preco Unit.', 'Total'].map((h, i) => (
-                    <th key={h} style={{
-                      padding: '10px 16px',
-                      textAlign: i >= 3 ? 'right' : 'left',
-                      fontWeight: 500, color: 'var(--color-neutral-500)',
-                      backgroundColor: 'var(--color-neutral-50)',
-                      borderBottom: '1px solid var(--color-border)',
-                      fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sale.items.map((item) => (
-                  <tr key={item.id}>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontFamily: 'monospace', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>{item.code}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>{item.productName}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.unitLabel}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{item.qty}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(item.total)}</td>
+
+          {isMobile ? (
+            // ── Mobile: Card layout for items ──
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {sale.items.map((item) => (
+                <div key={item.id} style={{
+                  padding: '12px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-neutral-100)',
+                  backgroundColor: 'var(--color-neutral-50)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div>
+                      <p style={{ fontWeight: 500, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)', margin: 0 }}>
+                        {item.productName}
+                      </p>
+                      {item.code && (
+                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', fontFamily: 'monospace', margin: '2px 0 0' }}>
+                          {item.code}
+                        </p>
+                      )}
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-900)' }}>
+                      {formatCurrency(item.total)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>
+                    <span>{item.unitLabel}</span>
+                    <span>{item.qty} x {formatCurrency(item.unitPrice)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // ── Desktop: Table layout ──
+            <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                <thead>
+                  <tr>
+                    {['Codigo', 'Produto', 'Unidade', 'Qtd', 'Preco Unit.', 'Total'].map((h, i) => (
+                      <th key={h} style={{
+                        padding: '10px 16px',
+                        textAlign: i >= 3 ? 'right' : 'left',
+                        fontWeight: 500, color: 'var(--color-neutral-500)',
+                        backgroundColor: 'var(--color-neutral-50)',
+                        borderBottom: '1px solid var(--color-border)',
+                        fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                      }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {sale.items.map((item) => (
+                    <tr key={item.id}>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontFamily: 'monospace', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>{item.code}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>{item.productName}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.unitLabel}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{item.qty}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(item.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Payments */}
         <div style={cardStyle}>
           <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Pagamentos</h2>
-          <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-              <thead>
-                <tr>
-                  {['Data', 'Forma', 'Conta', 'Parcelas', 'Valor'].map((h, i) => (
-                    <th key={h} style={{
-                      padding: '10px 16px',
-                      textAlign: i === 4 ? 'right' : 'left',
-                      fontWeight: 500, color: 'var(--color-neutral-500)',
-                      backgroundColor: 'var(--color-neutral-50)',
-                      borderBottom: '1px solid var(--color-border)',
-                      fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sale.payments.map((p) => {
-                  const methodLabel = { CASH: 'Dinheiro', PIX: 'PIX', CREDIT_CARD: 'Cartao Credito', DEBIT_CARD: 'Cartao Debito', CREDIARIO: 'Crediario', BOLETO: 'Boleto', CHEQUE: 'Cheque' }[p.method] ?? p.method
-                  return (
-                    <tr key={p.id}>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{formatDate(p.date)}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{methodLabel}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.accountName}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.installments ? `${p.installments}x` : '-'}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(p.amount)}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+
+          {isMobile ? (
+            // ── Mobile: Card layout for payments ──
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {sale.payments.map((p) => {
+                const methodLabel = METHOD_LABELS[p.method] ?? p.method
+                return (
+                  <div key={p.id} style={{
+                    padding: '12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-neutral-100)',
+                    backgroundColor: 'var(--color-neutral-50)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 500, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)' }}>
+                        {methodLabel}
+                      </span>
+                      <span style={{ fontWeight: 600, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-900)' }}>
+                        {formatCurrency(p.amount)}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>
+                      <span>{formatDate(p.date)}</span>
+                      <span>{p.accountName}</span>
+                      {p.installments && <span>{p.installments}x</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            // ── Desktop: Table layout ──
+            <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                <thead>
+                  <tr>
+                    {['Data', 'Forma', 'Conta', 'Parcelas', 'Valor'].map((h, i) => (
+                      <th key={h} style={{
+                        padding: '10px 16px',
+                        textAlign: i === 4 ? 'right' : 'left',
+                        fontWeight: 500, color: 'var(--color-neutral-500)',
+                        backgroundColor: 'var(--color-neutral-50)',
+                        borderBottom: '1px solid var(--color-border)',
+                        fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sale.payments.map((p) => {
+                    const methodLabel = METHOD_LABELS[p.method] ?? p.method
+                    return (
+                      <tr key={p.id}>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{formatDate(p.date)}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{methodLabel}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.accountName}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.installments ? `${p.installments}x` : '-'}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(p.amount)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Receivables */}
@@ -459,11 +572,17 @@ export default function VendaDetalhePage() {
         {showCancelModal && (
           <div style={{
             position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px',
+            display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', zIndex: 1000, padding: isMobile ? '0' : '16px',
           }} onClick={() => setShowCancelModal(false)}>
             <div style={{
-              backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-xl)',
-              boxShadow: 'var(--shadow-xl)', width: '100%', maxWidth: '500px', padding: '24px',
+              backgroundColor: 'var(--color-white)',
+              borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-xl)',
+              width: '100%',
+              maxWidth: isMobile ? '100%' : '500px',
+              padding: isMobile ? '20px 16px 32px' : '24px',
+              maxHeight: isMobile ? '90vh' : undefined,
+              overflowY: 'auto',
             }} onClick={(e) => e.stopPropagation()}>
               <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 20px' }}>Cancelar Venda</h2>
 
@@ -477,8 +596,8 @@ export default function VendaDetalhePage() {
                 <div>
                   <p style={{ fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-700)', margin: '0 0 8px' }}>O que foi feito com a mercadoria?</p>
                   {['Devolvida ao estoque', 'Credito para o cliente', 'Perda/estrago', 'Outro'].map((opt) => (
-                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
-                      <input type="radio" name="merchandise" value={opt} checked={cancelMerchandise === opt} onChange={(e) => setCancelMerchandise(e.target.value)} style={{ accentColor: 'var(--color-primary-600)' }} />
+                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '8px 0' : '4px 0', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
+                      <input type="radio" name="merchandise" value={opt} checked={cancelMerchandise === opt} onChange={(e) => setCancelMerchandise(e.target.value)} style={{ accentColor: 'var(--color-primary-600)', width: '18px', height: '18px' }} />
                       {opt}
                     </label>
                   ))}
@@ -487,8 +606,8 @@ export default function VendaDetalhePage() {
                 <div>
                   <p style={{ fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-700)', margin: '0 0 8px' }}>O que foi feito com o dinheiro?</p>
                   {['Devolvido', 'Credito para o cliente', 'Estorno em cartao', 'Outro'].map((opt) => (
-                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
-                      <input type="radio" name="money" value={opt} checked={cancelMoney === opt} onChange={(e) => setCancelMoney(e.target.value)} style={{ accentColor: 'var(--color-primary-600)' }} />
+                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '8px 0' : '4px 0', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
+                      <input type="radio" name="money" value={opt} checked={cancelMoney === opt} onChange={(e) => setCancelMoney(e.target.value)} style={{ accentColor: 'var(--color-primary-600)', width: '18px', height: '18px' }} />
                       {opt}
                     </label>
                   ))}
@@ -509,11 +628,25 @@ export default function VendaDetalhePage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                marginTop: '20px',
+                ...(isMobile && {
+                  flexDirection: 'column-reverse' as const,
+                }),
+              }}>
                 <button onClick={() => setShowCancelModal(false)} style={{
-                  padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
-                  color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
-                  border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  padding: isMobile ? '12px 16px' : '8px 16px',
+                  fontSize: 'var(--font-sm)',
+                  fontWeight: 500,
+                  color: 'var(--color-neutral-600)',
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-neutral-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  ...(isMobile && { width: '100%' }),
                 }}>
                   Voltar
                 </button>
@@ -521,11 +654,16 @@ export default function VendaDetalhePage() {
                   onClick={handleCancel}
                   disabled={!cancelMerchandise || !cancelMoney || cancelling}
                   style={{
-                    padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
-                    color: 'var(--color-white)', backgroundColor: 'var(--color-danger-600)',
-                    border: 'none', borderRadius: 'var(--radius-md)',
+                    padding: isMobile ? '12px 16px' : '8px 16px',
+                    fontSize: 'var(--font-sm)',
+                    fontWeight: 600,
+                    color: 'var(--color-white)',
+                    backgroundColor: 'var(--color-danger-600)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
                     cursor: (!cancelMerchandise || !cancelMoney || cancelling) ? 'not-allowed' : 'pointer',
                     opacity: (!cancelMerchandise || !cancelMoney || cancelling) ? 0.5 : 1,
+                    ...(isMobile && { width: '100%' }),
                   }}
                 >
                   {cancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}

@@ -4,6 +4,7 @@ import { type CSSProperties } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 
 interface PurchaseRawItem {
@@ -91,12 +92,13 @@ function mapPurchaseDetail(raw: PurchaseRaw): PurchaseDetail {
 export default function CompraDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: rawPurchase, loading } = useApi<PurchaseRaw>(`/purchases/${id}`)
   const purchase = rawPurchase ? mapPurchaseDetail(rawPurchase) : null
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)', padding: '24px', boxShadow: 'var(--shadow-sm)',
+    border: '1px solid var(--color-border)', padding: isMobile ? '16px' : '24px', boxShadow: 'var(--shadow-sm)',
   }
 
   const infoLabelStyle: CSSProperties = {
@@ -112,7 +114,7 @@ export default function CompraDetalhePage() {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="skeleton" style={{ height: '32px', width: '300px' }} />
+          <div className="skeleton" style={{ height: '32px', width: isMobile ? '200px' : '300px' }} />
           <div className="skeleton skeleton-card" style={{ height: '200px' }} />
         </div>
       </Layout>
@@ -132,57 +134,101 @@ export default function CompraDetalhePage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '960px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '960px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => router.back()} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
             borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Compra - {purchase.supplierName}</h1>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+            {isMobile ? purchase.supplierName : `Compra - ${purchase.supplierName}`}
+          </h1>
         </div>
 
+        {/* Info grid */}
         <div style={cardStyle}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: isMobile ? '16px' : '20px',
+          }}>
             <div><p style={infoLabelStyle}>Fornecedor</p><p style={infoValueStyle}>{purchase.supplierName}</p></div>
             <div><p style={infoLabelStyle}>Data</p><p style={infoValueStyle}>{formatDate(purchase.date)}</p></div>
             <div><p style={infoLabelStyle}>Total</p><p style={{ ...infoValueStyle, fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(purchase.total)}</p></div>
-            {purchase.notes && <div><p style={infoLabelStyle}>Observacao</p><p style={infoValueStyle}>{purchase.notes}</p></div>}
+            {purchase.notes && <div style={isMobile ? { gridColumn: '1 / -1' } : undefined}><p style={infoLabelStyle}>Observacao</p><p style={infoValueStyle}>{purchase.notes}</p></div>}
           </div>
         </div>
 
         {/* Items */}
         <div style={cardStyle}>
           <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Itens</h2>
-          <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-              <thead>
-                <tr>
-                  {['Produto', 'Unidade', 'Qtd', 'Custo Unit.', 'Total'].map((h, i) => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: i >= 2 ? 'right' : 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {purchase.items.map((item) => (
-                  <tr key={item.id}>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>{item.productName}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.unitLabel}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{item.qty}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{formatCurrency(item.unitCost)}</td>
-                    <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(item.totalCost)}</td>
+
+          {isMobile ? (
+            /* Mobile: stacked item cards */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {purchase.items.map((item) => (
+                <div key={item.id} style={{
+                  padding: '12px', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-neutral-200)',
+                  backgroundColor: 'var(--color-neutral-50)',
+                }}>
+                  <div style={{ fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '8px', fontSize: 'var(--font-sm)' }}>
+                    {item.productName}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: 'var(--font-xs)' }}>
+                    <div>
+                      <span style={{ color: 'var(--color-neutral-500)' }}>Unid.</span>
+                      <div style={{ fontWeight: 500, color: 'var(--color-neutral-700)' }}>{item.unitLabel}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--color-neutral-500)' }}>Qtd</span>
+                      <div style={{ fontWeight: 500, color: 'var(--color-neutral-700)' }}>{item.qty}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ color: 'var(--color-neutral-500)' }}>Total</span>
+                      <div style={{ fontWeight: 700, color: 'var(--color-neutral-900)' }}>{formatCurrency(item.totalCost)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '2px solid var(--color-neutral-300)' }}>
+                <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)', fontSize: 'var(--font-sm)' }}>Subtotal Itens</span>
+                <span style={{ fontWeight: 700, fontSize: 'var(--font-sm)' }}>{formatCurrency(itemsTotal)}</span>
+              </div>
+            </div>
+          ) : (
+            /* Desktop: table */
+            <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                <thead>
+                  <tr>
+                    {['Produto', 'Unidade', 'Qtd', 'Custo Unit.', 'Total'].map((h, i) => (
+                      <th key={h} style={{ padding: '10px 16px', textAlign: i >= 2 ? 'right' : 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan={4} style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 500, color: 'var(--color-neutral-600)' }}>Subtotal Itens</td>
-                  <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700 }}>{formatCurrency(itemsTotal)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {purchase.items.map((item) => (
+                    <tr key={item.id}>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>{item.productName}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.unitLabel}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{item.qty}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>{formatCurrency(item.unitCost)}</td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(item.totalCost)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={4} style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 500, color: 'var(--color-neutral-600)' }}>Subtotal Itens</td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700 }}>{formatCurrency(itemsTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Extra Costs */}

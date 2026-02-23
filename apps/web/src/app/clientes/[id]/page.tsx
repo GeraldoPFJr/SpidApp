@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { StatsCard } from '@/components/StatsCard'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 
 interface CustomerRawReceivable {
@@ -89,6 +90,7 @@ function mapCustomerDetail(raw: CustomerRaw): CustomerDetail {
 export default function ClienteDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: rawCustomer, loading } = useApi<CustomerRaw>(`/customers/${id}`)
   const customer = rawCustomer ? mapCustomerDetail(rawCustomer) : null
 
@@ -223,14 +225,14 @@ export default function ClienteDetalhePage() {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '24px',
+    padding: isMobile ? '16px' : '24px',
     boxShadow: 'var(--shadow-sm)',
   }
 
   const infoRowStyle: CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '20px',
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: isMobile ? '16px' : '20px',
   }
 
   const infoLabelStyle: CSSProperties = {
@@ -246,7 +248,7 @@ export default function ClienteDetalhePage() {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="skeleton" style={{ height: '32px', width: '300px' }} />
+          <div className="skeleton" style={{ height: '32px', width: isMobile ? '200px' : '300px' }} />
           <div className="skeleton skeleton-card" style={{ height: '150px' }} />
           <div className="skeleton skeleton-card" style={{ height: '200px' }} />
         </div>
@@ -266,30 +268,39 @@ export default function ClienteDetalhePage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1100px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '1100px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '16px',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button onClick={() => router.back()} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+              width: isMobile ? '44px' : '36px', height: isMobile ? '44px' : '36px',
+              borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+            <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
               {customer.name}
             </h1>
           </div>
           <button
             onClick={() => router.push(`/vendas/nova?cliente=${id}`)}
             style={{
-              padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
+              padding: isMobile ? '12px 16px' : '8px 16px',
+              fontSize: 'var(--font-sm)', fontWeight: 600,
               color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
               border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              width: isMobile ? '100%' : 'auto',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -300,7 +311,11 @@ export default function ClienteDetalhePage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: isMobile ? '12px' : '16px',
+        }}>
           <StatsCard
             title="Em Aberto"
             value={formatCurrency(customer.openAmount)}

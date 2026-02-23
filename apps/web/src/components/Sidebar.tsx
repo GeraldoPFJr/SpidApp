@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { type CSSProperties, useState, useEffect } from 'react'
+import { type CSSProperties, useState, useEffect, useCallback } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4' },
@@ -36,7 +36,13 @@ function NavIcon({ path }: { path: string }) {
   )
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+  isMobile?: boolean
+}
+
+export function Sidebar({ mobileOpen, onMobileClose, isMobile }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
@@ -50,6 +56,22 @@ export function Sidebar() {
       .catch(() => {})
   }, [])
 
+  // Close drawer on navigation
+  useEffect(() => {
+    if (isMobile && mobileOpen) {
+      onMobileClose?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isMobile && mobileOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [isMobile, mobileOpen])
+
   async function handleLogout() {
     setLoggingOut(true)
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
@@ -57,6 +79,174 @@ export function Sidebar() {
     router.refresh()
   }
 
+  const handleLinkClick = useCallback(() => {
+    if (isMobile) onMobileClose?.()
+  }, [isMobile, onMobileClose])
+
+  // ─── Mobile Drawer Mode ────────────────────────
+  if (isMobile) {
+    const drawerStyle: CSSProperties = {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      bottom: 0,
+      width: '280px',
+      maxWidth: '85vw',
+      backgroundColor: 'var(--color-neutral-800)',
+      color: 'var(--color-neutral-50)',
+      display: 'flex',
+      flexDirection: 'column',
+      zIndex: 101,
+      transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+      transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      willChange: 'transform',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+    }
+
+    return (
+      <>
+        {/* Backdrop */}
+        {mobileOpen && (
+          <div
+            className="drawer-backdrop"
+            onClick={onMobileClose}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Drawer */}
+        <aside style={drawerStyle}>
+          {/* Logo */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '20px 20px',
+            borderBottom: '1px solid var(--color-neutral-700)',
+            minHeight: '64px',
+          }}>
+            <span style={{
+              fontSize: '1.375rem',
+              fontWeight: 700,
+              letterSpacing: '-0.025em',
+              color: 'var(--color-white)',
+            }}>
+              Spid
+            </span>
+            <button
+              onClick={onMobileClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-neutral-400)',
+                padding: '8px',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                minHeight: '44px',
+                minWidth: '44px',
+              }}
+              aria-label="Fechar menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Nav */}
+          <nav style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            padding: '12px',
+            flex: 1,
+            overflowY: 'auto',
+          }}>
+            {NAV_ITEMS.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleLinkClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--font-base)',
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? 'var(--color-white)' : 'var(--color-neutral-400)',
+                    backgroundColor: isActive ? 'var(--color-primary-600)' : 'transparent',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                    minHeight: '44px',
+                  }}
+                >
+                  <NavIcon path={item.icon} />
+                  <span>{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div style={{
+            borderTop: '1px solid var(--color-neutral-700)',
+            padding: '12px',
+          }}>
+            {companyName && (
+              <div style={{
+                fontSize: 'var(--font-xs)',
+                color: 'var(--color-neutral-400)',
+                marginBottom: '8px',
+                padding: '0 14px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {companyName}
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 'var(--font-base)',
+                fontWeight: 400,
+                color: 'var(--color-neutral-400)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: loggingOut ? 'not-allowed' : 'pointer',
+                width: '100%',
+                textAlign: 'left',
+                transition: 'all 150ms ease',
+                opacity: loggingOut ? 0.5 : 1,
+                minHeight: '44px',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>{loggingOut ? 'Saindo...' : 'Sair'}</span>
+            </button>
+          </div>
+        </aside>
+      </>
+    )
+  }
+
+  // ─── Desktop Sidebar (original) ────────────────
   const sidebarWidth = collapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)'
 
   const sidebarStyle: CSSProperties = {

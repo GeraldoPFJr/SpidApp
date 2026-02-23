@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency } from '@/lib/format'
 import type { Customer } from '@spid/shared'
 
@@ -15,6 +16,7 @@ interface CustomerRow extends Customer {
 
 export default function ClientesPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<CustomerRow[]>('/customers')
 
   const columns: DataTableColumn<CustomerRow>[] = useMemo(() => [
@@ -93,11 +95,13 @@ export default function ClientesPage() {
     <button
       onClick={() => router.push('/clientes/novo')}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: '8px',
-        padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        padding: isMobile ? '12px 16px' : '8px 16px',
+        fontSize: 'var(--font-sm)', fontWeight: 600,
         color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
         border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
         transition: 'all var(--transition-fast)',
+        width: isMobile ? '100%' : 'auto',
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-700)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-600)' }}
@@ -111,9 +115,9 @@ export default function ClientesPage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Clientes</h1>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Clientes</h1>
           <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Gerencie seus clientes</p>
         </div>
         <DataTable

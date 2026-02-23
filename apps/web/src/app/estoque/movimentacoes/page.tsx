@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatDate } from '@/lib/format'
 
@@ -23,6 +24,7 @@ const REASON_MAP: Record<string, string> = {
 }
 
 export default function MovimentacoesPage() {
+  const { isMobile } = useMediaQuery()
   const { data, loading, refetch } = useApi<MovementRow[]>('/inventory/movements')
   const [showModal, setShowModal] = useState(false)
   const [newProductId, setNewProductId] = useState('')
@@ -76,13 +78,19 @@ export default function MovimentacoesPage() {
     }
   }
 
-  const inputStyle = { width: '100%', padding: '8px 12px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', outline: 'none' }
+  const inputStyle = {
+    width: '100%', padding: isMobile ? '10px 12px' : '8px 12px',
+    fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)',
+    backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
+    borderRadius: 'var(--radius-md)', outline: 'none',
+    minHeight: isMobile ? '44px' : 'auto',
+  }
 
   return (
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Movimentacoes de Estoque</h1>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Movimentacoes de Estoque</h1>
           <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Entradas e saidas de estoque</p>
         </div>
         <DataTable
@@ -94,12 +102,14 @@ export default function MovimentacoesPage() {
           searchKeys={['productName', 'reasonType']}
           actions={
             <button onClick={() => setShowModal(true)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              padding: isMobile ? '10px 14px' : '8px 16px',
               fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
               backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+              minHeight: '44px',
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-              Nova Movimentacao
+              {isMobile ? 'Nova' : 'Nova Movimentacao'}
             </button>
           }
           emptyTitle="Nenhuma movimentacao"
@@ -107,8 +117,19 @@ export default function MovimentacoesPage() {
 
         {/* Modal */}
         {showModal && (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }} onClick={() => setShowModal(false)}>
-            <div style={{ backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-xl)', width: '100%', maxWidth: '480px', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', zIndex: 1000, padding: isMobile ? '0' : '16px' }} onClick={() => setShowModal(false)}>
+            <div style={{
+              backgroundColor: 'var(--color-white)',
+              borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-xl)',
+              width: '100%', maxWidth: isMobile ? '100%' : '480px',
+              padding: '24px',
+              maxHeight: isMobile ? '90vh' : 'auto',
+              overflowY: 'auto',
+            }} onClick={(e) => e.stopPropagation()}>
+              {isMobile && (
+                <div style={{ width: '36px', height: '4px', borderRadius: '2px', backgroundColor: 'var(--color-neutral-300)', margin: '0 auto 16px' }} />
+              )}
               <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 20px' }}>Nova Movimentacao</h2>
               {submitError && (
                 <div style={{ padding: '10px 14px', marginBottom: '12px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
@@ -147,12 +168,24 @@ export default function MovimentacoesPage() {
                   <textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="Opcional" style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-                <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>Cancelar</button>
+              <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column-reverse' : 'row',
+                justifyContent: isMobile ? 'stretch' : 'flex-end',
+                gap: '12px', marginTop: '20px',
+              }}>
+                <button onClick={() => setShowModal(false)} style={{
+                  padding: '10px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
+                  color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  minHeight: '44px', width: isMobile ? '100%' : 'auto',
+                }}>Cancelar</button>
                 <button onClick={handleSave} disabled={saving || !newProductId || !newQty} style={{
-                  padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
+                  padding: '10px 16px', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
                   backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)',
-                  cursor: (saving || !newProductId || !newQty) ? 'not-allowed' : 'pointer', opacity: (saving || !newProductId || !newQty) ? 0.5 : 1,
+                  cursor: (saving || !newProductId || !newQty) ? 'not-allowed' : 'pointer',
+                  opacity: (saving || !newProductId || !newQty) ? 0.5 : 1,
+                  minHeight: '44px', width: isMobile ? '100%' : 'auto',
                 }}>
                   {saving ? 'Salvando...' : 'Salvar'}
                 </button>

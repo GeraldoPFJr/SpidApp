@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { Account } from '@spid/shared'
 
-// ─── Types ──────────────────────────────────────────────
+// Types
 
 interface OverdueCustomer {
   customerId: string
@@ -29,10 +30,11 @@ interface OverdueCustomer {
   }>
 }
 
-// ─── Component ──────────────────────────────────────────
+// Component
 
 export default function InadimplentesPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data, loading, refetch } = useApi<OverdueCustomer[]>('/receivables/overdue')
   const { data: accounts } = useApi<Account[]>('/accounts')
 
@@ -162,19 +164,13 @@ export default function InadimplentesPage() {
     },
   ], [])
 
-  // ─── Styles ────────────────────────────────────────
-
-  const summaryGridStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '16px',
-  }
+  // Styles
 
   const summaryCardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '20px',
+    padding: isMobile ? '16px' : '20px',
     boxShadow: 'var(--shadow-sm)',
   }
 
@@ -188,61 +184,24 @@ export default function InadimplentesPage() {
   }
 
   const summaryValueStyle: CSSProperties = {
-    fontSize: '1.5rem',
+    fontSize: isMobile ? '1.25rem' : '1.5rem',
     fontWeight: 700,
     color: 'var(--color-neutral-900)',
     margin: 0,
   }
 
-  const receivableTableStyle: CSSProperties = {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: 'var(--font-sm)',
-  }
-
-  const recThStyle: CSSProperties = {
-    padding: '8px 16px',
-    fontWeight: 500,
-    color: 'var(--color-neutral-500)',
-    fontSize: 'var(--font-xs)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    textAlign: 'left',
-    borderBottom: '1px solid var(--color-neutral-200)',
-  }
-
-  const recTdStyle: CSSProperties = {
-    padding: '10px 16px',
-    color: 'var(--color-neutral-700)',
-    borderBottom: '1px solid var(--color-neutral-100)',
-  }
-
-  const payBtnStyle: CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 12px',
-    fontSize: 'var(--font-xs)',
-    fontWeight: 600,
-    color: 'var(--color-success-700)',
-    backgroundColor: 'var(--color-success-50)',
-    border: '1px solid var(--color-success-200)',
-    borderRadius: 'var(--radius-md)',
-    cursor: 'pointer',
-    transition: 'all var(--transition-fast)',
-  }
-
   const payFormInputStyle: CSSProperties = {
-    padding: '6px 10px',
+    padding: isMobile ? '10px 10px' : '6px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)',
     border: '1px solid var(--color-neutral-300)',
     borderRadius: 'var(--radius-md)',
     outline: 'none',
+    minHeight: isMobile ? '44px' : 'auto',
   }
 
-  // ─── Render ────────────────────────────────────────
+  // Render
 
   return (
     <Layout>
@@ -259,7 +218,7 @@ export default function InadimplentesPage() {
 
         {/* Summary cards */}
         {!loading && data && (
-          <div style={summaryGridStyle}>
+          <div className="stats-grid" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)' }}>
             <div style={summaryCardStyle}>
               <p style={summaryLabelStyle}>Total em Aberto</p>
               <p style={{ ...summaryValueStyle, color: 'var(--color-danger-600)' }}>
@@ -270,7 +229,7 @@ export default function InadimplentesPage() {
               <p style={summaryLabelStyle}>Clientes Inadimplentes</p>
               <p style={summaryValueStyle}>{totalCustomers}</p>
             </div>
-            <div style={summaryCardStyle}>
+            <div style={{ ...summaryCardStyle, ...(isMobile ? { gridColumn: '1 / -1' } : {}) }}>
               <p style={summaryLabelStyle}>Media por Cliente</p>
               <p style={summaryValueStyle}>
                 {totalCustomers > 0 ? formatCurrency(totalOpen / totalCustomers) : 'R$ 0,00'}
@@ -311,9 +270,14 @@ export default function InadimplentesPage() {
               animation: 'fadeIn 200ms ease-out',
             }}>
               <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '16px 20px', borderBottom: '1px solid var(--color-border)',
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                justifyContent: 'space-between',
+                padding: isMobile ? '12px 16px' : '16px 20px',
+                borderBottom: '1px solid var(--color-border)',
                 backgroundColor: 'var(--color-neutral-50)',
+                gap: isMobile ? '12px' : '0',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
@@ -333,14 +297,16 @@ export default function InadimplentesPage() {
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : 'auto' }}>
                   <button
                     onClick={() => router.push(`/clientes/${customer.customerId}`)}
                     style={{
-                      padding: '6px 14px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                      padding: '8px 14px', fontSize: 'var(--font-xs)', fontWeight: 500,
                       color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
                       border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
                       cursor: 'pointer', transition: 'all var(--transition-fast)',
+                      flex: isMobile ? 1 : 'none', minHeight: '44px',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
                     Ver Cliente
@@ -349,7 +315,7 @@ export default function InadimplentesPage() {
                     onClick={() => setExpandedId(null)}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: '32px', height: '32px',
+                      width: '44px', height: '44px',
                       borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-white)',
                       border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
                     }}
@@ -361,139 +327,225 @@ export default function InadimplentesPage() {
                 </div>
               </div>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={receivableTableStyle}>
-                  <thead>
-                    <tr>
-                      <th style={recThStyle}>Vencimento</th>
-                      <th style={recThStyle}>Tipo</th>
-                      <th style={recThStyle}>Cupom</th>
-                      <th style={{ ...recThStyle, textAlign: 'right' }}>Valor</th>
-                      <th style={{ ...recThStyle, textAlign: 'right' }}>Dias Atraso</th>
-                      <th style={{ ...recThStyle, textAlign: 'center' }}>Acao</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customer.receivables.map((rec) => (
-                      <React.Fragment key={rec.id}>
-                        <tr>
-                          <td style={recTdStyle}>{formatDate(rec.dueDate)}</td>
-                          <td style={recTdStyle}>
-                            <span style={{
-                              display: 'inline-flex', padding: '2px 8px',
-                              fontSize: 'var(--font-xs)', fontWeight: 500,
-                              borderRadius: 'var(--radius-full)',
-                              backgroundColor: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)',
-                            }}>
-                              {kindLabels[rec.kind] ?? rec.kind}
-                            </span>
-                          </td>
-                          <td style={recTdStyle}>
-                            {rec.couponNumber ? `#${String(rec.couponNumber).padStart(4, '0')}` : '-'}
-                          </td>
-                          <td style={{ ...recTdStyle, textAlign: 'right', fontWeight: 600 }}>
+              {isMobile ? (
+                /* Mobile: receivables as cards */
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {customer.receivables.map((rec) => (
+                    <React.Fragment key={rec.id}>
+                      <div style={{
+                        padding: '12px', borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--color-neutral-200)',
+                        backgroundColor: payingId === rec.id ? 'var(--color-success-50)' : 'var(--color-neutral-50)',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{
+                            display: 'inline-flex', padding: '2px 8px',
+                            fontSize: 'var(--font-xs)', fontWeight: 500,
+                            borderRadius: 'var(--radius-full)',
+                            backgroundColor: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)',
+                          }}>
+                            {kindLabels[rec.kind] ?? rec.kind}
+                          </span>
+                          <span style={{
+                            fontWeight: 600, fontSize: 'var(--font-xs)',
+                            color: rec.daysOverdue > 30 ? 'var(--color-danger-600)' : rec.daysOverdue > 7 ? 'var(--color-warning-600)' : 'var(--color-neutral-600)',
+                          }}>
+                            {rec.daysOverdue}d atraso
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>
+                            Venc: {formatDate(rec.dueDate)}
+                            {rec.couponNumber ? ` | #${String(rec.couponNumber).padStart(4, '0')}` : ''}
+                          </span>
+                          <span style={{ fontWeight: 700, color: 'var(--color-neutral-900)' }}>
                             {formatCurrency(rec.amount)}
-                          </td>
-                          <td style={{ ...recTdStyle, textAlign: 'right' }}>
-                            <span style={{
-                              fontWeight: 600,
-                              color: rec.daysOverdue > 30 ? 'var(--color-danger-600)' : rec.daysOverdue > 7 ? 'var(--color-warning-600)' : 'var(--color-neutral-600)',
-                            }}>
-                              {rec.daysOverdue}d
-                            </span>
-                          </td>
-                          <td style={{ ...recTdStyle, textAlign: 'center' }}>
-                            {payingId === rec.id ? (
-                              <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)' }}>editando...</span>
-                            ) : (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); startPay(rec.id, rec.amount) }}
-                                style={payBtnStyle}
-                              >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                                Receber
-                              </button>
+                          </span>
+                        </div>
+
+                        {payingId === rec.id ? (
+                          <div style={{ borderTop: '1px solid var(--color-success-200)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {payError && (
+                              <div style={{ padding: '8px 12px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-sm)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
+                                {payError}
+                              </div>
                             )}
-                          </td>
-                        </tr>
-                        {payingId === rec.id && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                              <div>
+                                <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
+                                <input type="text" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} style={{ ...payFormInputStyle, width: '100%', textAlign: 'right' }} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Metodo</label>
+                                <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', width: '100%' }}>
+                                  {Object.entries(methodLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                            <div>
+                              <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Conta</label>
+                              <select value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', width: '100%' }}>
+                                <option value="">Selecione...</option>
+                                {accounts?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                              </select>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => setPayingId(null)} style={{
+                                flex: 1, padding: '10px', fontSize: 'var(--font-xs)', fontWeight: 500,
+                                color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
+                                border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer', minHeight: '44px',
+                              }}>Cancelar</button>
+                              <button onClick={() => handlePay(rec.id)} disabled={saving || !payAccountId} style={{
+                                flex: 1, padding: '10px', fontSize: 'var(--font-xs)', fontWeight: 600,
+                                color: 'var(--color-white)', backgroundColor: 'var(--color-success-600)',
+                                border: 'none', borderRadius: 'var(--radius-md)',
+                                cursor: (saving || !payAccountId) ? 'not-allowed' : 'pointer',
+                                opacity: (saving || !payAccountId) ? 0.5 : 1,
+                                minHeight: '44px',
+                              }}>
+                                {saving ? 'Salvando...' : 'Confirmar'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); startPay(rec.id, rec.amount) }}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                              width: '100%', padding: '10px', fontSize: 'var(--font-xs)', fontWeight: 600,
+                              color: 'var(--color-success-700)', backgroundColor: 'var(--color-success-50)',
+                              border: '1px solid var(--color-success-200)', borderRadius: 'var(--radius-md)',
+                              cursor: 'pointer', minHeight: '44px',
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Receber
+                          </button>
+                        )}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                /* Desktop: table */
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid var(--color-neutral-200)' }}>Vencimento</th>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid var(--color-neutral-200)' }}>Tipo</th>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid var(--color-neutral-200)' }}>Cupom</th>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', borderBottom: '1px solid var(--color-neutral-200)' }}>Valor</th>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', borderBottom: '1px solid var(--color-neutral-200)' }}>Dias Atraso</th>
+                        <th style={{ padding: '8px 16px', fontWeight: 500, color: 'var(--color-neutral-500)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', borderBottom: '1px solid var(--color-neutral-200)' }}>Acao</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customer.receivables.map((rec) => (
+                        <React.Fragment key={rec.id}>
                           <tr>
-                            <td colSpan={6} style={{ padding: '12px 16px', backgroundColor: 'var(--color-success-50)', borderBottom: '1px solid var(--color-success-100)' }}>
-                              {payError && (
-                                <div style={{ padding: '8px 12px', marginBottom: '8px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-sm)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
-                                  {payError}
-                                </div>
+                            <td style={{ padding: '10px 16px', color: 'var(--color-neutral-700)', borderBottom: '1px solid var(--color-neutral-100)' }}>{formatDate(rec.dueDate)}</td>
+                            <td style={{ padding: '10px 16px', color: 'var(--color-neutral-700)', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                              <span style={{
+                                display: 'inline-flex', padding: '2px 8px',
+                                fontSize: 'var(--font-xs)', fontWeight: 500,
+                                borderRadius: 'var(--radius-full)',
+                                backgroundColor: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)',
+                              }}>
+                                {kindLabels[rec.kind] ?? rec.kind}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 16px', color: 'var(--color-neutral-700)', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                              {rec.couponNumber ? `#${String(rec.couponNumber).padStart(4, '0')}` : '-'}
+                            </td>
+                            <td style={{ padding: '10px 16px', color: 'var(--color-neutral-700)', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>
+                              {formatCurrency(rec.amount)}
+                            </td>
+                            <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right' }}>
+                              <span style={{
+                                fontWeight: 600,
+                                color: rec.daysOverdue > 30 ? 'var(--color-danger-600)' : rec.daysOverdue > 7 ? 'var(--color-warning-600)' : 'var(--color-neutral-600)',
+                              }}>
+                                {rec.daysOverdue}d
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'center' }}>
+                              {payingId === rec.id ? (
+                                <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)' }}>editando...</span>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); startPay(rec.id, rec.amount) }}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 600,
+                                    color: 'var(--color-success-700)', backgroundColor: 'var(--color-success-50)',
+                                    border: '1px solid var(--color-success-200)', borderRadius: 'var(--radius-md)',
+                                    cursor: 'pointer', transition: 'all var(--transition-fast)',
+                                  }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  Receber
+                                </button>
                               )}
-                              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
-                                <div>
-                                  <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
-                                  <input
-                                    type="text"
-                                    value={payAmount}
-                                    onChange={(e) => setPayAmount(e.target.value)}
-                                    style={{ ...payFormInputStyle, width: '120px', textAlign: 'right' }}
-                                  />
-                                </div>
-                                <div>
-                                  <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Metodo</label>
-                                  <select
-                                    value={payMethod}
-                                    onChange={(e) => setPayMethod(e.target.value)}
-                                    style={{ ...payFormInputStyle, cursor: 'pointer' }}
-                                  >
-                                    {Object.entries(methodLabels).map(([k, v]) => (
-                                      <option key={k} value={k}>{v}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Conta</label>
-                                  <select
-                                    value={payAccountId}
-                                    onChange={(e) => setPayAccountId(e.target.value)}
-                                    style={{ ...payFormInputStyle, cursor: 'pointer', minWidth: '160px' }}
-                                  >
-                                    <option value="">Selecione...</option>
-                                    {accounts?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                  </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                  <button
-                                    onClick={() => setPayingId(null)}
-                                    style={{
+                            </td>
+                          </tr>
+                          {payingId === rec.id && (
+                            <tr>
+                              <td colSpan={6} style={{ padding: '12px 16px', backgroundColor: 'var(--color-success-50)', borderBottom: '1px solid var(--color-success-100)' }}>
+                                {payError && (
+                                  <div style={{ padding: '8px 12px', marginBottom: '8px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-sm)', color: 'var(--color-danger-700)', fontSize: 'var(--font-xs)' }}>
+                                    {payError}
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                                  <div>
+                                    <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
+                                    <input type="text" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} style={{ ...payFormInputStyle, width: '120px', textAlign: 'right' }} />
+                                  </div>
+                                  <div>
+                                    <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Metodo</label>
+                                    <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer' }}>
+                                      {Object.entries(methodLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Conta</label>
+                                    <select value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', minWidth: '160px' }}>
+                                      <option value="">Selecione...</option>
+                                      {accounts?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                    </select>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button onClick={() => setPayingId(null)} style={{
                                       padding: '6px 14px', fontSize: 'var(--font-xs)', fontWeight: 500,
                                       color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
-                                      border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    Cancelar
-                                  </button>
-                                  <button
-                                    onClick={() => handlePay(rec.id)}
-                                    disabled={saving || !payAccountId}
-                                    style={{
+                                      border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                                    }}>Cancelar</button>
+                                    <button onClick={() => handlePay(rec.id)} disabled={saving || !payAccountId} style={{
                                       padding: '6px 14px', fontSize: 'var(--font-xs)', fontWeight: 600,
                                       color: 'var(--color-white)', backgroundColor: 'var(--color-success-600)',
                                       border: 'none', borderRadius: 'var(--radius-md)',
                                       cursor: (saving || !payAccountId) ? 'not-allowed' : 'pointer',
                                       opacity: (saving || !payAccountId) ? 0.5 : 1,
-                                    }}
-                                  >
-                                    {saving ? 'Salvando...' : 'Confirmar'}
-                                  </button>
+                                    }}>
+                                      {saving ? 'Salvando...' : 'Confirmar'}
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )
         })()}

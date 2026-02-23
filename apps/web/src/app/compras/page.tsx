@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 
 interface PurchaseRaw {
@@ -43,6 +44,7 @@ function mapPurchaseRow(raw: PurchaseRaw): PurchaseRow {
 
 export default function ComprasPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: rawData, loading } = useApi<PurchaseRaw[]>('/purchases')
   const data = useMemo(() => rawData?.map(mapPurchaseRow) ?? [], [rawData])
 
@@ -64,9 +66,29 @@ export default function ComprasPage() {
   return (
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Compras</h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Entradas de estoque via compras</p>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isMobile ? '12px' : '16px',
+        }}>
+          <div>
+            <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Compras</h1>
+            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Entradas de estoque via compras</p>
+          </div>
+          <button onClick={() => router.push('/compras/nova')} style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            padding: isMobile ? '12px 16px' : '8px 16px',
+            fontSize: 'var(--font-sm)', fontWeight: 600,
+            color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+            border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+            width: isMobile ? '100%' : 'auto',
+            minHeight: '44px',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            Nova Compra
+          </button>
         </div>
         <DataTable
           columns={columns}
@@ -76,15 +98,6 @@ export default function ComprasPage() {
           loading={loading}
           searchPlaceholder="Buscar por fornecedor..."
           searchKeys={['supplierName']}
-          actions={
-            <button onClick={() => router.push('/compras/nova')} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
-              color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-              Nova Compra
-            </button>
-          }
           emptyTitle="Nenhuma compra registrada"
           emptyDescription="Registre sua primeira compra"
         />

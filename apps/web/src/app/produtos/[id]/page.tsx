@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 
 interface ProductRawUnit {
@@ -132,6 +133,7 @@ function mapProductDetail(raw: ProductRaw): ProductDetail {
 export default function ProdutoDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: rawProduct, loading } = useApi<ProductRaw>(`/products/${id}`)
   const product = rawProduct ? mapProductDetail(rawProduct) : null
 
@@ -185,14 +187,14 @@ export default function ProdutoDetalhePage() {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '24px',
+    padding: isMobile ? '16px' : '24px',
     boxShadow: 'var(--shadow-sm)',
   }
 
   const infoRowStyle: CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '20px',
+    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: isMobile ? '16px' : '20px',
   }
 
   const infoItemStyle: CSSProperties = {
@@ -219,7 +221,7 @@ export default function ProdutoDetalhePage() {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="skeleton" style={{ height: '32px', width: '300px' }} />
+          <div className="skeleton" style={{ height: '32px', width: isMobile ? '200px' : '300px' }} />
           <div className="skeleton skeleton-card" style={{ height: '200px' }} />
           <div className="skeleton skeleton-card" style={{ height: '200px' }} />
         </div>
@@ -239,15 +241,22 @@ export default function ProdutoDetalhePage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1100px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '1100px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '16px',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={() => router.back()}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+                width: isMobile ? '44px' : '36px', height: isMobile ? '44px' : '36px',
+                borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
                 cursor: 'pointer',
               }}
@@ -257,7 +266,7 @@ export default function ProdutoDetalhePage() {
               </svg>
             </button>
             <div>
-              <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+              <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
                 {product.name}
               </h1>
               <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '2px 0 0' }}>
@@ -265,14 +274,20 @@ export default function ProdutoDetalhePage() {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{
+            display: 'flex', gap: '8px',
+            width: isMobile ? '100%' : 'auto',
+          }}>
             <button
               onClick={() => router.push(`/produtos/${id}/editar`)}
               style={{
-                padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
+                padding: isMobile ? '12px 16px' : '8px 16px',
+                fontSize: 'var(--font-sm)', fontWeight: 500,
                 color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
                 border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
+                flex: isMobile ? 1 : 'none',
+                textAlign: 'center',
               }}
             >
               Editar
@@ -280,9 +295,12 @@ export default function ProdutoDetalhePage() {
             <button
               onClick={() => router.push(`/estoque/movimentacoes?produto=${id}`)}
               style={{
-                padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
+                padding: isMobile ? '12px 16px' : '8px 16px',
+                fontSize: 'var(--font-sm)', fontWeight: 600,
                 color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
                 border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                flex: isMobile ? 1 : 'none',
+                textAlign: 'center',
               }}
             >
               Ajustar Estoque
@@ -298,7 +316,7 @@ export default function ProdutoDetalhePage() {
           <div style={infoRowStyle}>
             <div style={infoItemStyle}>
               <span style={infoLabelStyle}>Estoque Base</span>
-              <span style={{ ...infoValueStyle, fontSize: '1.5rem', fontWeight: 700 }}>
+              <span style={{ ...infoValueStyle, fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 700 }}>
                 {product.stockBase.toLocaleString('pt-BR')}
               </span>
             </div>
@@ -341,14 +359,18 @@ export default function ProdutoDetalhePage() {
             <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
               Estoque por Unidade
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '12px',
+            }}>
               {product.units.map((unit) => {
                 const equivalent = unit.equivalentStock ?? Math.floor(product.stockBase / unit.factorToBase)
                 return (
                   <div
                     key={unit.id}
                     style={{
-                      padding: '16px',
+                      padding: isMobile ? '12px' : '16px',
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--color-neutral-200)',
                       backgroundColor: 'var(--color-neutral-50)',
@@ -358,7 +380,7 @@ export default function ProdutoDetalhePage() {
                     <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)', margin: '0 0 4px', textTransform: 'uppercase', fontWeight: 500 }}>
                       {unit.nameLabel}
                     </p>
-                    <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+                    <p style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
                       {equivalent.toLocaleString('pt-BR')}
                     </p>
                     <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', margin: '2px 0 0' }}>
@@ -377,34 +399,66 @@ export default function ProdutoDetalhePage() {
             <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
               Tabela de Precos
             </h2>
-            <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Unidade
-                    </th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Tabela
-                    </th>
-                    <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Preco
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {product.prices.map((p) => (
-                    <tr key={p.id}>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.unitLabel}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.tierName}</td>
-                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>
-                        {formatCurrency(p.price)}
-                      </td>
+
+            {isMobile ? (
+              /* Mobile: card list */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {product.prices.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-neutral-200)',
+                      backgroundColor: 'var(--color-neutral-50)',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-800)' }}>
+                        {p.unitLabel}
+                      </span>
+                      <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)', marginLeft: '8px' }}>
+                        {p.tierName}
+                      </span>
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-900)' }}>
+                      {formatCurrency(p.price)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Desktop: table */
+              <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Unidade
+                      </th>
+                      <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Tabela
+                      </th>
+                      <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-border)', fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Preco
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {product.prices.map((p) => (
+                      <tr key={p.id}>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.unitLabel}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)' }}>{p.tierName}</td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'right', fontWeight: 600 }}>
+                          {formatCurrency(p.price)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -414,27 +468,45 @@ export default function ProdutoDetalhePage() {
             <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
               Vendas nos Ultimos 3 Meses
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: '12px',
+            }}>
               {product.salesLast3Months.map((m) => (
                 <div
                   key={m.month}
                   style={{
-                    padding: '16px',
+                    padding: isMobile ? '12px 16px' : '16px',
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--color-neutral-200)',
                     backgroundColor: 'var(--color-neutral-50)',
-                    textAlign: 'center',
+                    textAlign: isMobile ? 'left' : 'center',
+                    display: isMobile ? 'flex' : 'block',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)', margin: '0 0 8px', textTransform: 'uppercase', fontWeight: 500 }}>
-                    {m.month}
-                  </p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: '0 0 4px' }}>
-                    {formatCurrency(m.revenue)}
-                  </p>
-                  <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', margin: 0 }}>
-                    {m.qty.toLocaleString('pt-BR')} un. base
-                  </p>
+                  <div>
+                    <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)', margin: isMobile ? '0' : '0 0 8px', textTransform: 'uppercase', fontWeight: 500 }}>
+                      {m.month}
+                    </p>
+                    {isMobile && (
+                      <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', margin: '2px 0 0' }}>
+                        {m.qty.toLocaleString('pt-BR')} un. base
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: isMobile ? 'var(--font-base)' : '1.125rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: isMobile ? '0' : '0 0 4px' }}>
+                      {formatCurrency(m.revenue)}
+                    </p>
+                    {!isMobile && (
+                      <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)', margin: 0 }}>
+                        {m.qty.toLocaleString('pt-BR')} un. base
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

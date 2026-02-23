@@ -4,9 +4,10 @@ import { type CSSProperties, useMemo, useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, getCurrentMonth } from '@/lib/format'
 
-// ─── API response types ──────────────────────────────────
+// API response types
 
 type Tab = 'products' | 'customers' | 'cashflow'
 
@@ -40,7 +41,7 @@ interface ApiCashFlow {
   }
 }
 
-// ─── Display row types ──────────────────────────────────
+// Display row types
 
 interface Product3mRow {
   productId: string
@@ -60,7 +61,7 @@ interface CustomerRankRow {
   avgPaymentDays: number
 }
 
-// ─── Mappers ──────────────────────────────────────────
+// Mappers
 
 function mapProducts(raw: ApiProduct3m[]): Product3mRow[] {
   return raw.map((item) => {
@@ -89,9 +90,10 @@ function mapCustomers(raw: ApiCustomer3m[]): CustomerRankRow[] {
   }))
 }
 
-// ─── Component ──────────────────────────────────────────
+// Component
 
 export default function RelatoriosPage() {
+  const { isMobile } = useMediaQuery()
   const [activeTab, setActiveTab] = useState<Tab>('products')
   const [month, setMonth] = useState(getCurrentMonth)
 
@@ -102,7 +104,7 @@ export default function RelatoriosPage() {
   const productsData = useMemo(() => mapProducts(rawProducts ?? []), [rawProducts])
   const customersData = useMemo(() => mapCustomers(rawCustomers ?? []), [rawCustomers])
 
-  // ─── Month labels ──────────────────────────────
+  // Month labels
 
   const monthLabels = useMemo(() => {
     const parts = month.split('-').map(Number)
@@ -118,7 +120,7 @@ export default function RelatoriosPage() {
     return { m2: getLabel(2), m1: getLabel(1), m0: getLabel(0) }
   }, [month])
 
-  // ─── Products 3 Months columns ─────────────────
+  // Products 3 Months columns
 
   const productColumns: DataTableColumn<Product3mRow>[] = useMemo(() => [
     {
@@ -179,7 +181,7 @@ export default function RelatoriosPage() {
     },
   ], [monthLabels])
 
-  // ─── Customer Ranking columns ──────────────────
+  // Customer Ranking columns
 
   const customerColumns: DataTableColumn<CustomerRankRow>[] = useMemo(() => [
     {
@@ -234,7 +236,7 @@ export default function RelatoriosPage() {
     },
   ], [])
 
-  // ─── Styles ────────────────────────────────────
+  // Styles
 
   const tabBarStyle: CSSProperties = {
     display: 'flex',
@@ -242,10 +244,12 @@ export default function RelatoriosPage() {
     backgroundColor: 'var(--color-neutral-100)',
     borderRadius: 'var(--radius-md)',
     padding: '4px',
+    overflowX: isMobile ? 'auto' : 'visible',
+    WebkitOverflowScrolling: 'touch',
   }
 
   const tabBtnStyle = (active: boolean): CSSProperties => ({
-    padding: '8px 20px',
+    padding: isMobile ? '10px 16px' : '8px 20px',
     fontSize: 'var(--font-sm)',
     fontWeight: active ? 600 : 400,
     color: active ? 'var(--color-neutral-900)' : 'var(--color-neutral-500)',
@@ -255,18 +259,21 @@ export default function RelatoriosPage() {
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
     boxShadow: active ? 'var(--shadow-sm)' : 'none',
+    whiteSpace: 'nowrap',
+    minHeight: '44px',
+    flexShrink: 0,
   })
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '20px',
+    padding: isMobile ? '16px' : '20px',
     boxShadow: 'var(--shadow-sm)',
   }
 
   const accountCardStyle: CSSProperties = {
-    padding: '16px',
+    padding: isMobile ? '12px' : '16px',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--color-neutral-200)',
     backgroundColor: 'var(--color-white)',
@@ -282,14 +289,14 @@ export default function RelatoriosPage() {
   }
 
   const cfValueStyle: CSSProperties = {
-    fontSize: '1.25rem',
+    fontSize: isMobile ? '1rem' : '1.25rem',
     fontWeight: 700,
     color: 'var(--color-neutral-900)',
     margin: 0,
   }
 
   const monthInputStyle: CSSProperties = {
-    padding: '8px 12px',
+    padding: isMobile ? '10px 12px' : '8px 12px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-700)',
     backgroundColor: 'var(--color-white)',
@@ -297,15 +304,22 @@ export default function RelatoriosPage() {
     borderRadius: 'var(--radius-md)',
     outline: 'none',
     cursor: 'pointer',
+    minHeight: '44px',
   }
 
-  // ─── Render ────────────────────────────────────
+  // Render
 
   return (
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isMobile ? '12px' : '16px',
+        }}>
           <div>
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
               Relatorios
@@ -327,17 +341,17 @@ export default function RelatoriosPage() {
         {/* Tab bar */}
         <div style={tabBarStyle}>
           <button style={tabBtnStyle(activeTab === 'products')} onClick={() => setActiveTab('products')}>
-            Produtos (3 meses)
+            {isMobile ? 'Produtos' : 'Produtos (3 meses)'}
           </button>
           <button style={tabBtnStyle(activeTab === 'customers')} onClick={() => setActiveTab('customers')}>
-            Ranking Clientes
+            {isMobile ? 'Clientes' : 'Ranking Clientes'}
           </button>
           <button style={tabBtnStyle(activeTab === 'cashflow')} onClick={() => setActiveTab('cashflow')}>
             Fluxo de Caixa
           </button>
         </div>
 
-        {/* ─── Products 3 Months ───────────────────── */}
+        {/* Products 3 Months */}
         {activeTab === 'products' && (
           <DataTable
             columns={productColumns}
@@ -351,7 +365,7 @@ export default function RelatoriosPage() {
           />
         )}
 
-        {/* ─── Customer Ranking ────────────────────── */}
+        {/* Customer Ranking */}
         {activeTab === 'customers' && (
           <DataTable
             columns={customerColumns}
@@ -365,17 +379,17 @@ export default function RelatoriosPage() {
           />
         )}
 
-        {/* ─── Cash Flow ──────────────────────────── */}
+        {/* Cash Flow */}
         {activeTab === 'cashflow' && (
           <>
             {cashFlowLoading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+              <div className="stats-grid" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)' }}>
                 {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton skeleton-card" style={{ height: '120px', borderRadius: 'var(--radius-lg)' }} />)}
               </div>
             ) : cashFlowData ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Consolidated summary */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div className="stats-grid" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)' }}>
                   <div style={cardStyle}>
                     <p style={cfLabelStyle}>Total Entradas</p>
                     <p style={{ ...cfValueStyle, color: 'var(--color-success-600)' }}>
@@ -388,7 +402,7 @@ export default function RelatoriosPage() {
                       {formatCurrency(cashFlowData.consolidated?.saidas)}
                     </p>
                   </div>
-                  <div style={cardStyle}>
+                  <div style={{ ...cardStyle, ...(isMobile ? { gridColumn: '1 / -1' } : {}) }}>
                     <p style={cfLabelStyle}>Fluxo Liquido</p>
                     <p style={{
                       ...cfValueStyle,
@@ -409,7 +423,7 @@ export default function RelatoriosPage() {
                     <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
                       Por Conta
                     </h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
                       {(cashFlowData.byAccount ?? []).map((acc) => (
                         <div key={acc.account.id} style={accountCardStyle}>
                           <p style={{ fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 12px', fontSize: 'var(--font-sm)' }}>
@@ -453,69 +467,106 @@ export default function RelatoriosPage() {
                     <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>
                       Por Categoria
                     </h2>
-                    <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-                        <thead>
-                          <tr>
-                            <th style={{
-                              padding: '10px 16px', textAlign: 'left', fontWeight: 500,
-                              color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
-                              borderBottom: '1px solid var(--color-border)',
-                              fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+
+                    {isMobile ? (
+                      /* Mobile: category cards */
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {(cashFlowData.byCategory ?? []).map((cat, i) => {
+                          const isIncome = cat.type === 'INCOME' || cat.type === 'APORTE'
+                          return (
+                            <div key={`${cat.name}-${cat.type}-${i}`} style={{
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              padding: '12px', borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--color-neutral-200)',
+                              backgroundColor: 'var(--color-neutral-50)',
                             }}>
-                              Categoria
-                            </th>
-                            <th style={{
-                              padding: '10px 16px', textAlign: 'center', fontWeight: 500,
-                              color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
-                              borderBottom: '1px solid var(--color-border)',
-                              fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                              width: '100px',
-                            }}>
-                              Tipo
-                            </th>
-                            <th style={{
-                              padding: '10px 16px', textAlign: 'right', fontWeight: 500,
-                              color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
-                              borderBottom: '1px solid var(--color-border)',
-                              fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                              width: '150px',
-                            }}>
-                              Valor
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(cashFlowData.byCategory ?? []).map((cat, i) => {
-                            const isIncome = cat.type === 'INCOME' || cat.type === 'APORTE'
-                            return (
-                              <tr key={`${cat.name}-${cat.type}-${i}`}>
-                                <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>
-                                  {cat.name}
-                                </td>
-                                <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'center' }}>
-                                  <span style={{
-                                    display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-                                    fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
-                                    backgroundColor: isIncome ? 'var(--color-success-100)' : 'var(--color-danger-100)',
-                                    color: isIncome ? 'var(--color-success-700)' : 'var(--color-danger-700)',
-                                  }}>
-                                    {isIncome ? 'Entrada' : 'Saida'}
-                                  </span>
-                                </td>
-                                <td style={{
-                                  padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)',
-                                  textAlign: 'right', fontWeight: 600,
-                                  color: isIncome ? 'var(--color-success-600)' : 'var(--color-danger-600)',
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{
+                                  display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
+                                  fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
+                                  backgroundColor: isIncome ? 'var(--color-success-100)' : 'var(--color-danger-100)',
+                                  color: isIncome ? 'var(--color-success-700)' : 'var(--color-danger-700)',
                                 }}>
-                                  {isIncome ? '+' : '-'}{formatCurrency(cat.total)}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                                  {isIncome ? 'Entrada' : 'Saida'}
+                                </span>
+                                <span style={{ fontWeight: 500, fontSize: 'var(--font-sm)' }}>{cat.name}</span>
+                              </div>
+                              <span style={{
+                                fontWeight: 600, fontSize: 'var(--font-sm)',
+                                color: isIncome ? 'var(--color-success-600)' : 'var(--color-danger-600)',
+                              }}>
+                                {isIncome ? '+' : '-'}{formatCurrency(cat.total)}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      /* Desktop: table */
+                      <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
+                          <thead>
+                            <tr>
+                              <th style={{
+                                padding: '10px 16px', textAlign: 'left', fontWeight: 500,
+                                color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
+                                borderBottom: '1px solid var(--color-border)',
+                                fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                              }}>
+                                Categoria
+                              </th>
+                              <th style={{
+                                padding: '10px 16px', textAlign: 'center', fontWeight: 500,
+                                color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
+                                borderBottom: '1px solid var(--color-border)',
+                                fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                                width: '100px',
+                              }}>
+                                Tipo
+                              </th>
+                              <th style={{
+                                padding: '10px 16px', textAlign: 'right', fontWeight: 500,
+                                color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-neutral-50)',
+                                borderBottom: '1px solid var(--color-border)',
+                                fontSize: 'var(--font-xs)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                                width: '150px',
+                              }}>
+                                Valor
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(cashFlowData.byCategory ?? []).map((cat, i) => {
+                              const isIncome = cat.type === 'INCOME' || cat.type === 'APORTE'
+                              return (
+                                <tr key={`${cat.name}-${cat.type}-${i}`}>
+                                  <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>
+                                    {cat.name}
+                                  </td>
+                                  <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)', textAlign: 'center' }}>
+                                    <span style={{
+                                      display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
+                                      fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
+                                      backgroundColor: isIncome ? 'var(--color-success-100)' : 'var(--color-danger-100)',
+                                      color: isIncome ? 'var(--color-success-700)' : 'var(--color-danger-700)',
+                                    }}>
+                                      {isIncome ? 'Entrada' : 'Saida'}
+                                    </span>
+                                  </td>
+                                  <td style={{
+                                    padding: '10px 16px', borderBottom: '1px solid var(--color-neutral-100)',
+                                    textAlign: 'right', fontWeight: 600,
+                                    color: isIncome ? 'var(--color-success-600)' : 'var(--color-danger-600)',
+                                  }}>
+                                    {isIncome ? '+' : '-'}{formatCurrency(cat.total)}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

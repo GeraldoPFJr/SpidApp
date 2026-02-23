@@ -4,6 +4,7 @@ import { type CSSProperties, useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import type { Supplier, Product, ProductUnit } from '@spid/shared'
@@ -28,6 +29,7 @@ interface ProductOption extends Product {
 
 export default function NovaCompraPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: suppliers } = useApi<Supplier[]>('/suppliers')
   const { data: products } = useApi<ProductOption[]>('/products')
 
@@ -121,26 +123,33 @@ export default function NovaCompraPage() {
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)', padding: '24px', boxShadow: 'var(--shadow-sm)',
+    border: '1px solid var(--color-border)', padding: isMobile ? '16px' : '24px', boxShadow: 'var(--shadow-sm)',
   }
 
   const miniInputStyle: CSSProperties = {
-    padding: '6px 10px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)',
+    padding: isMobile ? '10px 12px' : '6px 10px',
+    fontSize: 'var(--font-sm)', color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
     borderRadius: 'var(--radius-sm)', outline: 'none', width: '100%',
+    minHeight: isMobile ? '44px' : 'auto',
+  }
+
+  const labelStyle: CSSProperties = {
+    fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)',
+    marginBottom: '4px', display: 'block',
   }
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '960px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '960px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => router.back()} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
             borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Nova Compra</h1>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Nova Compra</h1>
         </div>
 
         {errors.submit && (
@@ -175,56 +184,127 @@ export default function NovaCompraPage() {
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: 0 }}>Itens</h2>
-            <button onClick={addItem} style={{ padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-primary-600)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
+            <button onClick={addItem} style={{ padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-primary-600)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', minHeight: '36px' }}>
               + Adicionar Item
             </button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            {items.map((item) => {
-              const prod = products?.find((p) => p.id === item.productId)
-              const qty = parseFloat(item.qty.replace(',', '.')) || 0
-              const cost = parseFloat(item.unitCost.replace(',', '.')) || 0
-              return (
-                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px 120px 100px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                  <select value={item.productId} onChange={(e) => updateItem(item.id, 'productId', e.target.value)} style={miniInputStyle}>
-                    <option value="">Produto...</option>
-                    {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                  <select value={item.unitId} onChange={(e) => updateItem(item.id, 'unitId', e.target.value)} style={miniInputStyle} disabled={!item.productId}>
-                    <option value="">Unid.</option>
-                    {prod?.units?.map((u) => <option key={u.id} value={u.id}>{u.nameLabel}</option>)}
-                  </select>
-                  <input type="text" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} style={{ ...miniInputStyle, textAlign: 'center' }} placeholder="Qtd" />
-                  <input type="text" value={item.unitCost} onChange={(e) => updateItem(item.id, 'unitCost', e.target.value)} style={{ ...miniInputStyle, textAlign: 'right' }} placeholder="Custo unit." />
-                  <span style={{ textAlign: 'right', fontWeight: 600, fontSize: 'var(--font-sm)' }}>{formatCurrency(qty * cost)}</span>
-                  {items.length > 1 ? (
-                    <button onClick={() => removeItem(item.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                    </button>
-                  ) : <span />}
-                </div>
-              )
-            })}
-          </div>
+
+          {isMobile ? (
+            /* Mobile: stacked cards */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {items.map((item, idx) => {
+                const prod = products?.find((p) => p.id === item.productId)
+                const qty = parseFloat(item.qty.replace(',', '.')) || 0
+                const cost = parseFloat(item.unitCost.replace(',', '.')) || 0
+                return (
+                  <div key={item.id} style={{
+                    padding: '12px', borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-neutral-200)',
+                    backgroundColor: 'var(--color-neutral-50)',
+                    display: 'flex', flexDirection: 'column', gap: '10px',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-neutral-500)' }}>Item {idx + 1}</span>
+                      {items.length > 1 && (
+                        <button onClick={() => removeItem(item.id)} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px',
+                          borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)',
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>
+                      )}
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Produto</label>
+                      <select value={item.productId} onChange={(e) => updateItem(item.id, 'productId', e.target.value)} style={{ ...miniInputStyle, cursor: 'pointer' }}>
+                        <option value="">Selecione...</option>
+                        {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={labelStyle}>Unidade</label>
+                        <select value={item.unitId} onChange={(e) => updateItem(item.id, 'unitId', e.target.value)} style={{ ...miniInputStyle, cursor: 'pointer' }} disabled={!item.productId}>
+                          <option value="">Unid.</option>
+                          {prod?.units?.map((u) => <option key={u.id} value={u.id}>{u.nameLabel}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Quantidade</label>
+                        <input type="text" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} style={{ ...miniInputStyle, textAlign: 'center' }} placeholder="Qtd" />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'end' }}>
+                      <div>
+                        <label style={labelStyle}>Custo Unit.</label>
+                        <input type="text" value={item.unitCost} onChange={(e) => updateItem(item.id, 'unitCost', e.target.value)} style={{ ...miniInputStyle, textAlign: 'right' }} placeholder="0,00" />
+                      </div>
+                      <div style={{ textAlign: 'right', padding: '10px 0' }}>
+                        <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-500)' }}>Total: </span>
+                        <span style={{ fontWeight: 700, fontSize: 'var(--font-sm)', color: 'var(--color-neutral-900)' }}>{formatCurrency(qty * cost)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            /* Desktop: grid rows */
+            <div style={{ overflowX: 'auto' }}>
+              {items.map((item) => {
+                const prod = products?.find((p) => p.id === item.productId)
+                const qty = parseFloat(item.qty.replace(',', '.')) || 0
+                const cost = parseFloat(item.unitCost.replace(',', '.')) || 0
+                return (
+                  <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px 120px 100px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                    <select value={item.productId} onChange={(e) => updateItem(item.id, 'productId', e.target.value)} style={miniInputStyle}>
+                      <option value="">Produto...</option>
+                      {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <select value={item.unitId} onChange={(e) => updateItem(item.id, 'unitId', e.target.value)} style={miniInputStyle} disabled={!item.productId}>
+                      <option value="">Unid.</option>
+                      {prod?.units?.map((u) => <option key={u.id} value={u.id}>{u.nameLabel}</option>)}
+                    </select>
+                    <input type="text" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} style={{ ...miniInputStyle, textAlign: 'center' }} placeholder="Qtd" />
+                    <input type="text" value={item.unitCost} onChange={(e) => updateItem(item.id, 'unitCost', e.target.value)} style={{ ...miniInputStyle, textAlign: 'right' }} placeholder="Custo unit." />
+                    <span style={{ textAlign: 'right', fontWeight: 600, fontSize: 'var(--font-sm)' }}>{formatCurrency(qty * cost)}</span>
+                    {items.length > 1 ? (
+                      <button onClick={() => removeItem(item.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      </button>
+                    ) : <span />}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Extra Costs */}
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: 0 }}>Custos Extras</h2>
-            <button onClick={addExtraCost} style={{ padding: '4px 12px', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-primary-600)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
+            <button onClick={addExtraCost} style={{ padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-primary-600)', backgroundColor: 'var(--color-primary-50)', border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', minHeight: '36px' }}>
               + Adicionar Custo
             </button>
           </div>
           {extraCosts.map((c) => (
-            <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 160px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
+            <div key={c.id} style={{
+              display: isMobile ? 'flex' : 'grid',
+              flexDirection: isMobile ? 'column' : undefined,
+              gridTemplateColumns: isMobile ? undefined : '1fr 160px 40px',
+              gap: '8px', padding: '8px 0', alignItems: isMobile ? 'stretch' : 'center',
+              borderBottom: '1px solid var(--color-neutral-100)',
+            }}>
               <input type="text" value={c.label} onChange={(e) => updateExtraCost(c.id, 'label', e.target.value)} placeholder="Ex: Frete" style={miniInputStyle} />
-              <input type="text" value={c.amount} onChange={(e) => updateExtraCost(c.id, 'amount', e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
-              {extraCosts.length > 1 ? (
-                <button onClick={() => removeExtraCost(c.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                </button>
-              ) : <span />}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input type="text" value={c.amount} onChange={(e) => updateExtraCost(c.id, 'amount', e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right', flex: 1 }} />
+                {extraCosts.length > 1 ? (
+                  <button onClick={() => removeExtraCost(c.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', flexShrink: 0, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </button>
+                ) : null}
+              </div>
             </div>
           ))}
         </div>
@@ -232,13 +312,18 @@ export default function NovaCompraPage() {
         {/* Payment + Total */}
         <div style={cardStyle}>
           <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Pagamento</h2>
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '16px' : '24px',
+            alignItems: isMobile ? 'stretch' : 'flex-start',
+          }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)', cursor: 'pointer' }}>
-                <input type="radio" checked={paymentType === 'cash'} onChange={() => setPaymentType('cash')} style={{ accentColor: 'var(--color-primary-600)' }} /> A vista
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)', cursor: 'pointer', minHeight: '44px' }}>
+                <input type="radio" checked={paymentType === 'cash'} onChange={() => setPaymentType('cash')} style={{ accentColor: 'var(--color-primary-600)', width: '18px', height: '18px' }} /> A vista
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)', cursor: 'pointer' }}>
-                <input type="radio" checked={paymentType === 'installment'} onChange={() => setPaymentType('installment')} style={{ accentColor: 'var(--color-primary-600)' }} /> A prazo
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)', cursor: 'pointer', minHeight: '44px' }}>
+                <input type="radio" checked={paymentType === 'installment'} onChange={() => setPaymentType('installment')} style={{ accentColor: 'var(--color-primary-600)', width: '18px', height: '18px' }} /> A prazo
               </label>
               {paymentType === 'installment' && (
                 <div style={{ marginLeft: '24px' }}>
@@ -247,7 +332,14 @@ export default function NovaCompraPage() {
                 </div>
               )}
             </div>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{
+              marginLeft: isMobile ? '0' : 'auto',
+              textAlign: 'right',
+              ...(isMobile ? {
+                borderTop: '1px solid var(--color-neutral-200)',
+                paddingTop: '16px',
+              } : {}),
+            }}>
               <div style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', marginBottom: '4px' }}>Itens: {formatCurrency(itemsTotal)}</div>
               {extraTotal > 0 && <div style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', marginBottom: '4px' }}>Custos extras: {formatCurrency(extraTotal)}</div>}
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-neutral-900)' }}>Total: {formatCurrency(grandTotal)}</div>
@@ -255,13 +347,21 @@ export default function NovaCompraPage() {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button onClick={() => router.back()} style={{ padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>Cancelar</button>
+        {/* Bottom actions - sticky on mobile */}
+        <div className="form-actions" style={isMobile ? {
+          position: 'sticky', bottom: 0, left: 0, right: 0,
+          backgroundColor: 'var(--color-white)',
+          borderTop: '1px solid var(--color-border)',
+          padding: '12px 0', margin: '0 -16px', paddingLeft: '16px', paddingRight: '16px',
+          zIndex: 10,
+        } : undefined}>
+          <button onClick={() => router.back()} style={{ padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '44px' }}>Cancelar</button>
           <button onClick={handleSubmit} disabled={saving || !supplierId || !items.some((i) => i.productId)} style={{
             padding: '10px 24px', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
             backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)',
             cursor: (saving || !supplierId || !items.some((i) => i.productId)) ? 'not-allowed' : 'pointer',
             opacity: (saving || !supplierId || !items.some((i) => i.productId)) ? 0.5 : 1,
+            minHeight: '44px',
           }}>
             {saving ? 'Salvando...' : 'Salvar Compra'}
           </button>

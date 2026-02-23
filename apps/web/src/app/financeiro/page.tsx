@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout'
 import { StatsCard } from '@/components/StatsCard'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { FinanceEntry, Account } from '@spid/shared'
 
@@ -15,6 +16,7 @@ interface FinanceOverview {
 }
 
 export default function FinanceiroPage() {
+  const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<FinanceOverview>('/finance')
   const [typeFilter, setTypeFilter] = useState('')
   const [accountFilter, setAccountFilter] = useState('')
@@ -72,11 +74,11 @@ export default function FinanceiroPage() {
 
         {/* Account balances */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+          <div className="stats-grid">
             {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton skeleton-card" style={{ height: '120px', borderRadius: 'var(--radius-lg)' }} />)}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+          <div className="stats-grid">
             {data?.accounts.map((acc) => (
               <StatsCard
                 key={acc.id}
@@ -89,7 +91,11 @@ export default function FinanceiroPage() {
         )}
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, auto)',
+          gap: '8px',
+        }}>
           {[
             { label: 'Nova Despesa', href: '/financeiro/lancamento?tipo=EXPENSE' },
             { label: 'Nova Receita', href: '/financeiro/lancamento?tipo=INCOME' },
@@ -98,10 +104,13 @@ export default function FinanceiroPage() {
             { label: 'Fechamento', href: '/financeiro/fechamento' },
           ].map((btn) => (
             <Link key={btn.label} href={btn.href} style={{
-              padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
+              padding: isMobile ? '12px 16px' : '8px 16px',
+              fontSize: 'var(--font-sm)', fontWeight: 500,
               color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
               border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
               textDecoration: 'none', transition: 'all var(--transition-fast)',
+              textAlign: 'center', minHeight: '44px',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {btn.label}
             </Link>
@@ -117,11 +126,12 @@ export default function FinanceiroPage() {
           searchPlaceholder="Buscar lancamento..."
           searchKeys={['categoryName', 'notes']}
           actions={
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{
                 padding: '6px 10px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)',
                 backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
                 borderRadius: 'var(--radius-sm)', outline: 'none', cursor: 'pointer',
+                minHeight: '44px',
               }}>
                 <option value="">Todos os tipos</option>
                 <option value="EXPENSE">Despesas</option>
@@ -133,6 +143,7 @@ export default function FinanceiroPage() {
                 padding: '6px 10px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)',
                 backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
                 borderRadius: 'var(--radius-sm)', outline: 'none', cursor: 'pointer',
+                minHeight: '44px',
               }}>
                 <option value="">Todas as contas</option>
                 {data?.accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

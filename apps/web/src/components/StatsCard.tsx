@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties, ReactNode } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface StatsCardProps {
   title: string
@@ -21,18 +22,22 @@ export function StatsCard({
   tooltip,
   onClick,
 }: StatsCardProps) {
+  const { isMobile } = useMediaQuery()
+
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '20px 24px',
+    padding: isMobile ? '14px 16px' : '20px 24px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: isMobile ? '4px' : '8px',
     boxShadow: 'var(--shadow-sm)',
     transition: 'all 200ms ease',
     cursor: onClick ? 'pointer' : 'default',
     position: 'relative',
+    minWidth: 0,
+    overflow: 'hidden',
   }
 
   const headerStyle: CSSProperties = {
@@ -46,18 +51,23 @@ export function StatsCard({
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
+    minWidth: 0,
+    flex: 1,
   }
 
   const titleStyle: CSSProperties = {
-    fontSize: 'var(--font-sm)',
+    fontSize: isMobile ? 'var(--font-xs)' : 'var(--font-sm)',
     fontWeight: 500,
     color: 'var(--color-neutral-500)',
     margin: 0,
     lineHeight: 1.4,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }
 
   const tooltipIconStyle: CSSProperties = {
-    display: 'inline-flex',
+    display: isMobile ? 'none' : 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     width: '16px',
@@ -75,8 +85,8 @@ export function StatsCard({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '40px',
-    height: '40px',
+    width: isMobile ? '32px' : '40px',
+    height: isMobile ? '32px' : '40px',
     borderRadius: 'var(--radius-md)',
     backgroundColor: 'var(--color-primary-50)',
     color: 'var(--color-primary-600)',
@@ -84,19 +94,22 @@ export function StatsCard({
   }
 
   const valueStyle: CSSProperties = {
-    fontSize: '1.75rem',
+    fontSize: isMobile ? '1.25rem' : '1.75rem',
     fontWeight: 700,
     color: 'var(--color-neutral-900)',
     margin: 0,
     lineHeight: 1.2,
     letterSpacing: '-0.025em',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }
 
   const footerStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    marginTop: '4px',
+    marginTop: isMobile ? '0' : '4px',
   }
 
   const changeStyle = (isPositive: boolean): CSSProperties => ({

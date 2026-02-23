@@ -2,9 +2,11 @@
 
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -37,6 +39,9 @@ export default function LoginPage() {
     }
   }
 
+  const inputPadding = isMobile ? '14px' : '12px'
+  const inputFontSize = '16px' // Always 16px to prevent iOS zoom
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -53,10 +58,10 @@ export default function LoginPage() {
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)',
-        padding: '40px 32px',
+        padding: isMobile ? '32px 20px' : '40px 32px',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '36px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Spid</h1>
+          <h1 style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Spid</h1>
           <p style={{ fontSize: '16px', color: '#64748b', marginTop: '8px' }}>Sistema de Vendas</p>
         </div>
 
@@ -73,10 +78,10 @@ export default function LoginPage() {
               placeholder="seu@email.com"
               style={{
                 width: '100%',
-                padding: '12px',
+                padding: inputPadding,
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
-                fontSize: '15px',
+                fontSize: inputFontSize,
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -95,10 +100,10 @@ export default function LoginPage() {
               placeholder="Sua senha"
               style={{
                 width: '100%',
-                padding: '12px',
+                padding: inputPadding,
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
-                fontSize: '15px',
+                fontSize: inputFontSize,
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -116,12 +121,12 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: isMobile ? '14px' : '12px',
               backgroundColor: '#2563eb',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '15px',
+              fontSize: '16px',
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,

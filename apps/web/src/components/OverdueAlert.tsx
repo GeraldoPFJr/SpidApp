@@ -3,6 +3,7 @@
 import { type CSSProperties } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -14,13 +15,17 @@ interface OverdueAlertProps {
 // ─── Component ──────────────────────────────────────────
 
 export function OverdueAlert({ count, total }: OverdueAlertProps) {
+  const { isMobile } = useMediaQuery()
+
   if (!count || count <= 0) return null
 
   const containerStyle: CSSProperties = {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: isMobile ? 'flex-start' : 'center',
     justifyContent: 'space-between',
-    padding: '16px 20px',
+    flexDirection: isMobile ? 'column' : 'row',
+    padding: isMobile ? '14px 16px' : '16px 20px',
+    gap: isMobile ? '12px' : '16px',
     backgroundColor: 'var(--color-danger-50)',
     border: '1px solid var(--color-danger-100)',
     borderRadius: 'var(--radius-lg)',
@@ -37,8 +42,8 @@ export function OverdueAlert({ count, total }: OverdueAlertProps) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '40px',
-    height: '40px',
+    width: isMobile ? '36px' : '40px',
+    height: isMobile ? '36px' : '40px',
     borderRadius: 'var(--radius-md)',
     backgroundColor: 'var(--color-danger-100)',
     color: 'var(--color-danger-600)',
@@ -68,6 +73,11 @@ export function OverdueAlert({ count, total }: OverdueAlertProps) {
     border: '1px solid var(--color-danger-200)',
     backgroundColor: 'var(--color-white)',
     transition: 'all var(--transition-fast)',
+    textAlign: 'center' as const,
+    width: isMobile ? '100%' : 'auto',
+    display: isMobile ? 'block' : 'inline-block',
+    minHeight: '44px',
+    lineHeight: isMobile ? '28px' : undefined,
   }
 
   return (

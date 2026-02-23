@@ -1,6 +1,7 @@
 'use client'
 
 import { type CSSProperties, type ReactNode, useCallback, useMemo, useState } from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -11,6 +12,12 @@ export interface DataTableColumn<T> {
   width?: string
   sortable?: boolean
   align?: 'left' | 'center' | 'right'
+  /** Show this column in mobile card view (first 3 by default) */
+  mobileVisible?: boolean
+  /** Use as card title in mobile view */
+  mobileTitle?: boolean
+  /** Use as card subtitle in mobile view */
+  mobileSubtitle?: boolean
 }
 
 interface DataTableProps<T> {
@@ -52,6 +59,7 @@ export function DataTable<T>({
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
   const [page, setPage] = useState(0)
+  const { isMobile } = useMediaQuery()
 
   // Filter
   const filteredRows = useMemo(() => {
@@ -124,18 +132,19 @@ export function DataTable<T>({
 
   const toolbarStyle: CSSProperties = {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: isMobile ? 'stretch' : 'center',
     justifyContent: 'space-between',
-    padding: '16px 20px',
-    gap: '12px',
+    padding: isMobile ? '12px' : '16px 20px',
+    gap: isMobile ? '8px' : '12px',
     borderBottom: '1px solid var(--color-border)',
+    flexDirection: isMobile ? 'column' : 'row',
   }
 
   const searchWrapperStyle: CSSProperties = {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    maxWidth: '320px',
+    maxWidth: isMobile ? '100%' : '320px',
     flex: 1,
   }
 
@@ -149,8 +158,8 @@ export function DataTable<T>({
 
   const searchInputStyle: CSSProperties = {
     width: '100%',
-    padding: '8px 12px 8px 36px',
-    fontSize: 'var(--font-sm)',
+    padding: isMobile ? '10px 12px 10px 36px' : '8px 12px 8px 36px',
+    fontSize: isMobile ? '16px' : 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-neutral-50)',
     border: '1px solid var(--color-neutral-200)',
@@ -208,14 +217,16 @@ export function DataTable<T>({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 20px',
+    padding: isMobile ? '10px 12px' : '12px 20px',
     borderTop: '1px solid var(--color-border)',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-500)',
+    gap: '8px',
+    flexWrap: 'wrap',
   }
 
   const paginationBtnStyle = (disabled: boolean): CSSProperties => ({
-    padding: '6px 12px',
+    padding: isMobile ? '8px 16px' : '6px 12px',
     fontSize: 'var(--font-sm)',
     fontWeight: 500,
     color: disabled ? 'var(--color-neutral-300)' : 'var(--color-neutral-600)',
@@ -224,6 +235,7 @@ export function DataTable<T>({
     borderRadius: 'var(--radius-md)',
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'all var(--transition-fast)',
+    minHeight: isMobile ? '44px' : undefined,
   })
 
   const emptyContainerStyle: CSSProperties = {
@@ -231,7 +243,7 @@ export function DataTable<T>({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '48px 24px',
+    padding: isMobile ? '32px 16px' : '48px 24px',
     textAlign: 'center',
   }
 
@@ -267,18 +279,18 @@ export function DataTable<T>({
               style={{
                 display: 'flex',
                 gap: '16px',
-                padding: '14px 20px',
+                padding: isMobile ? '12px' : '14px 20px',
                 borderBottom: '1px solid var(--color-neutral-100)',
               }}
             >
-              {columns.map((col) => (
+              {(isMobile ? [columns[0], columns[1]].filter(Boolean) : columns).map((col) => (
                 <div
-                  key={col.key}
+                  key={col!.key}
                   className="skeleton skeleton-text"
                   style={{
                     flex: 1,
                     height: '16px',
-                    maxWidth: col.width ?? '200px',
+                    maxWidth: col!.width ?? '200px',
                   }}
                 />
               ))}
@@ -290,6 +302,182 @@ export function DataTable<T>({
   }
 
   const showPagination = sortedRows.length > pageSize
+
+  // ─── Mobile Card View ──────────────────────────
+
+  if (isMobile) {
+    // Determine which columns show in cards
+    const titleCol = columns.find((c) => c.mobileTitle) ?? columns[0]
+    const subtitleCol = columns.find((c) => c.mobileSubtitle) ?? columns[1]
+    const visibleCols = columns.filter((c) => c.mobileVisible)
+    const extraCols = visibleCols.length > 0
+      ? visibleCols.filter((c) => c !== titleCol && c !== subtitleCol)
+      : columns.slice(2, 5).filter((c) => c !== titleCol && c !== subtitleCol)
+
+    return (
+      <div style={containerStyle}>
+        {(searchable || actions) && (
+          <div style={toolbarStyle}>
+            {searchable && (
+              <div style={searchWrapperStyle}>
+                <span style={searchIconStyle}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  style={searchInputStyle}
+                />
+              </div>
+            )}
+            {actions && <div style={{ display: 'flex', gap: '8px' }}>{actions}</div>}
+          </div>
+        )}
+
+        {/* Card list */}
+        <div style={{ padding: '0' }}>
+          {paginatedRows.length === 0 ? (
+            <div style={emptyContainerStyle}>
+              {emptyIcon && <div style={emptyIconStyle}>{emptyIcon}</div>}
+              <h3 style={emptyTitleStyle}>{emptyTitle}</h3>
+              {emptyDescription && <p style={emptyDescStyle}>{emptyDescription}</p>}
+            </div>
+          ) : (
+            paginatedRows.map((row, rowIndex) => {
+              const globalIndex = page * pageSize + rowIndex
+              return (
+                <div
+                  key={keyExtractor(row)}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  style={{
+                    padding: '14px 16px',
+                    borderBottom: '1px solid var(--color-neutral-100)',
+                    cursor: onRowClick ? 'pointer' : 'default',
+                    transition: 'background-color var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  {/* Title row */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                  }}>
+                    <div style={{
+                      fontWeight: 600,
+                      fontSize: 'var(--font-sm)',
+                      color: 'var(--color-neutral-900)',
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {titleCol?.render
+                        ? titleCol.render(row, titleCol.key, globalIndex)
+                        : String((row as Record<string, unknown>)[titleCol?.key ?? ''] ?? '')}
+                    </div>
+                    {/* Show last column value (often status or total) as badge */}
+                    {columns.length > 2 && (() => {
+                      const lastCol = columns[columns.length - 1]!
+                      return (
+                        <div style={{ flexShrink: 0 }}>
+                          {lastCol.render
+                            ? lastCol.render(row, lastCol.key, globalIndex)
+                            : String((row as Record<string, unknown>)[lastCol.key] ?? '')}
+                        </div>
+                      )
+                    })()}
+                  </div>
+
+                  {/* Subtitle + extra fields */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}>
+                    {subtitleCol && (
+                      <span style={{
+                        fontSize: 'var(--font-xs)',
+                        color: 'var(--color-neutral-500)',
+                      }}>
+                        {subtitleCol.render
+                          ? subtitleCol.render(row, subtitleCol.key, globalIndex)
+                          : String((row as Record<string, unknown>)[subtitleCol.key] ?? '')}
+                      </span>
+                    )}
+                    {extraCols.map((col) => (
+                      <span key={col.key} style={{
+                        fontSize: 'var(--font-xs)',
+                        color: 'var(--color-neutral-400)',
+                      }}>
+                        {col.render
+                          ? col.render(row, col.key, globalIndex)
+                          : String((row as Record<string, unknown>)[col.key] ?? '')}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Chevron indicator for clickable rows */}
+                  {onRowClick && (
+                    <div style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--color-neutral-300)',
+                      display: 'none', // hidden but available
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Pagination */}
+        {showPagination && (
+          <div style={paginationStyle}>
+            <span style={{ fontSize: 'var(--font-xs)' }}>
+              {sortedRows.length} registro{sortedRows.length !== 1 ? 's' : ''}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                style={paginationBtnStyle(page === 0)}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                Anterior
+              </button>
+              <span style={{ padding: '0 4px', fontWeight: 500, color: 'var(--color-neutral-700)', fontSize: 'var(--font-xs)' }}>
+                {page + 1}/{totalPages}
+              </span>
+              <button
+                style={paginationBtnStyle(page >= totalPages - 1)}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+              >
+                Proximo
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ─── Desktop Table View ────────────────────────
 
   return (
     <div style={containerStyle}>

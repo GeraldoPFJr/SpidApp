@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout'
 import { PaymentSplit, type PaymentEntry } from '@/components/PaymentSplit'
 import { InstallmentConfig } from '@/components/InstallmentConfig'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import type { Customer, Product, ProductUnit, Account } from '@spid/shared'
@@ -44,6 +45,7 @@ function createEmptyItem(): SaleItem {
 
 export default function NovaVendaPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
 
   // Customer
   const [customerId, setCustomerId] = useState<string | null>(null)
@@ -302,7 +304,7 @@ export default function NovaVendaPage() {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '20px 24px',
+    padding: isMobile ? '16px' : '20px 24px',
     boxShadow: 'var(--shadow-sm)',
     animation: 'spid-fade-in 0.3s ease',
   }
@@ -318,7 +320,7 @@ export default function NovaVendaPage() {
 
   const inputStyle: CSSProperties = {
     width: '100%',
-    padding: '8px 12px',
+    padding: isMobile ? '12px' : '8px 12px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)',
@@ -329,7 +331,7 @@ export default function NovaVendaPage() {
   }
 
   const miniInputStyle: CSSProperties = {
-    padding: '7px 10px',
+    padding: isMobile ? '10px' : '7px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)',
@@ -340,13 +342,21 @@ export default function NovaVendaPage() {
     transition: 'border-color var(--transition-fast)',
   }
 
-  const itemRowStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 120px 72px 100px 100px 36px',
-    gap: '8px',
-    padding: '6px 0',
-    alignItems: 'center',
-  }
+  const itemRowStyle: CSSProperties = isMobile
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        padding: '12px 0',
+        position: 'relative',
+      }
+    : {
+        display: 'grid',
+        gridTemplateColumns: '1fr 120px 72px 100px 100px 36px',
+        gap: '8px',
+        padding: '6px 0',
+        alignItems: 'center',
+      }
 
   const headerLabelStyle: CSSProperties = {
     fontSize: '11px',
@@ -376,6 +386,7 @@ export default function NovaVendaPage() {
           justifyContent: 'center',
           minHeight: '60vh',
           gap: '20px',
+          padding: isMobile ? '24px 16px' : '24px',
           animation: 'spid-scale-in 0.3s ease',
         }}>
           <div style={{
@@ -400,12 +411,23 @@ export default function NovaVendaPage() {
               Total: {formatCurrency(total)}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            marginTop: '8px',
+            ...(isMobile && {
+              flexDirection: 'column' as const,
+              width: '100%',
+              maxWidth: '320px',
+            }),
+          }}>
             {savedSaleId && (
               <button
                 onClick={() => router.push(`/vendas/${savedSaleId}`)}
                 style={{
-                  padding: '10px 20px',
+                  padding: isMobile ? '12px 20px' : '10px 20px',
                   fontSize: 'var(--font-sm)',
                   fontWeight: 500,
                   color: 'var(--color-neutral-600)',
@@ -414,6 +436,7 @@ export default function NovaVendaPage() {
                   borderRadius: 'var(--radius-md)',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
+                  ...(isMobile && { width: '100%' }),
                 }}
               >
                 Ver Detalhes
@@ -423,7 +446,7 @@ export default function NovaVendaPage() {
               <button
                 onClick={() => router.push(`/vendas/${savedSaleId}?print=1`)}
                 style={{
-                  padding: '10px 20px',
+                  padding: isMobile ? '12px 20px' : '10px 20px',
                   fontSize: 'var(--font-sm)',
                   fontWeight: 500,
                   color: 'var(--color-neutral-600)',
@@ -432,6 +455,7 @@ export default function NovaVendaPage() {
                   borderRadius: 'var(--radius-md)',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
+                  ...(isMobile && { width: '100%' }),
                 }}
               >
                 Imprimir Cupom
@@ -440,7 +464,7 @@ export default function NovaVendaPage() {
             <button
               onClick={resetForm}
               style={{
-                padding: '10px 24px',
+                padding: isMobile ? '12px 24px' : '10px 24px',
                 fontSize: 'var(--font-sm)',
                 fontWeight: 600,
                 color: 'var(--color-white)',
@@ -449,6 +473,7 @@ export default function NovaVendaPage() {
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
+                ...(isMobile && { width: '100%' }),
               }}
             >
               Nova Venda
@@ -465,7 +490,13 @@ export default function NovaVendaPage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '960px', paddingBottom: '100px' }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isMobile ? '12px' : '16px',
+        maxWidth: '960px',
+        paddingBottom: isMobile ? '120px' : '100px',
+      }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
@@ -474,21 +505,22 @@ export default function NovaVendaPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '34px',
-              height: '34px',
+              width: isMobile ? '40px' : '34px',
+              height: isMobile ? '40px' : '34px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--color-white)',
               border: '1px solid var(--color-neutral-200)',
               cursor: 'pointer',
               transition: 'all var(--transition-fast)',
               color: 'var(--color-neutral-600)',
+              flexShrink: 0,
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-lg)' : 'var(--font-xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
             Nova Venda
           </h1>
         </div>
@@ -544,7 +576,7 @@ export default function NovaVendaPage() {
                   setShowCustomerDropdown(true)
                 }}
                 onFocus={() => setShowCustomerDropdown(true)}
-                placeholder="Buscar cliente ou deixar vazio para Consumidor Final..."
+                placeholder={isMobile ? 'Buscar cliente...' : 'Buscar cliente ou deixar vazio para Consumidor Final...'}
                 style={inputStyle}
               />
               {customerId && (
@@ -561,10 +593,13 @@ export default function NovaVendaPage() {
                     border: 'none',
                     background: 'none',
                     cursor: 'pointer',
-                    padding: '2px',
+                    padding: '4px',
                     color: 'var(--color-neutral-400)',
                     display: 'flex',
                     alignItems: 'center',
+                    minHeight: '44px',
+                    minWidth: '44px',
+                    justifyContent: 'center',
                   }}
                   tabIndex={-1}
                 >
@@ -585,7 +620,7 @@ export default function NovaVendaPage() {
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
-                maxHeight: '240px',
+                maxHeight: isMobile ? '200px' : '240px',
                 overflowY: 'auto',
                 marginTop: '4px',
               }}>
@@ -600,7 +635,7 @@ export default function NovaVendaPage() {
                     style={{
                       width: '100%',
                       textAlign: 'left',
-                      padding: '9px 14px',
+                      padding: isMobile ? '12px 14px' : '9px 14px',
                       border: 'none',
                       backgroundColor: 'transparent',
                       fontSize: 'var(--font-sm)',
@@ -641,7 +676,7 @@ export default function NovaVendaPage() {
                     style={{
                       width: '100%',
                       textAlign: 'left',
-                      padding: '10px 14px',
+                      padding: isMobile ? '12px 14px' : '10px 14px',
                       border: 'none',
                       borderTop: '1px solid var(--color-neutral-200)',
                       backgroundColor: 'var(--color-primary-50)',
@@ -691,15 +726,17 @@ export default function NovaVendaPage() {
         <div style={sectionStyle}>
           <p style={sectionTitleStyle}>Itens</p>
 
-          {/* Column Headers */}
-          <div style={{ ...itemRowStyle, borderBottom: '1px solid var(--color-neutral-100)', paddingBottom: '8px', marginBottom: '4px' }}>
-            <span style={headerLabelStyle}>Produto</span>
-            <span style={headerLabelStyle}>Unidade</span>
-            <span style={{ ...headerLabelStyle, textAlign: 'center' }}>Qtd</span>
-            <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Preco</span>
-            <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Subtotal</span>
-            <span />
-          </div>
+          {/* Column Headers — desktop only */}
+          {!isMobile && (
+            <div style={{ ...itemRowStyle, borderBottom: '1px solid var(--color-neutral-100)', paddingBottom: '8px', marginBottom: '4px' }}>
+              <span style={headerLabelStyle}>Produto</span>
+              <span style={headerLabelStyle}>Unidade</span>
+              <span style={{ ...headerLabelStyle, textAlign: 'center' }}>Qtd</span>
+              <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Preco</span>
+              <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Subtotal</span>
+              <span />
+            </div>
+          )}
 
           {/* Item Rows */}
           {items.map((item, index) => {
@@ -707,6 +744,132 @@ export default function NovaVendaPage() {
             const isLastItem = index === items.length - 1
             const prod = products?.find((p) => p.id === item.productId)
 
+            if (isMobile) {
+              // ── Mobile Card Layout ──
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    opacity: isGhost ? 0.55 : 1,
+                    borderBottom: isLastItem ? 'none' : '1px solid var(--color-neutral-100)',
+                    padding: '12px 0',
+                    transition: 'opacity var(--transition-fast)',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Remove button — top right */}
+                  {!isGhost && (
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--color-danger-50)',
+                        border: '1px solid var(--color-danger-200)',
+                        cursor: 'pointer',
+                        color: 'var(--color-danger-500)',
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* Product select — full width */}
+                  <div style={{ marginBottom: '8px', paddingRight: !isGhost ? '40px' : '0' }}>
+                    <select
+                      ref={isGhost ? ghostProductRef : undefined}
+                      value={item.productId}
+                      onChange={(e) => selectProduct(item.id, e.target.value)}
+                      style={{ ...miniInputStyle, padding: '12px 10px' }}
+                    >
+                      <option value="">Selecionar produto...</option>
+                      {products?.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Unit + Qty + Price row */}
+                  {!isGhost && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <span style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Unidade</span>
+                        <select
+                          value={item.unitId}
+                          onChange={(e) => {
+                            const unit = prod?.units?.find((u) => u.id === e.target.value)
+                            updateItem(item.id, 'unitId', e.target.value)
+                            if (unit) {
+                              updateItem(item.id, 'unitLabel', unit.nameLabel)
+                              if (unit.price != null) updateItem(item.id, 'unitPrice', String(unit.price))
+                            }
+                          }}
+                          style={{ ...miniInputStyle, padding: '10px 8px' }}
+                          disabled={!item.productId}
+                        >
+                          <option value="">Un.</option>
+                          {prod?.units?.map((u) => (
+                            <option key={u.id} value={u.id}>{u.nameLabel}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <span style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Qtd</span>
+                        <input
+                          ref={(el) => { qtyRefs.current[item.id] = el }}
+                          type="text"
+                          inputMode="decimal"
+                          value={item.qty}
+                          onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
+                          onKeyDown={(e) => handleQtyKeyDown(e, item.id)}
+                          style={{ ...miniInputStyle, textAlign: 'center', padding: '10px 8px' }}
+                        />
+                      </div>
+                      <div>
+                        <span style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Preco</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
+                          style={{ ...miniInputStyle, textAlign: 'right', padding: '10px 8px' }}
+                          placeholder="0,00"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subtotal */}
+                  {!isGhost && item.subtotal > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      marginTop: '8px',
+                      paddingTop: '4px',
+                    }}>
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: 'var(--font-sm)',
+                        color: 'var(--color-neutral-800)',
+                      }}>
+                        Subtotal: {formatCurrency(item.subtotal)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            // ── Desktop Grid Layout ──
             return (
               <div
                 key={item.id}
@@ -813,38 +976,58 @@ export default function NovaVendaPage() {
           {/* Adjustments + Totals */}
           {validItems.length > 0 && (
             <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--color-neutral-100)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+                gap: '10px',
+                marginBottom: '14px',
+              }}>
                 <div>
                   <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <select
                       value={discountType}
                       onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
-                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0, padding: '7px 4px' }}
+                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0, padding: isMobile ? '10px 4px' : '7px 4px' }}
                     >
                       <option value="fixed">R$</option>
                       <option value="percent">%</option>
                     </select>
                     <input
                       type="text"
+                      inputMode="decimal"
                       value={discount}
                       onChange={(e) => setDiscount(e.target.value)}
                       placeholder="0"
-                      style={{ ...miniInputStyle, textAlign: 'right' }}
+                      style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
                     />
                   </div>
                 </div>
                 <div>
                   <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Acrescimo (R$)</label>
-                  <input type="text" value={surcharge} onChange={(e) => setSurcharge(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={surcharge}
+                    onChange={(e) => setSurcharge(e.target.value)}
+                    placeholder="0,00"
+                    style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
+                  />
                 </div>
                 <div>
                   <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete (R$)</label>
-                  <input type="text" value={freight} onChange={(e) => setFreight(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={freight}
+                    onChange={(e) => setFreight(e.target.value)}
+                    placeholder="0,00"
+                    style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
+                  />
                 </div>
               </div>
 
-              <div style={{ maxWidth: '260px', marginLeft: 'auto' }}>
+              <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto' }}>
                 <div style={summaryRowStyle}>
                   <span>Subtotal</span>
                   <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
@@ -913,53 +1096,35 @@ export default function NovaVendaPage() {
         WebkitBackdropFilter: 'blur(16px)',
         borderTop: '1px solid var(--color-neutral-200)',
         boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.06)',
-        padding: '14px 24px',
-        marginLeft: '-32px',
-        marginRight: '-32px',
-        marginBottom: '-32px',
+        padding: isMobile ? '12px 16px' : '14px 24px',
+        marginLeft: isMobile ? '-16px' : '-32px',
+        marginRight: isMobile ? '-16px' : '-32px',
+        marginBottom: isMobile ? '-16px' : '-32px',
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          maxWidth: '960px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '24px' }}>
-            {validItems.length > 0 && (
-              <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-400)' }}>
-                {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
-              </span>
-            )}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-              <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
-              <span style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
-                {formatCurrency(total)}
-              </span>
+        {isMobile ? (
+          // ── Mobile bottom bar: stacked layout ──
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                {validItems.length > 0 && (
+                  <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)' }}>
+                    {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
+                <span style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
+                  {formatCurrency(total)}
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={() => router.back()}
-              style={{
-                padding: '10px 20px',
-                fontSize: 'var(--font-sm)',
-                fontWeight: 500,
-                color: 'var(--color-neutral-500)',
-                backgroundColor: 'transparent',
-                border: '1px solid var(--color-neutral-300)',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-            >
-              Cancelar
-            </button>
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
               style={{
-                padding: '10px 32px',
+                width: '100%',
+                padding: '14px 24px',
                 fontSize: 'var(--font-base)',
                 fontWeight: 600,
                 color: 'var(--color-white)',
@@ -970,17 +1135,76 @@ export default function NovaVendaPage() {
                 transition: 'all var(--transition-fast)',
                 boxShadow: canSubmit ? '0 2px 8px rgba(22, 163, 74, 0.3)' : 'none',
               }}
-              onMouseEnter={(e) => {
-                if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-700)'
-              }}
-              onMouseLeave={(e) => {
-                if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-600)'
-              }}
             >
               {saving ? 'Confirmando...' : 'Confirmar Venda'}
             </button>
           </div>
-        </div>
+        ) : (
+          // ── Desktop bottom bar ──
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            maxWidth: '960px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '24px' }}>
+              {validItems.length > 0 && (
+                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-400)' }}>
+                  {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
+                </span>
+              )}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
+                <span style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
+                  {formatCurrency(total)}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => router.back()}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: 'var(--font-sm)',
+                  fontWeight: 500,
+                  color: 'var(--color-neutral-500)',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--color-neutral-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                style={{
+                  padding: '10px 32px',
+                  fontSize: 'var(--font-base)',
+                  fontWeight: 600,
+                  color: 'var(--color-white)',
+                  backgroundColor: canSubmit ? 'var(--color-success-600)' : 'var(--color-neutral-300)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  transition: 'all var(--transition-fast)',
+                  boxShadow: canSubmit ? '0 2px 8px rgba(22, 163, 74, 0.3)' : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-700)'
+                }}
+                onMouseLeave={(e) => {
+                  if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-600)'
+                }}
+              >
+                {saving ? 'Confirmando...' : 'Confirmar Venda'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

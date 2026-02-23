@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface ApiStockRow {
   productId: string
@@ -46,6 +47,7 @@ function mapStockRow(row: ApiStockRow): StockRow {
 }
 
 export default function EstoquePage() {
+  const { isMobile } = useMediaQuery()
   const { data: rawData, loading } = useApi<ApiStockRow[]>('/inventory')
   const data = useMemo(() => (rawData ?? []).map(mapStockRow), [rawData])
 
@@ -132,18 +134,22 @@ export default function EstoquePage() {
   ], [])
 
   const navLinks = (
-    <div style={{ display: 'flex', gap: '8px' }}>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
       <Link href="/estoque/movimentacoes" style={{
-        padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
+        padding: isMobile ? '10px 14px' : '8px 16px',
+        fontSize: 'var(--font-sm)', fontWeight: 500,
         color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
         border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', textDecoration: 'none',
+        minHeight: '44px', display: 'inline-flex', alignItems: 'center',
       }}>
         Movimentacoes
       </Link>
       <Link href="/estoque/inventario" style={{
-        padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500,
+        padding: isMobile ? '10px 14px' : '8px 16px',
+        fontSize: 'var(--font-sm)', fontWeight: 500,
         color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
         border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', textDecoration: 'none',
+        minHeight: '44px', display: 'inline-flex', alignItems: 'center',
       }}>
         Inventario
       </Link>

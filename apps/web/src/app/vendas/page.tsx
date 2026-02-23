@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate } from '@/lib/format'
 
 interface SaleRaw {
@@ -39,6 +40,7 @@ function mapSaleRow(raw: SaleRaw): SaleRow {
 
 export default function VendasPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const [statusFilter, setStatusFilter] = useState('')
   const { data: rawData, loading } = useApi<SaleRaw[]>('/sales')
   const data = useMemo(() => rawData?.map(mapSaleRow) ?? null, [rawData])
@@ -103,14 +105,29 @@ export default function VendasPage() {
   ], [])
 
   const filterActions = (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div style={{
+      display: 'flex',
+      gap: '8px',
+      alignItems: 'center',
+      ...(isMobile && {
+        flexDirection: 'column' as const,
+        alignItems: 'stretch',
+        width: '100%',
+      }),
+    }}>
       <select
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
         style={{
-          padding: '6px 10px', fontSize: 'var(--font-sm)', color: 'var(--color-neutral-700)',
-          backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
-          borderRadius: 'var(--radius-sm)', outline: 'none', cursor: 'pointer',
+          padding: isMobile ? '10px 12px' : '6px 10px',
+          fontSize: 'var(--font-sm)',
+          color: 'var(--color-neutral-700)',
+          backgroundColor: 'var(--color-white)',
+          border: '1px solid var(--color-neutral-300)',
+          borderRadius: 'var(--radius-sm)',
+          outline: 'none',
+          cursor: 'pointer',
+          ...(isMobile && { width: '100%' }),
         }}
       >
         <option value="">Todos os status</option>
@@ -121,10 +138,19 @@ export default function VendasPage() {
       <button
         onClick={() => router.push('/vendas/nova')}
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 600,
-          color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
-          border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: isMobile ? '12px 16px' : '8px 16px',
+          fontSize: 'var(--font-sm)',
+          fontWeight: 600,
+          color: 'var(--color-white)',
+          backgroundColor: 'var(--color-primary-600)',
+          border: 'none',
+          borderRadius: 'var(--radius-md)',
+          cursor: 'pointer',
+          ...(isMobile && { width: '100%' }),
         }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -137,9 +163,14 @@ export default function VendasPage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Vendas</h1>
+          <h1 style={{
+            fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)',
+            fontWeight: 700,
+            color: 'var(--color-neutral-900)',
+            margin: 0,
+          }}>Vendas</h1>
           <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Historico de vendas</p>
         </div>
         <DataTable

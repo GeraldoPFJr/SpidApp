@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Product } from '@spid/shared'
 
 interface ProductRow extends Product {
@@ -14,6 +15,7 @@ interface ProductRow extends Product {
 
 export default function ProdutosPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<ProductRow[]>('/products')
 
   const columns: DataTableColumn<ProductRow>[] = useMemo(() => [
@@ -82,8 +84,9 @@ export default function ProdutosPage() {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: '8px',
-        padding: '8px 16px',
+        padding: isMobile ? '12px 16px' : '8px 16px',
         fontSize: 'var(--font-sm)',
         fontWeight: 600,
         color: 'var(--color-white)',
@@ -92,6 +95,7 @@ export default function ProdutosPage() {
         borderRadius: 'var(--radius-md)',
         cursor: 'pointer',
         transition: 'all var(--transition-fast)',
+        width: isMobile ? '100%' : 'auto',
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-700)'
@@ -110,9 +114,9 @@ export default function ProdutosPage() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
             Produtos
           </h1>
           <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>

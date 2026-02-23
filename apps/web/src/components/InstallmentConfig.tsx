@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useMemo } from 'react'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface InstallmentConfigProps {
   totalAmount: number
@@ -24,6 +25,8 @@ export function InstallmentConfig({
   onIntervalModeChange,
   startDate,
 }: InstallmentConfigProps) {
+  const { isMobile } = useMediaQuery()
+
   const generatedDates = useMemo(() => {
     const start = startDate ? new Date(startDate) : new Date()
     const dates: Array<{ number: number; date: Date; amount: number }> = []
@@ -47,18 +50,21 @@ export function InstallmentConfig({
     return dates
   }, [totalAmount, installments, intervalDays, intervalMode, startDate])
 
+  /* ── Styles ── */
+
   const containerStyle: CSSProperties = {
     backgroundColor: 'var(--color-neutral-50)',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--color-neutral-200)',
-    padding: '16px',
+    padding: isMobile ? '12px' : '16px',
   }
 
   const inputRowStyle: CSSProperties = {
     display: 'flex',
-    gap: '16px',
+    flexDirection: isMobile ? 'column' : 'row',
+    gap: isMobile ? '16px' : '16px',
     marginBottom: '16px',
-    alignItems: 'flex-end',
+    alignItems: isMobile ? 'stretch' : 'flex-end',
     flexWrap: 'wrap',
   }
 
@@ -75,24 +81,35 @@ export function InstallmentConfig({
   }
 
   const inputStyle: CSSProperties = {
-    padding: '6px 10px',
+    padding: isMobile ? '12px' : '6px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
     backgroundColor: 'var(--color-white)',
     border: '1px solid var(--color-neutral-300)',
     borderRadius: 'var(--radius-sm)',
     outline: 'none',
-    width: '100px',
+    width: isMobile ? '100%' : '100px',
     textAlign: 'center',
+    minHeight: isMobile ? '44px' : 'auto',
+    transition: 'border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const radioLabelStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '8px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-700)',
     cursor: 'pointer',
+    minHeight: isMobile ? '44px' : 'auto',
+    padding: isMobile ? '4px 0' : '0',
+  }
+
+  const radioInputStyle: CSSProperties = {
+    accentColor: 'var(--color-primary-600)',
+    width: isMobile ? '20px' : 'auto',
+    height: isMobile ? '20px' : 'auto',
+    flexShrink: 0,
   }
 
   const previewTableStyle: CSSProperties = {
@@ -101,12 +118,35 @@ export function InstallmentConfig({
     fontSize: 'var(--font-sm)',
   }
 
+  const thStyle: CSSProperties = {
+    padding: isMobile ? '8px' : '6px 12px',
+    fontSize: 'var(--font-xs)',
+    fontWeight: 500,
+    color: 'var(--color-neutral-500)',
+    backgroundColor: 'var(--color-white)',
+    borderBottom: '1px solid var(--color-neutral-200)',
+    whiteSpace: 'nowrap',
+  }
+
+  const tdStyle: CSSProperties = {
+    padding: isMobile ? '10px 8px' : '6px 12px',
+    borderBottom: '1px solid var(--color-neutral-100)',
+    whiteSpace: 'nowrap',
+  }
+
   return (
     <div style={containerStyle}>
-      <p style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-neutral-700)', margin: '0 0 12px' }}>
+      <p style={{
+        fontSize: 'var(--font-sm)',
+        fontWeight: 600,
+        color: 'var(--color-neutral-700)',
+        margin: '0 0 12px',
+      }}>
         Configuracao de Parcelas
       </p>
+
       <div style={inputRowStyle}>
+        {/* ── Parcelas input ── */}
         <div style={fieldStyle}>
           <label style={labelStyle}>Parcelas</label>
           <input
@@ -118,63 +158,149 @@ export function InstallmentConfig({
             style={inputStyle}
           />
         </div>
+
+        {/* ── Interval mode: "A cada X dias" ── */}
         <div style={fieldStyle}>
           <label style={labelStyle}>Intervalo</label>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          {isMobile ? (
+            /* Mobile: stacked radio + input */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: intervalMode === 'days' ? 'var(--color-primary-50)' : 'var(--color-white)',
+                border: `1px solid ${intervalMode === 'days' ? 'var(--color-primary-200)' : 'var(--color-neutral-200)'}`,
+                borderRadius: 'var(--radius-sm)',
+                transition: 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+              }}>
+                <label style={{ ...radioLabelStyle, flex: 1 }}>
+                  <input
+                    type="radio"
+                    checked={intervalMode === 'days'}
+                    onChange={() => onIntervalModeChange('days')}
+                    style={radioInputStyle}
+                  />
+                  A cada
+                </label>
+                <input
+                  type="number"
+                  value={intervalDays}
+                  onChange={(e) => onIntervalChange(Math.max(1, parseInt(e.target.value, 10) || 7))}
+                  min="1"
+                  disabled={intervalMode !== 'days'}
+                  style={{
+                    ...inputStyle,
+                    width: '72px',
+                    opacity: intervalMode === 'days' ? 1 : 0.4,
+                  }}
+                />
+                <span style={{
+                  fontSize: 'var(--font-sm)',
+                  color: 'var(--color-neutral-600)',
+                }}>
+                  dias
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: intervalMode === 'sameDay' ? 'var(--color-primary-50)' : 'var(--color-white)',
+                border: `1px solid ${intervalMode === 'sameDay' ? 'var(--color-primary-200)' : 'var(--color-neutral-200)'}`,
+                borderRadius: 'var(--radius-sm)',
+                minHeight: '44px',
+                transition: 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+              }}>
+                <label style={radioLabelStyle}>
+                  <input
+                    type="radio"
+                    checked={intervalMode === 'sameDay'}
+                    onChange={() => onIntervalModeChange('sameDay')}
+                    style={radioInputStyle}
+                  />
+                  Mesmo dia do mes
+                </label>
+              </div>
+            </div>
+          ) : (
+            /* Desktop: inline radio + input */
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <label style={radioLabelStyle}>
+                <input
+                  type="radio"
+                  checked={intervalMode === 'days'}
+                  onChange={() => onIntervalModeChange('days')}
+                  style={{ accentColor: 'var(--color-primary-600)' }}
+                />
+                A cada
+              </label>
+              <input
+                type="number"
+                value={intervalDays}
+                onChange={(e) => onIntervalChange(Math.max(1, parseInt(e.target.value, 10) || 7))}
+                min="1"
+                disabled={intervalMode !== 'days'}
+                style={{ ...inputStyle, width: '60px', opacity: intervalMode === 'days' ? 1 : 0.5 }}
+              />
+              <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-600)', alignSelf: 'center' }}>dias</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── "Mesmo dia do mes" radio (desktop only — on mobile it's in the group above) ── */}
+        {!isMobile && (
+          <div style={{ ...fieldStyle, justifyContent: 'flex-end' }}>
             <label style={radioLabelStyle}>
               <input
                 type="radio"
-                checked={intervalMode === 'days'}
-                onChange={() => onIntervalModeChange('days')}
+                checked={intervalMode === 'sameDay'}
+                onChange={() => onIntervalModeChange('sameDay')}
                 style={{ accentColor: 'var(--color-primary-600)' }}
               />
-              A cada
+              Mesmo dia do mes
             </label>
-            <input
-              type="number"
-              value={intervalDays}
-              onChange={(e) => onIntervalChange(Math.max(1, parseInt(e.target.value, 10) || 7))}
-              min="1"
-              disabled={intervalMode !== 'days'}
-              style={{ ...inputStyle, width: '60px', opacity: intervalMode === 'days' ? 1 : 0.5 }}
-            />
-            <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-600)', alignSelf: 'center' }}>dias</span>
           </div>
-        </div>
-        <div style={{ ...fieldStyle, justifyContent: 'flex-end' }}>
-          <label style={radioLabelStyle}>
-            <input
-              type="radio"
-              checked={intervalMode === 'sameDay'}
-              onChange={() => onIntervalModeChange('sameDay')}
-              style={{ accentColor: 'var(--color-primary-600)' }}
-            />
-            Mesmo dia do mes
-          </label>
-        </div>
+        )}
       </div>
 
-      {/* Preview */}
+      {/* ── Preview table ── */}
       {generatedDates.length > 0 && (
-        <div style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-neutral-200)', overflow: 'hidden' }}>
-          <table style={previewTableStyle}>
-            <thead>
-              <tr>
-                <th style={{ padding: '6px 12px', textAlign: 'center', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-white)', borderBottom: '1px solid var(--color-neutral-200)' }}>#</th>
-                <th style={{ padding: '6px 12px', textAlign: 'left', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-white)', borderBottom: '1px solid var(--color-neutral-200)' }}>Vencimento</th>
-                <th style={{ padding: '6px 12px', textAlign: 'right', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', backgroundColor: 'var(--color-white)', borderBottom: '1px solid var(--color-neutral-200)' }}>Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {generatedDates.map((d) => (
-                <tr key={d.number}>
-                  <td style={{ padding: '6px 12px', textAlign: 'center', borderBottom: '1px solid var(--color-neutral-100)', color: 'var(--color-neutral-500)' }}>{d.number}</td>
-                  <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--color-neutral-100)' }}>{formatDate(d.date)}</td>
-                  <td style={{ padding: '6px 12px', textAlign: 'right', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 500 }}>{formatCurrency(d.amount)}</td>
+        <div style={{
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--color-neutral-200)',
+          overflow: 'hidden',
+        }}>
+          {/* Scrollable wrapper for mobile */}
+          <div style={{
+            overflowX: isMobile ? 'auto' : 'visible',
+            WebkitOverflowScrolling: 'touch',
+          }}>
+            <table style={{
+              ...previewTableStyle,
+              minWidth: isMobile ? '280px' : 'auto',
+            }}>
+              <thead>
+                <tr>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>#</th>
+                  <th style={{ ...thStyle, textAlign: 'left' }}>Vencimento</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Valor</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {generatedDates.map((d) => (
+                  <tr key={d.number}>
+                    <td style={{ ...tdStyle, textAlign: 'center', color: 'var(--color-neutral-500)' }}>{d.number}</td>
+                    <td style={tdStyle}>{formatDate(d.date)}</td>
+                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 500 }}>{formatCurrency(d.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

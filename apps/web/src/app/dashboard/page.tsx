@@ -8,6 +8,7 @@ import { StatsCard } from '@/components/StatsCard'
 import { OverdueAlert } from '@/components/OverdueAlert'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { formatCurrency, formatDate, formatMonth, getCurrentMonth } from '@/lib/format'
 
 // ─── Types ──────────────────────────────────────────────
@@ -42,6 +43,7 @@ interface DashboardData {
 export default function DashboardPage() {
   const [month, setMonth] = useState(getCurrentMonth)
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<DashboardData>(`/reports/dashboard?month=${month}`)
 
   const handleMonthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,15 +117,16 @@ export default function DashboardPage() {
   const pageStyle: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
+    gap: isMobile ? '16px' : '24px',
   }
 
   const headerRowStyle: CSSProperties = {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: isMobile ? 'stretch' : 'center',
     justifyContent: 'space-between',
+    flexDirection: isMobile ? 'column' : 'row',
     flexWrap: 'wrap',
-    gap: '16px',
+    gap: isMobile ? '12px' : '16px',
   }
 
   const headerLeftStyle: CSSProperties = {
@@ -133,7 +136,7 @@ export default function DashboardPage() {
   }
 
   const pageTitleStyle: CSSProperties = {
-    fontSize: 'var(--font-2xl)',
+    fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)',
     fontWeight: 700,
     color: 'var(--color-neutral-900)',
     margin: 0,
@@ -149,10 +152,14 @@ export default function DashboardPage() {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
+    ...(isMobile && {
+      flexDirection: 'column' as const,
+      alignItems: 'stretch',
+    }),
   }
 
   const monthInputStyle: CSSProperties = {
-    padding: '8px 12px',
+    padding: isMobile ? '10px 12px' : '8px 12px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-700)',
     backgroundColor: 'var(--color-white)',
@@ -160,13 +167,15 @@ export default function DashboardPage() {
     borderRadius: 'var(--radius-md)',
     outline: 'none',
     cursor: 'pointer',
+    ...(isMobile && { width: '100%' }),
   }
 
   const newSaleButtonStyle: CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '8px',
-    padding: '10px 20px',
+    padding: isMobile ? '12px 20px' : '10px 20px',
     fontSize: 'var(--font-sm)',
     fontWeight: 600,
     color: 'var(--color-white)',
@@ -175,12 +184,7 @@ export default function DashboardPage() {
     borderRadius: 'var(--radius-md)',
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
-  }
-
-  const statsGridStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '16px',
+    ...(isMobile && { width: '100%' }),
   }
 
   const sectionTitleStyle: CSSProperties = {
@@ -243,14 +247,14 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         {loading ? (
-          <div style={statsGridStyle}>
+          <div className="stats-grid">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="skeleton skeleton-card" style={{ height: '140px', borderRadius: 'var(--radius-lg)' }} />
             ))}
           </div>
         ) : (
           <>
-            <div style={statsGridStyle}>
+            <div className="stats-grid">
               <StatsCard
                 title="Faturamento"
                 value={formatCurrency(revenue)}
@@ -298,7 +302,7 @@ export default function DashboardPage() {
                 }
               />
             </div>
-            <div style={statsGridStyle}>
+            <div className="stats-grid">
               <StatsCard
                 title="Ticket Medio"
                 value={formatCurrency(averageTicket)}

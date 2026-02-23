@@ -4,6 +4,7 @@ import { type CSSProperties, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, getCurrentMonth } from '@/lib/format'
 import type { Account } from '@spid/shared'
@@ -17,6 +18,7 @@ interface ClosureData {
 
 export default function FechamentoPage() {
   const router = useRouter()
+  const { isMobile } = useMediaQuery()
   const { data: accounts } = useApi<Account[]>('/accounts')
 
   const [month, setMonth] = useState(getCurrentMonth)
@@ -53,13 +55,15 @@ export default function FechamentoPage() {
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)', padding: '24px', boxShadow: 'var(--shadow-sm)',
+    border: '1px solid var(--color-border)', padding: isMobile ? '16px' : '24px', boxShadow: 'var(--shadow-sm)',
   }
 
   const inputStyle: CSSProperties = {
-    width: '100%', padding: '8px 12px', fontSize: 'var(--font-base)',
+    width: '100%', padding: isMobile ? '10px 12px' : '8px 12px',
+    fontSize: 'var(--font-base)',
     color: 'var(--color-neutral-800)', backgroundColor: 'var(--color-white)',
     border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', outline: 'none',
+    minHeight: isMobile ? '44px' : 'auto',
   }
 
   const labelStyle: CSSProperties = {
@@ -73,20 +77,20 @@ export default function FechamentoPage() {
   }
 
   const infoValueStyle: CSSProperties = {
-    fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0,
+    fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0,
   }
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '700px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', maxWidth: '700px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => router.back()} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
             borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Fechamento Mensal</h1>
+          <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Fechamento Mensal</h1>
         </div>
 
         {submitError && (
@@ -115,7 +119,7 @@ export default function FechamentoPage() {
           <>
             <div style={cardStyle}>
               <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 20px' }}>Resumo</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+              <div className="stats-grid">
                 <div><p style={infoLabelStyle}>Saldo Inicial</p><p style={infoValueStyle}>{formatCurrency(closureData.openingBalance)}</p></div>
                 <div><p style={infoLabelStyle}>Entradas</p><p style={{ ...infoValueStyle, color: 'var(--color-success-600)' }}>{formatCurrency(closureData.totalIn)}</p></div>
                 <div><p style={infoLabelStyle}>Saidas</p><p style={{ ...infoValueStyle, color: 'var(--color-danger-600)' }}>{formatCurrency(closureData.totalOut)}</p></div>
@@ -132,7 +136,7 @@ export default function FechamentoPage() {
                 <div>
                   <label style={labelStyle}>Divergencia</label>
                   <p style={{
-                    fontSize: '1.25rem', fontWeight: 700, margin: '8px 0 0',
+                    fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: 700, margin: '8px 0 0',
                     color: divergence == null ? 'var(--color-neutral-400)' : divergence === 0 ? 'var(--color-success-600)' : 'var(--color-danger-600)',
                   }}>
                     {divergence == null ? '-' : (divergence > 0 ? '+' : '') + formatCurrency(divergence)}
@@ -146,11 +150,12 @@ export default function FechamentoPage() {
             </div>
 
             <div className="form-actions">
-              <button onClick={() => router.back()} style={{ padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => router.back()} style={{ padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer', minHeight: '44px' }}>Cancelar</button>
               <button onClick={handleSave} disabled={saving || isNaN(counted)} style={{
                 padding: '10px 24px', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
                 backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)',
                 cursor: (saving || isNaN(counted)) ? 'not-allowed' : 'pointer', opacity: (saving || isNaN(counted)) ? 0.5 : 1,
+                minHeight: '44px',
               }}>
                 {saving ? 'Salvando...' : 'Salvar Fechamento'}
               </button>
