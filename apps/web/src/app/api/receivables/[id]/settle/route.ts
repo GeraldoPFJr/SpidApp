@@ -8,6 +8,7 @@ const settleSchema = z.object({
   amount: z.number().positive(),
   accountId: z.string().uuid(),
   method: z.string().min(1),
+  date: z.string().optional(),
   notes: z.string().max(500).optional(),
 })
 
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return errorResponse('Receivable is not open', 400)
     }
 
-    const now = new Date()
+    const now = result.data.date ? new Date(result.data.date) : new Date()
     const totalSettled = receivable.settlements.reduce(
       (sum, s) => sum + Number(s.amount),
       0,

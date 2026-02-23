@@ -40,6 +40,7 @@ export default function InadimplentesPage() {
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [payingId, setPayingId] = useState<string | null>(null)
+  const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [payAmount, setPayAmount] = useState('')
   const [payAccountId, setPayAccountId] = useState('')
   const [payMethod, setPayMethod] = useState('CASH')
@@ -53,9 +54,11 @@ export default function InadimplentesPage() {
 
   const startPay = useCallback((receivableId: string, amount: number) => {
     setPayingId(receivableId)
+    setPayDate(new Date().toISOString().slice(0, 10))
     setPayAmount(amount.toFixed(2).replace('.', ','))
     setPayAccountId('')
     setPayMethod('CASH')
+    setPayError(null)
   }, [])
 
   const handlePay = useCallback(async (receivableId: string) => {
@@ -68,7 +71,7 @@ export default function InadimplentesPage() {
     try {
       await apiClient(`/receivables/${receivableId}/settle`, {
         method: 'POST',
-        body: { amount: parsed, accountId: payAccountId, method: payMethod },
+        body: { amount: parsed, accountId: payAccountId, method: payMethod, date: payDate },
       })
       setPayingId(null)
       refetch()
@@ -77,7 +80,7 @@ export default function InadimplentesPage() {
     } finally {
       setSaving(false)
     }
-  }, [payAmount, payAccountId, payMethod, refetch])
+  }, [payAmount, payAccountId, payMethod, payDate, refetch])
 
   const totalOpen = useMemo(() => (data ?? []).reduce((sum, c) => sum + c.openAmount, 0), [data])
   const totalCustomers = data?.length ?? 0
@@ -372,22 +375,28 @@ export default function InadimplentesPage() {
                             )}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                               <div>
+                                <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Data</label>
+                                <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ ...payFormInputStyle, width: '100%' }} />
+                              </div>
+                              <div>
                                 <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
                                 <input type="text" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} style={{ ...payFormInputStyle, width: '100%', textAlign: 'right' }} />
                               </div>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                               <div>
                                 <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Metodo</label>
                                 <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', width: '100%' }}>
                                   {Object.entries(methodLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                                 </select>
                               </div>
-                            </div>
-                            <div>
-                              <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Conta</label>
-                              <select value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', width: '100%' }}>
-                                <option value="">Selecione...</option>
-                                {accounts?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                              </select>
+                              <div>
+                                <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Conta</label>
+                                <select value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)} style={{ ...payFormInputStyle, cursor: 'pointer', width: '100%' }}>
+                                  <option value="">Selecione...</option>
+                                  {accounts?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                </select>
+                              </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <button onClick={() => setPayingId(null)} style={{
@@ -503,6 +512,10 @@ export default function InadimplentesPage() {
                                   </div>
                                 )}
                                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                                  <div>
+                                    <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Data</label>
+                                    <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ ...payFormInputStyle, width: '140px' }} />
+                                  </div>
                                   <div>
                                     <label style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-600)', display: 'block', marginBottom: '4px' }}>Valor</label>
                                     <input type="text" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} style={{ ...payFormInputStyle, width: '120px', textAlign: 'right' }} />
