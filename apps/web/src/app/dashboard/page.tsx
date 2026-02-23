@@ -154,11 +154,7 @@ export default function DashboardPage() {
   const headerActionsStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    ...(isMobile && {
-      flexDirection: 'column' as const,
-      alignItems: 'stretch',
-    }),
+    gap: '8px',
   }
 
   const monthInputStyle: CSSProperties = {
@@ -170,7 +166,8 @@ export default function DashboardPage() {
     borderRadius: 'var(--radius-md)',
     outline: 'none',
     cursor: 'pointer',
-    ...(isMobile && { width: '100%' }),
+    flex: isMobile ? 1 : undefined,
+    minWidth: 0,
   }
 
   const newSaleButtonStyle: CSSProperties = {
@@ -178,7 +175,7 @@ export default function DashboardPage() {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    padding: isMobile ? '12px 20px' : '10px 20px',
+    padding: isMobile ? '10px 16px' : '10px 20px',
     fontSize: 'var(--font-sm)',
     fontWeight: 600,
     color: 'var(--color-white)',
@@ -187,7 +184,7 @@ export default function DashboardPage() {
     borderRadius: 'var(--radius-md)',
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
-    ...(isMobile && { width: '100%' }),
+    whiteSpace: 'nowrap',
   }
 
   const sectionTitleStyle: CSSProperties = {
@@ -215,7 +212,6 @@ export default function DashboardPage() {
         <div style={headerRowStyle}>
           <div style={headerLeftStyle}>
             <h1 style={pageTitleStyle}>Dashboard</h1>
-            <p style={pageSubtitleStyle}>{formatMonth(month)}</p>
           </div>
           <div style={headerActionsStyle}>
             <input
