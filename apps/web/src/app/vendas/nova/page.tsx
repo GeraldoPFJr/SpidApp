@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { PaymentSplit, type PaymentEntry } from '@/components/PaymentSplit'
@@ -27,17 +27,8 @@ interface SaleItem {
   subtotal: number
 }
 
-// ─── Component ──────────────────────────────────────
-
-export default function NovaVendaPage() {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
-
-  // Step 1: Customer + Items
-  const [customerId, setCustomerId] = useState<string | null>(null)
-  const [customerSearch, setCustomerSearch] = useState('')
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
-  const [items, setItems] = useState<SaleItem[]>([{
+function createEmptyItem(): SaleItem {
+  return {
     id: crypto.randomUUID(),
     productId: '',
     productName: '',
@@ -46,13 +37,30 @@ export default function NovaVendaPage() {
     qty: '1',
     unitPrice: '',
     subtotal: 0,
-  }])
+  }
+}
+
+// ─── Component ──────────────────────────────────────
+
+export default function NovaVendaPage() {
+  const router = useRouter()
+
+  // Customer
+  const [customerId, setCustomerId] = useState<string | null>(null)
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+  const [creatingCustomer, setCreatingCustomer] = useState(false)
+
+  // Items (always ends with a ghost row)
+  const [items, setItems] = useState<SaleItem[]>([createEmptyItem()])
+
+  // Adjustments
   const [discount, setDiscount] = useState('')
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('fixed')
   const [surcharge, setSurcharge] = useState('')
   const [freight, setFreight] = useState('')
 
-  // Step 2: Payment
+  // Payment
   const [payments, setPayments] = useState<PaymentEntry[]>([])
   const [installmentConfig, setInstallmentConfig] = useState({
     installments: 1,
@@ -60,13 +68,15 @@ export default function NovaVendaPage() {
     intervalMode: 'days' as 'days' | 'sameDay',
   })
 
-  // Step 3: confirmation
+  // Submit
   const [saving, setSaving] = useState(false)
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
-  // Inline customer creation
-  const [creatingCustomer, setCreatingCustomer] = useState(false)
+  // Refs for focus management
+  const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const ghostProductRef = useRef<HTMLSelectElement | null>(null)
 
   // Data
   const { data: customers, refetch: refetchCustomers } = useApi<(Customer & { hasOverdue?: boolean })[]>('/customers')
@@ -74,6 +84,8 @@ export default function NovaVendaPage() {
   const { data: accounts } = useApi<Account[]>('/accounts')
 
   // ─── Computed Values ──────────────────────────────
+
+  const validItems = useMemo(() => items.filter((i) => i.productId), [items])
 
   const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.subtotal, 0), [items])
 
@@ -84,21 +96,7 @@ export default function NovaVendaPage() {
 
   const surchargeValue = parseFloat(surcharge.replace(',', '.')) || 0
   const freightValue = parseFloat(freight.replace(',', '.')) || 0
-  const total = subtotal - discountValue + surchargeValue + freightValue
-
-  // Auto-fill default payment when entering step 2
-  useEffect(() => {
-    const firstAccount = accounts?.[0]
-    if (step === 2 && payments.length === 0 && firstAccount) {
-      setPayments([{
-        id: crypto.randomUUID(),
-        method: 'CASH',
-        amount: total.toFixed(2).replace('.', ','),
-        accountId: firstAccount.id,
-        installments: 1,
-      }])
-    }
-  }, [step, payments.length, accounts, total])
+  const total = Math.max(0, subtotal - discountValue + surchargeValue + freightValue)
 
   const selectedCustomer = customers?.find((c) => c.id === customerId)
 
@@ -115,6 +113,39 @@ export default function NovaVendaPage() {
     return (customers ?? []).some((c) => c.name.toLowerCase() === term)
   }, [customers, customerSearch])
 
+  // ─── Auto-fill Payment ────────────────────────────
+
+  useEffect(() => {
+    const firstAccount = accounts?.[0]
+    if (payments.length === 0 && firstAccount && total > 0) {
+      setPayments([{
+        id: crypto.randomUUID(),
+        method: 'CASH',
+        amount: total.toFixed(2).replace('.', ','),
+        accountId: firstAccount.id,
+        installments: 1,
+      }])
+    }
+  }, [accounts, payments.length, total])
+
+  // Auto-update single payment amount when total changes
+  useEffect(() => {
+    if (payments.length === 1 && total > 0) {
+      const first = payments[0]
+      if (!first) return
+      const newAmount = total.toFixed(2).replace('.', ',')
+      if (first.amount !== newAmount) {
+        setPayments((prev) => {
+          const p = prev[0]
+          if (!p) return prev
+          return [{ ...p, amount: newAmount }]
+        })
+      }
+    }
+  }, [total, payments.length, payments])
+
+  // ─── Customer Management ──────────────────────────
+
   const handleCreateInlineCustomer = useCallback(async () => {
     const name = customerSearch.trim()
     if (!name) return
@@ -129,7 +160,7 @@ export default function NovaVendaPage() {
       setCustomerSearch('')
       setShowCustomerDropdown(false)
     } catch {
-      // Silently fail — user can retry
+      // Silently fail
     } finally {
       setCreatingCustomer(false)
     }
@@ -137,32 +168,26 @@ export default function NovaVendaPage() {
 
   // ─── Item Management ──────────────────────────────
 
-  const addItem = useCallback(() => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        productId: '',
-        productName: '',
-        unitId: '',
-        unitLabel: '',
-        qty: '1',
-        unitPrice: '',
-        subtotal: 0,
-      },
-    ])
+  const ensureGhostRow = useCallback((currentItems: SaleItem[]) => {
+    const lastItem = currentItems[currentItems.length - 1]
+    if (!lastItem || lastItem.productId) {
+      return [...currentItems, createEmptyItem()]
+    }
+    return currentItems
   }, [])
 
   const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id))
-  }, [])
+    setItems((prev) => {
+      const filtered = prev.filter((i) => i.id !== id)
+      return ensureGhostRow(filtered.length === 0 ? [] : filtered)
+    })
+  }, [ensureGhostRow])
 
   const updateItem = useCallback((id: string, field: keyof SaleItem, value: string) => {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item
         const updated = { ...item, [field]: value }
-        // Recalculate subtotal
         const qty = parseFloat(updated.qty.replace(',', '.')) || 0
         const price = parseFloat(updated.unitPrice.replace(',', '.')) || 0
         updated.subtotal = qty * price
@@ -175,8 +200,8 @@ export default function NovaVendaPage() {
     const prod = products?.find((p) => p.id === productId)
     if (!prod) return
     const firstUnit = prod.units?.[0]
-    setItems((prev) =>
-      prev.map((item) => {
+    setItems((prev) => {
+      const updated = prev.map((item) => {
         if (item.id !== itemId) return item
         return {
           ...item,
@@ -187,9 +212,15 @@ export default function NovaVendaPage() {
           unitPrice: firstUnit?.price?.toString() ?? '',
           subtotal: (parseFloat(item.qty) || 0) * (firstUnit?.price ?? 0),
         }
-      }),
-    )
-  }, [products])
+      })
+      return ensureGhostRow(updated)
+    })
+    // Focus qty field after product selection
+    setTimeout(() => {
+      qtyRefs.current[itemId]?.focus()
+      qtyRefs.current[itemId]?.select()
+    }, 50)
+  }, [products, ensureGhostRow])
 
   // ─── Submit ───────────────────────────────────────
 
@@ -197,7 +228,7 @@ export default function NovaVendaPage() {
     setSaving(true)
     setSubmitError(null)
     try {
-      const saleItems = items.map((i) => {
+      const saleItems = items.filter((i) => i.productId).map((i) => {
         const qty = parseFloat(i.qty.replace(',', '.')) || 0
         const unitPrice = parseFloat(i.unitPrice.replace(',', '.')) || 0
         return {
@@ -208,6 +239,8 @@ export default function NovaVendaPage() {
           total: qty * unitPrice,
         }
       })
+      if (saleItems.length === 0) return
+
       const result = await apiClient<{ id: string }>('/sales', {
         method: 'POST',
         body: {
@@ -230,466 +263,626 @@ export default function NovaVendaPage() {
         },
       })
       setSavedSaleId(result.id)
-      setStep(4) // Success
+      setShowSuccess(true)
     } catch {
       setSubmitError('Erro ao salvar venda. Tente novamente.')
     } finally {
       setSaving(false)
     }
-  }, [customerId, items, discountValue, surchargeValue, freightValue, payments])
+  }, [customerId, items, discountValue, surchargeValue, freightValue, payments, subtotal, total])
+
+  const resetForm = useCallback(() => {
+    setItems([createEmptyItem()])
+    setPayments([])
+    setCustomerId(null)
+    setCustomerSearch('')
+    setDiscount('')
+    setSurcharge('')
+    setFreight('')
+    setSavedSaleId(null)
+    setShowSuccess(false)
+    setSubmitError(null)
+  }, [])
+
+  // ─── Focus: Enter on qty goes to next ghost row ───
+
+  const handleQtyKeyDown = useCallback((e: React.KeyboardEvent, _itemId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      // Find ghost row (last item without productId) and focus its product select
+      setTimeout(() => {
+        ghostProductRef.current?.focus()
+      }, 50)
+    }
+  }, [])
 
   // ─── Styles ───────────────────────────────────────
 
-  const cardStyle: CSSProperties = {
+  const sectionStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--color-border)',
-    padding: '24px',
+    padding: '20px 24px',
     boxShadow: 'var(--shadow-sm)',
+    animation: 'spid-fade-in 0.3s ease',
+  }
+
+  const sectionTitleStyle: CSSProperties = {
+    fontSize: 'var(--font-xs)',
+    fontWeight: 600,
+    color: 'var(--color-neutral-400)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    margin: '0 0 12px',
   }
 
   const inputStyle: CSSProperties = {
-    width: '100%', padding: '8px 12px', fontSize: 'var(--font-sm)',
-    color: 'var(--color-neutral-800)', backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
-    outline: 'none',
-  }
-
-  const labelStyle: CSSProperties = {
-    fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)',
-    marginBottom: '4px', display: 'block',
-    textTransform: 'uppercase', letterSpacing: '0.05em',
-  }
-
-  const stepperStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0',
-    marginBottom: '24px',
-  }
-
-  const stepItemStyle = (s: number): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 16px',
+    width: '100%',
+    padding: '8px 12px',
     fontSize: 'var(--font-sm)',
-    fontWeight: step >= s ? 600 : 400,
-    color: step >= s ? 'var(--color-primary-600)' : 'var(--color-neutral-400)',
-    position: 'relative',
-  })
+    color: 'var(--color-neutral-800)',
+    backgroundColor: 'var(--color-white)',
+    border: '1px solid var(--color-neutral-300)',
+    borderRadius: 'var(--radius-md)',
+    outline: 'none',
+    transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
+  }
 
-  const stepCircleStyle = (s: number): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    fontSize: 'var(--font-xs)',
-    fontWeight: 600,
-    backgroundColor: step > s ? 'var(--color-success-500)' : step === s ? 'var(--color-primary-600)' : 'var(--color-neutral-200)',
-    color: step >= s ? 'var(--color-white)' : 'var(--color-neutral-500)',
-    transition: 'all var(--transition-normal)',
-  })
-
-  const stepDividerStyle: CSSProperties = {
-    width: '40px',
-    height: '2px',
-    backgroundColor: 'var(--color-neutral-200)',
+  const miniInputStyle: CSSProperties = {
+    padding: '7px 10px',
+    fontSize: 'var(--font-sm)',
+    color: 'var(--color-neutral-800)',
+    backgroundColor: 'var(--color-white)',
+    border: '1px solid var(--color-neutral-300)',
+    borderRadius: 'var(--radius-sm)',
+    outline: 'none',
+    width: '100%',
+    transition: 'border-color var(--transition-fast)',
   }
 
   const itemRowStyle: CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: '1fr 120px 80px 120px 100px 40px',
+    gridTemplateColumns: '1fr 120px 72px 100px 100px 36px',
     gap: '8px',
-    padding: '8px 0',
+    padding: '6px 0',
     alignItems: 'center',
-    borderBottom: '1px solid var(--color-neutral-100)',
   }
 
-  const miniInputStyle: CSSProperties = {
-    padding: '6px 8px', fontSize: 'var(--font-sm)',
-    color: 'var(--color-neutral-800)', backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-sm)',
-    outline: 'none', width: '100%',
+  const headerLabelStyle: CSSProperties = {
+    fontSize: '11px',
+    fontWeight: 500,
+    color: 'var(--color-neutral-400)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
   }
 
   const summaryRowStyle: CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '4px 0',
+    padding: '3px 0',
     fontSize: 'var(--font-sm)',
-    color: 'var(--color-neutral-600)',
+    color: 'var(--color-neutral-500)',
   }
 
-  const totalRowStyle: CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '12px 0 0',
-    marginTop: '8px',
-    borderTop: '2px solid var(--color-neutral-800)',
-    fontSize: 'var(--font-lg)',
-    fontWeight: 700,
-    color: 'var(--color-neutral-900)',
+  // ─── Render: Success ──────────────────────────────
+
+  if (showSuccess) {
+    return (
+      <Layout>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: '20px',
+          animation: 'spid-scale-in 0.3s ease',
+        }}>
+          <div style={{
+            width: '72px',
+            height: '72px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--color-success-100)',
+            color: 'var(--color-success-600)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: '0 0 6px' }}>
+              Venda Confirmada!
+            </h2>
+            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: 0 }}>
+              Total: {formatCurrency(total)}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
+            {savedSaleId && (
+              <button
+                onClick={() => router.push(`/vendas/${savedSaleId}`)}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: 'var(--font-sm)',
+                  fontWeight: 500,
+                  color: 'var(--color-neutral-600)',
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-neutral-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                Ver Detalhes
+              </button>
+            )}
+            {savedSaleId && (
+              <button
+                onClick={() => router.push(`/vendas/${savedSaleId}?print=1`)}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: 'var(--font-sm)',
+                  fontWeight: 500,
+                  color: 'var(--color-neutral-600)',
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-neutral-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                Imprimir Cupom
+              </button>
+            )}
+            <button
+              onClick={resetForm}
+              style={{
+                padding: '10px 24px',
+                fontSize: 'var(--font-sm)',
+                fontWeight: 600,
+                color: 'var(--color-white)',
+                backgroundColor: 'var(--color-primary-600)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              Nova Venda
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
-  const navButtonStyle = (variant: 'primary' | 'secondary'): CSSProperties => ({
-    padding: '10px 24px',
-    fontSize: 'var(--font-sm)',
-    fontWeight: 600,
-    color: variant === 'primary' ? 'var(--color-white)' : 'var(--color-neutral-600)',
-    backgroundColor: variant === 'primary' ? 'var(--color-primary-600)' : 'var(--color-white)',
-    border: variant === 'primary' ? 'none' : '1px solid var(--color-neutral-300)',
-    borderRadius: 'var(--radius-md)',
-    cursor: 'pointer',
-    transition: 'all var(--transition-fast)',
-  })
+  // ─── Render: Main ─────────────────────────────────
 
-  // ─── Render ───────────────────────────────────────
+  const canSubmit = validItems.length > 0 && !saving
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '960px', paddingBottom: '100px' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => router.back()} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer',
-          }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '34px',
+              height: '34px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-white)',
+              border: '1px solid var(--color-neutral-200)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)',
+              color: 'var(--color-neutral-600)',
+            }}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Nova Venda</h1>
+          <h1 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+            Nova Venda
+          </h1>
         </div>
 
-        {/* Stepper */}
-        {step <= 3 && (
-          <div style={stepperStyle}>
-            <div style={stepItemStyle(1)}>
-              <span style={stepCircleStyle(1)}>{step > 1 ? '\u2713' : '1'}</span>
-              Cliente e Itens
-            </div>
-            <div style={stepDividerStyle} />
-            <div style={stepItemStyle(2)}>
-              <span style={stepCircleStyle(2)}>{step > 2 ? '\u2713' : '2'}</span>
-              Pagamento
-            </div>
-            <div style={stepDividerStyle} />
-            <div style={stepItemStyle(3)}>
-              <span style={stepCircleStyle(3)}>3</span>
-              Revisao
-            </div>
+        {/* Error Banner */}
+        {submitError && (
+          <div style={{
+            padding: '10px 16px',
+            backgroundColor: 'var(--color-danger-50)',
+            border: '1px solid var(--color-danger-200)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-danger-700)',
+            fontSize: 'var(--font-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'spid-fade-in 0.2s ease',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            {submitError}
+            <button
+              onClick={() => setSubmitError(null)}
+              style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger-500)', padding: '2px' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
         )}
 
-        {/* ─── STEP 1: Customer + Items ─── */}
-        {step === 1 && (
-          <>
-            {/* Customer Selection */}
-            <div style={cardStyle}>
-              <h2 style={{ fontSize: 'var(--font-base)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Cliente</h2>
-              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+        {/* ─── SECTION: Cliente ─── */}
+        <div style={sectionStyle}>
+          <p style={sectionTitleStyle}>Cliente</p>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+          <div
+            style={{ position: 'relative' }}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setShowCustomerDropdown(false)
+              }
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={customerId ? selectedCustomer?.name ?? '' : customerSearch}
+                onChange={(e) => {
+                  setCustomerSearch(e.target.value)
+                  setCustomerId(null)
+                  setShowCustomerDropdown(true)
+                }}
+                onFocus={() => setShowCustomerDropdown(true)}
+                placeholder="Buscar cliente ou deixar vazio para Consumidor Final..."
+                style={inputStyle}
+              />
+              {customerId && (
+                <button
+                  onClick={() => {
+                    setCustomerId(null)
+                    setCustomerSearch('')
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    color: 'var(--color-neutral-400)',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  tabIndex={-1}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {showCustomerDropdown && !customerId && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 20,
+                backgroundColor: 'var(--color-white)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-lg)',
+                maxHeight: '240px',
+                overflowY: 'auto',
+                marginTop: '4px',
+              }}>
+                {filteredCustomers.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setCustomerId(c.id)
+                      setCustomerSearch('')
+                      setShowCustomerDropdown(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '9px 14px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      fontSize: 'var(--font-sm)',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--color-neutral-50)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'background-color var(--transition-fast)',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-neutral-50)' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                  >
+                    <span>{c.name}</span>
+                    {c.hasOverdue && (
+                      <span style={{
+                        fontSize: '11px',
+                        color: 'var(--color-danger-600)',
+                        fontWeight: 500,
+                        backgroundColor: 'var(--color-danger-50)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                      }}>
+                        Inadimplente
+                      </span>
+                    )}
+                  </button>
+                ))}
+                {filteredCustomers.length === 0 && customerSearch.trim() && (
+                  <div style={{ padding: '12px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>
+                    Nenhum cliente encontrado
+                  </div>
+                )}
+                {customerSearch.trim() && !hasExactMatch && (
+                  <button
+                    onClick={handleCreateInlineCustomer}
+                    disabled={creatingCustomer}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 14px',
+                      border: 'none',
+                      borderTop: '1px solid var(--color-neutral-200)',
+                      backgroundColor: 'var(--color-primary-50)',
+                      cursor: creatingCustomer ? 'wait' : 'pointer',
+                      fontSize: 'var(--font-sm)',
+                      color: 'var(--color-primary-700)',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'background-color var(--transition-fast)',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-100)' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-50)' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    {creatingCustomer ? 'Criando...' : `Criar "${customerSearch.trim()}"`}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {selectedCustomer?.hasOverdue && (
+            <div style={{
+              marginTop: '10px',
+              padding: '8px 12px',
+              backgroundColor: 'var(--color-warning-50)',
+              border: '1px solid var(--color-warning-100)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--font-xs)',
+              color: 'var(--color-warning-700)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              Este cliente possui parcelas em atraso
+            </div>
+          )}
+        </div>
+
+        {/* ─── SECTION: Itens ─── */}
+        <div style={sectionStyle}>
+          <p style={sectionTitleStyle}>Itens</p>
+
+          {/* Column Headers */}
+          <div style={{ ...itemRowStyle, borderBottom: '1px solid var(--color-neutral-100)', paddingBottom: '8px', marginBottom: '4px' }}>
+            <span style={headerLabelStyle}>Produto</span>
+            <span style={headerLabelStyle}>Unidade</span>
+            <span style={{ ...headerLabelStyle, textAlign: 'center' }}>Qtd</span>
+            <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Preco</span>
+            <span style={{ ...headerLabelStyle, textAlign: 'right' }}>Subtotal</span>
+            <span />
+          </div>
+
+          {/* Item Rows */}
+          {items.map((item, index) => {
+            const isGhost = !item.productId
+            const isLastItem = index === items.length - 1
+            const prod = products?.find((p) => p.id === item.productId)
+
+            return (
               <div
-                style={{ position: 'relative', maxWidth: '400px' }}
-                onBlur={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                    setShowCustomerDropdown(false)
-                  }
+                key={item.id}
+                style={{
+                  ...itemRowStyle,
+                  opacity: isGhost ? 0.55 : 1,
+                  borderBottom: isLastItem ? 'none' : '1px solid var(--color-neutral-50)',
+                  transition: 'opacity var(--transition-fast)',
                 }}
               >
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    value={customerId ? selectedCustomer?.name ?? '' : customerSearch}
-                    onChange={(e) => {
-                      setCustomerSearch(e.target.value)
-                      setCustomerId(null)
-                      setShowCustomerDropdown(true)
+                <select
+                  ref={isGhost ? ghostProductRef : undefined}
+                  value={item.productId}
+                  onChange={(e) => selectProduct(item.id, e.target.value)}
+                  style={miniInputStyle}
+                >
+                  <option value="">Selecionar...</option>
+                  {products?.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={item.unitId}
+                  onChange={(e) => {
+                    const unit = prod?.units?.find((u) => u.id === e.target.value)
+                    updateItem(item.id, 'unitId', e.target.value)
+                    if (unit) {
+                      updateItem(item.id, 'unitLabel', unit.nameLabel)
+                      if (unit.price != null) updateItem(item.id, 'unitPrice', String(unit.price))
+                    }
+                  }}
+                  style={miniInputStyle}
+                  disabled={!item.productId}
+                >
+                  <option value="">Un.</option>
+                  {prod?.units?.map((u) => (
+                    <option key={u.id} value={u.id}>{u.nameLabel}</option>
+                  ))}
+                </select>
+                <input
+                  ref={(el) => { qtyRefs.current[item.id] = el }}
+                  type="text"
+                  value={item.qty}
+                  onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
+                  onKeyDown={(e) => handleQtyKeyDown(e, item.id)}
+                  style={{ ...miniInputStyle, textAlign: 'center' }}
+                  disabled={isGhost}
+                />
+                <input
+                  type="text"
+                  value={item.unitPrice}
+                  onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
+                  style={{ ...miniInputStyle, textAlign: 'right' }}
+                  disabled={isGhost}
+                  placeholder="0,00"
+                />
+                <span style={{
+                  textAlign: 'right',
+                  fontWeight: 600,
+                  fontSize: 'var(--font-sm)',
+                  color: item.subtotal > 0 ? 'var(--color-neutral-800)' : 'var(--color-neutral-300)',
+                  paddingRight: '4px',
+                }}>
+                  {item.subtotal > 0 ? formatCurrency(item.subtotal) : '-'}
+                </span>
+                {!isGhost ? (
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'transparent',
+                      border: '1px solid transparent',
+                      cursor: 'pointer',
+                      color: 'var(--color-neutral-300)',
+                      transition: 'all var(--transition-fast)',
                     }}
-                    onFocus={() => setShowCustomerDropdown(true)}
-                    placeholder="Buscar cliente ou deixar vazio para Consumidor Final..."
-                    style={inputStyle}
-                  />
-                  {customerId && (
-                    <button
-                      onClick={() => {
-                        setCustomerId(null)
-                        setCustomerSearch('')
-                      }}
-                      style={{
-                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                        border: 'none', background: 'none', cursor: 'pointer', padding: '2px',
-                        color: 'var(--color-neutral-400)', display: 'flex', alignItems: 'center',
-                      }}
-                      tabIndex={-1}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--color-danger-500)'
+                      ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-danger-200)'
+                      ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-danger-50)'
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--color-neutral-300)'
+                      ;(e.currentTarget as HTMLElement).style.borderColor = 'transparent'
+                      ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                ) : (
+                  <span />
+                )}
+              </div>
+            )
+          })}
+
+          {/* Adjustments + Totals */}
+          {validItems.length > 0 && (
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--color-neutral-100)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <select
+                      value={discountType}
+                      onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0, padding: '7px 4px' }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  )}
+                      <option value="fixed">R$</option>
+                      <option value="percent">%</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                      placeholder="0"
+                      style={{ ...miniInputStyle, textAlign: 'right' }}
+                    />
+                  </div>
                 </div>
-                {showCustomerDropdown && !customerId && (
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                    backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)',
-                    maxHeight: '280px', overflowY: 'auto', marginTop: '4px',
-                  }}>
-                    {filteredCustomers.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => {
-                          setCustomerId(c.id)
-                          setCustomerSearch('')
-                          setShowCustomerDropdown(false)
-                        }}
-                        style={{
-                          width: '100%', textAlign: 'left', padding: '8px 12px',
-                          border: 'none', backgroundColor: 'transparent',
-                          fontSize: 'var(--font-sm)', cursor: 'pointer',
-                          borderBottom: '1px solid var(--color-neutral-100)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-neutral-50)' }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                      >
-                        <span>{c.name}</span>
-                        {c.hasOverdue && (
-                          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-danger-600)', fontWeight: 500 }}>Inadimplente</span>
-                        )}
-                      </button>
-                    ))}
-                    {filteredCustomers.length === 0 && customerSearch.trim() && (
-                      <div style={{ padding: '12px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>
-                        Nenhum cliente encontrado
-                      </div>
-                    )}
-                    {customerSearch.trim() && !hasExactMatch && (
-                      <button
-                        onClick={handleCreateInlineCustomer}
-                        disabled={creatingCustomer}
-                        style={{
-                          width: '100%', textAlign: 'left', padding: '10px 12px',
-                          border: 'none', borderTop: '1px solid var(--color-neutral-200)',
-                          backgroundColor: 'var(--color-primary-50)', cursor: creatingCustomer ? 'wait' : 'pointer',
-                          fontSize: 'var(--font-sm)', color: 'var(--color-primary-700)', fontWeight: 500,
-                          display: 'flex', alignItems: 'center', gap: '6px',
-                        }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-100)' }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-50)' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        {creatingCustomer ? 'Criando...' : `Criar "${customerSearch.trim()}"`}
-                      </button>
-                    )}
+                <div>
+                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Acrescimo (R$)</label>
+                  <input type="text" value={surcharge} onChange={(e) => setSurcharge(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+                </div>
+                <div>
+                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete (R$)</label>
+                  <input type="text" value={freight} onChange={(e) => setFreight(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+                </div>
+              </div>
+
+              <div style={{ maxWidth: '260px', marginLeft: 'auto' }}>
+                <div style={summaryRowStyle}>
+                  <span>Subtotal</span>
+                  <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
+                </div>
+                {discountValue > 0 && (
+                  <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}>
+                    <span>Desconto</span>
+                    <span>- {formatCurrency(discountValue)}</span>
+                  </div>
+                )}
+                {surchargeValue > 0 && (
+                  <div style={summaryRowStyle}>
+                    <span>Acrescimo</span>
+                    <span>+ {formatCurrency(surchargeValue)}</span>
+                  </div>
+                )}
+                {freightValue > 0 && (
+                  <div style={summaryRowStyle}>
+                    <span>Frete</span>
+                    <span>+ {formatCurrency(freightValue)}</span>
                   </div>
                 )}
               </div>
-              {selectedCustomer?.hasOverdue && (
-                <div style={{
-                  marginTop: '12px', padding: '10px 14px', backgroundColor: 'var(--color-warning-50)',
-                  border: '1px solid var(--color-warning-100)', borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--font-sm)', color: 'var(--color-warning-700)',
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  Este cliente possui parcelas em atraso
-                </div>
-              )}
             </div>
+          )}
+        </div>
 
-            {/* Items */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h2 style={{ fontSize: 'var(--font-base)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: 0 }}>Itens</h2>
-                <button onClick={addItem} style={{
-                  padding: '6px 14px', fontSize: 'var(--font-xs)', fontWeight: 500,
-                  color: 'var(--color-primary-600)', backgroundColor: 'var(--color-primary-50)',
-                  border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                }}>
-                  + Adicionar Item
-                </button>
-              </div>
+        {/* ─── SECTION: Pagamento ─── */}
+        <div style={{ animation: 'spid-fade-in 0.3s ease 0.1s both' }}>
+          <PaymentSplit
+            payments={payments}
+            onChange={setPayments}
+            total={total}
+            accounts={accounts?.map((a) => ({ id: a.id, name: a.name })) ?? []}
+          />
 
-              {items.length === 0 ? (
-                <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>
-                  Adicione itens a venda
-                </div>
-              ) : (
-                <>
-                  <div style={{ ...itemRowStyle, borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Produto</span>
-                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unidade</span>
-                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Qtd</span>
-                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Preco Unit.</span>
-                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Subtotal</span>
-                    <span />
-                  </div>
-                  {items.map((item) => {
-                    const prod = products?.find((p) => p.id === item.productId)
-                    return (
-                      <div key={item.id} style={itemRowStyle}>
-                        <select
-                          value={item.productId}
-                          onChange={(e) => selectProduct(item.id, e.target.value)}
-                          style={miniInputStyle}
-                        >
-                          <option value="">Selecionar...</option>
-                          {products?.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={item.unitId}
-                          onChange={(e) => {
-                            const unit = prod?.units?.find((u) => u.id === e.target.value)
-                            updateItem(item.id, 'unitId', e.target.value)
-                            if (unit) {
-                              updateItem(item.id, 'unitLabel', unit.nameLabel)
-                              if (unit.price != null) updateItem(item.id, 'unitPrice', String(unit.price))
-                            }
-                          }}
-                          style={miniInputStyle}
-                          disabled={!item.productId}
-                        >
-                          <option value="">Unid.</option>
-                          {prod?.units?.map((u) => (
-                            <option key={u.id} value={u.id}>{u.nameLabel}</option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          value={item.qty}
-                          onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
-                          style={{ ...miniInputStyle, textAlign: 'center' }}
-                        />
-                        <input
-                          type="text"
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
-                          style={{ ...miniInputStyle, textAlign: 'right' }}
-                        />
-                        <span style={{ textAlign: 'right', fontWeight: 600, fontSize: 'var(--font-sm)' }}>
-                          {formatCurrency(item.subtotal)}
-                        </span>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
-                            backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)',
-                            cursor: 'pointer', color: 'var(--color-danger-500)',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-
-              {/* Totals */}
-              {items.length > 0 && (
-                <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                    <div>
-                      <label style={labelStyle}>Desconto</label>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <select
-                          value={discountType}
-                          onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
-                          style={{ ...miniInputStyle, width: '60px', flexShrink: 0 }}
-                        >
-                          <option value="fixed">R$</option>
-                          <option value="percent">%</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={discount}
-                          onChange={(e) => setDiscount(e.target.value)}
-                          placeholder="0"
-                          style={{ ...miniInputStyle, textAlign: 'right' }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Acrescimo (R$)</label>
-                      <input type="text" value={surcharge} onChange={(e) => setSurcharge(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Frete (R$)</label>
-                      <input type="text" value={freight} onChange={(e) => setFreight(e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
-                    <div style={summaryRowStyle}>
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    {discountValue > 0 && (
-                      <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}>
-                        <span>Desconto</span>
-                        <span>- {formatCurrency(discountValue)}</span>
-                      </div>
-                    )}
-                    {surchargeValue > 0 && (
-                      <div style={summaryRowStyle}>
-                        <span>Acrescimo</span>
-                        <span>+ {formatCurrency(surchargeValue)}</span>
-                      </div>
-                    )}
-                    {freightValue > 0 && (
-                      <div style={summaryRowStyle}>
-                        <span>Frete</span>
-                        <span>+ {formatCurrency(freightValue)}</span>
-                      </div>
-                    )}
-                    <div style={totalRowStyle}>
-                      <span>Total</span>
-                      <span>{formatCurrency(total)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button onClick={() => router.back()} style={navButtonStyle('secondary')}>Cancelar</button>
-              <button
-                onClick={() => setStep(2)}
-                disabled={!items.some((i) => i.productId)}
-                style={{ ...navButtonStyle('primary'), opacity: !items.some((i) => i.productId) ? 0.5 : 1, cursor: !items.some((i) => i.productId) ? 'not-allowed' : 'pointer' }}
-              >
-                Proximo: Pagamento
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ─── STEP 2: Payment ─── */}
-        {step === 2 && (
-          <>
-            <PaymentSplit
-              payments={payments}
-              onChange={setPayments}
-              total={total}
-              accounts={accounts?.map((a) => ({ id: a.id, name: a.name })) ?? []}
-            />
-
-            {/* Show InstallmentConfig if any payment needs installments */}
-            {payments.some((p) => ['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method) && p.installments > 1) && (
+          {payments.some((p) => ['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method) && p.installments > 1) && (
+            <div style={{ marginTop: '12px' }}>
               <InstallmentConfig
                 totalAmount={
                   payments
@@ -703,173 +896,91 @@ export default function NovaVendaPage() {
                 intervalMode={installmentConfig.intervalMode}
                 onIntervalModeChange={(v) => setInstallmentConfig((prev) => ({ ...prev, intervalMode: v }))}
               />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ─── STICKY BOTTOM BAR ─── */}
+      <div style={{
+        position: 'sticky',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderTop: '1px solid var(--color-neutral-200)',
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.06)',
+        padding: '14px 24px',
+        marginLeft: '-32px',
+        marginRight: '-32px',
+        marginBottom: '-32px',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          maxWidth: '960px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '24px' }}>
+            {validItems.length > 0 && (
+              <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-400)' }}>
+                {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
+              </span>
             )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(1)} style={navButtonStyle('secondary')}>Voltar</button>
-              <button
-                onClick={() => setStep(3)}
-                disabled={payments.length === 0}
-                style={{ ...navButtonStyle('primary'), opacity: payments.length === 0 ? 0.5 : 1, cursor: payments.length === 0 ? 'not-allowed' : 'pointer' }}
-              >
-                Proximo: Revisao
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ─── STEP 3: Review ─── */}
-        {step === 3 && (
-          <>
-            {submitError && (
-              <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-danger-50)', border: '1px solid var(--color-danger-100)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger-700)', fontSize: 'var(--font-sm)' }}>
-                {submitError}
-              </div>
-            )}
-            <div style={cardStyle}>
-              <h2 style={{ fontSize: 'var(--font-base)', fontWeight: 600, color: 'var(--color-neutral-800)', margin: '0 0 16px' }}>Resumo da Venda</h2>
-
-              {/* Customer */}
-              <div style={{ marginBottom: '20px' }}>
-                <p style={labelStyle}>Cliente</p>
-                <p style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--color-neutral-800)', margin: 0 }}>
-                  {selectedCustomer?.name ?? 'Consumidor Final'}
-                </p>
-              </div>
-
-              {/* Items */}
-              <p style={{ ...labelStyle, marginBottom: '8px' }}>Itens ({items.length})</p>
-              <div style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-neutral-200)', overflow: 'hidden', marginBottom: '16px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-sm)' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-neutral-200)', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)' }}>Produto</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-neutral-200)', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)' }}>Qtd</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-neutral-200)', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)' }}>Unit.</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', backgroundColor: 'var(--color-neutral-50)', borderBottom: '1px solid var(--color-neutral-200)', fontSize: 'var(--font-xs)', fontWeight: 500, color: 'var(--color-neutral-500)' }}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.productName} ({item.unitLabel})</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>{item.qty}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'right', borderBottom: '1px solid var(--color-neutral-100)' }}>{formatCurrency(parseFloat(item.unitPrice.replace(',', '.')) || 0)}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'right', borderBottom: '1px solid var(--color-neutral-100)', fontWeight: 600 }}>{formatCurrency(item.subtotal)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Totals */}
-              <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
-                <div style={summaryRowStyle}><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-                {discountValue > 0 && <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}><span>Desconto</span><span>- {formatCurrency(discountValue)}</span></div>}
-                {surchargeValue > 0 && <div style={summaryRowStyle}><span>Acrescimo</span><span>+ {formatCurrency(surchargeValue)}</span></div>}
-                {freightValue > 0 && <div style={summaryRowStyle}><span>Frete</span><span>+ {formatCurrency(freightValue)}</span></div>}
-                <div style={totalRowStyle}><span>Total</span><span>{formatCurrency(total)}</span></div>
-              </div>
-
-              {/* Payments */}
-              <div style={{ marginTop: '20px' }}>
-                <p style={{ ...labelStyle, marginBottom: '8px' }}>Pagamento</p>
-                {payments.map((p) => {
-                  const methodLabel = { CASH: 'Dinheiro', PIX: 'PIX', CREDIT_CARD: 'Cartao Credito', DEBIT_CARD: 'Cartao Debito', CREDIARIO: 'Crediario', BOLETO: 'Boleto', CHEQUE: 'Cheque' }[p.method] ?? p.method
-                  return (
-                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 'var(--font-sm)' }}>
-                      <span style={{ color: 'var(--color-neutral-600)' }}>
-                        {methodLabel}
-                        {p.installments > 1 && ` (${p.installments}x)`}
-                      </span>
-                      <span style={{ fontWeight: 500 }}>{formatCurrency(parseFloat(p.amount.replace(',', '.')) || 0)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(2)} style={navButtonStyle('secondary')}>Voltar</button>
-              <button
-                onClick={handleSubmit}
-                disabled={saving}
-                style={{
-                  ...navButtonStyle('primary'),
-                  backgroundColor: 'var(--color-success-600)',
-                  padding: '12px 32px',
-                  fontSize: 'var(--font-base)',
-                  opacity: saving ? 0.7 : 1,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {saving ? 'Confirmando...' : 'Confirmar Venda'}
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ─── STEP 4: Success ─── */}
-        {step === 4 && (
-          <div style={{ ...cardStyle, textAlign: 'center', padding: '48px 24px' }}>
-            <div style={{
-              width: '64px', height: '64px', borderRadius: '50%',
-              backgroundColor: 'var(--color-success-100)', color: 'var(--color-success-600)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 20px',
-            }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <h2 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: '0 0 8px' }}>Venda Confirmada!</h2>
-            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '0 0 32px' }}>
-              A venda foi salva com sucesso. Total: {formatCurrency(total)}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {savedSaleId && (
-                <button
-                  onClick={() => router.push(`/vendas/${savedSaleId}`)}
-                  style={navButtonStyle('secondary')}
-                >
-                  Ver Detalhes
-                </button>
-              )}
-              {savedSaleId && (
-                <button
-                  onClick={() => router.push(`/vendas/${savedSaleId}?print=1`)}
-                  style={navButtonStyle('secondary')}
-                >
-                  Imprimir Cupom
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setStep(1)
-                  setItems([{
-                    id: crypto.randomUUID(),
-                    productId: '',
-                    productName: '',
-                    unitId: '',
-                    unitLabel: '',
-                    qty: '1',
-                    unitPrice: '',
-                    subtotal: 0,
-                  }])
-                  setPayments([])
-                  setCustomerId(null)
-                  setDiscount('')
-                  setSurcharge('')
-                  setFreight('')
-                  setSavedSaleId(null)
-                }}
-                style={navButtonStyle('primary')}
-              >
-                Nova Venda
-              </button>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+              <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
+              <span style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
+                {formatCurrency(total)}
+              </span>
             </div>
           </div>
-        )}
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => router.back()}
+              style={{
+                padding: '10px 20px',
+                fontSize: 'var(--font-sm)',
+                fontWeight: 500,
+                color: 'var(--color-neutral-500)',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-neutral-300)',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              style={{
+                padding: '10px 32px',
+                fontSize: 'var(--font-base)',
+                fontWeight: 600,
+                color: 'var(--color-white)',
+                backgroundColor: canSubmit ? 'var(--color-success-600)' : 'var(--color-neutral-300)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+                transition: 'all var(--transition-fast)',
+                boxShadow: canSubmit ? '0 2px 8px rgba(22, 163, 74, 0.3)' : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-700)'
+              }}
+              onMouseLeave={(e) => {
+                if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-600)'
+              }}
+            >
+              {saving ? 'Confirmando...' : 'Confirmar Venda'}
+            </button>
+          </div>
+        </div>
       </div>
     </Layout>
   )
