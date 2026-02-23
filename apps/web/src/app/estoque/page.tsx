@@ -13,6 +13,8 @@ interface ApiStockRow {
   minStock: number | null
   belowMin: boolean
   units: Array<{ unitId: string; nameLabel: string; factorToBase: number; available: number }>
+  costValue: number
+  saleValue: number
 }
 
 interface StockRow {
@@ -21,7 +23,11 @@ interface StockRow {
   stockBase: number
   minStock: number | null
   units: Array<{ label: string; factor: number; equivalent: number }>
+  costValue: number
+  saleValue: number
 }
+
+const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function mapStockRow(row: ApiStockRow): StockRow {
   return {
@@ -34,6 +40,8 @@ function mapStockRow(row: ApiStockRow): StockRow {
       factor: u.factorToBase,
       equivalent: u.available,
     })),
+    costValue: row.costValue ?? 0,
+    saleValue: row.saleValue ?? 0,
   }
 }
 
@@ -71,6 +79,28 @@ export default function EstoquePage() {
         </div>
       ),
       sortable: false,
+    },
+    {
+      key: 'costValue',
+      header: 'Custo Estoque',
+      width: '140px',
+      align: 'right',
+      render: (row) => (
+        <span style={{ fontWeight: 500, color: 'var(--color-neutral-700)' }}>
+          {row.costValue > 0 ? fmtBRL(row.costValue) : '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'saleValue',
+      header: 'Valor Venda',
+      width: '140px',
+      align: 'right',
+      render: (row) => (
+        <span style={{ fontWeight: 500, color: 'var(--color-success-700)' }}>
+          {row.saleValue > 0 ? fmtBRL(row.saleValue) : '-'}
+        </span>
+      ),
     },
     {
       key: 'minStock',

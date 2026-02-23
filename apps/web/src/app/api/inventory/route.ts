@@ -20,11 +20,52 @@ export async function GET(request: NextRequest) {
     const auth = await requireAuth(request)
     if (isAuthError(auth)) return auth
 
+    // Get default price tier for sale value calculation
+    const defaultTier = await prisma.priceTier.findFirst({
+      where: { tenantId: auth.tenantId, isDefault: true },
+    })
+
     const products = await prisma.product.findMany({
       where: { deletedAt: null, tenantId: auth.tenantId },
       include: { units: { orderBy: { sortOrder: 'asc' } } },
       orderBy: { name: 'asc' },
     })
+
+    // Batch-load cost lots and base-unit prices for all products
+    const productIds = products.map((p) => p.id)
+
+    const costLots = await prisma.costLot.findMany({
+      where: { productId: { in: productIds }, tenantId: auth.tenantId, qtyRemainingBase: { gt: 0 } },
+      select: { productId: true, qtyRemainingBase: true, unitCostBase: true },
+    })
+
+    // Group cost lots by product
+    const costByProduct = new Map<string, number>()
+    for (const lot of costLots) {
+      const prev = costByProduct.get(lot.productId) ?? 0
+      costByProduct.set(lot.productId, prev + lot.qtyRemainingBase * Number(lot.unitCostBase))
+    }
+
+    // Get base-unit prices (factorToBase = 1) from default tier
+    let basePriceByProduct = new Map<string, number>()
+    if (defaultTier) {
+      const baseUnits = products.flatMap((p) =>
+        p.units.filter((u) => u.factorToBase === 1).map((u) => ({ productId: p.id, unitId: u.id })),
+      )
+      if (baseUnits.length > 0) {
+        const prices = await prisma.productPrice.findMany({
+          where: {
+            tenantId: auth.tenantId,
+            tierId: defaultTier.id,
+            unitId: { in: baseUnits.map((u) => u.unitId) },
+          },
+          select: { productId: true, unitId: true, price: true },
+        })
+        for (const p of prices) {
+          basePriceByProduct.set(p.productId, Number(p.price))
+        }
+      }
+    }
 
     const result = await Promise.all(
       products.map(async (product) => {
@@ -37,6 +78,10 @@ export async function GET(request: NextRequest) {
           available: Math.floor(qtyBase / unit.factorToBase),
         }))
 
+        const costValue = costByProduct.get(product.id) ?? 0
+        const basePrice = basePriceByProduct.get(product.id) ?? 0
+        const saleValue = qtyBase * basePrice
+
         return {
           productId: product.id,
           productName: product.name,
@@ -44,6 +89,8 @@ export async function GET(request: NextRequest) {
           minStock: product.minStock,
           belowMin: product.minStock !== null && qtyBase < product.minStock,
           units,
+          costValue,
+          saleValue,
         }
       }),
     )
