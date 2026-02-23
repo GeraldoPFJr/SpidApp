@@ -75,7 +75,6 @@ export default function ComprasPage() {
         }}>
           <div>
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Compras</h1>
-            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Entradas de estoque via compras</p>
           </div>
           <button onClick={() => router.push('/compras/nova')} style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',

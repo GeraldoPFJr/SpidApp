@@ -40,9 +40,6 @@ export default function CategoriasPage() {
           <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
             Categorias
           </h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>
-            Gerencie categorias de produtos e categorias financeiras
-          </p>
         </div>
 
         {/* Tabs */}
@@ -245,12 +242,9 @@ function ProductCategories() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Add new category */}
       <div style={mobileCardStyle}>
-        <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 4px' }}>
+        <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 16px' }}>
           Categorias de Produtos
         </h2>
-        <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '0 0 16px' }}>
-          Organize seus produtos em categorias e subcategorias
-        </p>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexDirection: isMobile ? 'column' : 'row' }}>
           <input
@@ -515,12 +509,9 @@ function FinanceCategories() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={mobileCardStyle}>
-        <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 4px' }}>
+        <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: '0 0 16px' }}>
           Categorias Financeiras
         </h2>
-        <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '0 0 16px' }}>
-          Categorize receitas e despesas para relatorios financeiros
-        </p>
 
         {/* Type toggle */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>

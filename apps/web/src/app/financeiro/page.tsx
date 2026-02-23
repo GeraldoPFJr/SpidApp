@@ -69,7 +69,6 @@ export default function FinanceiroPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Financeiro</h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Visao geral financeira</p>
         </div>
 
         {/* Account balances */}

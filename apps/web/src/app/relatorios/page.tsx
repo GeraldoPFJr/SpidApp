@@ -324,9 +324,6 @@ export default function RelatoriosPage() {
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
               Relatorios
             </h1>
-            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>
-              Analise de desempenho e resultados
-            </p>
           </div>
           {activeTab === 'cashflow' && (
             <input

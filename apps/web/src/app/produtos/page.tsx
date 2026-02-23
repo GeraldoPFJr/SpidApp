@@ -119,9 +119,6 @@ export default function ProdutosPage() {
           <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
             Produtos
           </h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>
-            Gerencie seu catalogo de produtos
-          </p>
         </div>
 
         <DataTable

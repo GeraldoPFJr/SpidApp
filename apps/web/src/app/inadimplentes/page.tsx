@@ -214,9 +214,6 @@ export default function InadimplentesPage() {
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
             Inadimplentes
           </h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>
-            Clientes com parcelas vencidas
-          </p>
         </div>
 
         {/* Summary cards */}

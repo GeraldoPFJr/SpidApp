@@ -91,7 +91,6 @@ export default function MovimentacoesPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
           <h1 style={{ fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Movimentacoes de Estoque</h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Entradas e saidas de estoque</p>
         </div>
         <DataTable
           columns={columns}

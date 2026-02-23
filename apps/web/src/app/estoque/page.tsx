@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
@@ -44,6 +44,97 @@ function mapStockRow(row: ApiStockRow): StockRow {
     costValue: row.costValue ?? 0,
     saleValue: row.saleValue ?? 0,
   }
+}
+
+function StockMobileCard({ row }: { row: StockRow }) {
+  const baseUnit = row.units.find((u) => u.factor === 1) ?? row.units[0]
+  const [selectedLabel, setSelectedLabel] = useState(baseUnit?.label ?? null)
+
+  const unitSalePrice = useMemo(() => {
+    if (row.stockBase <= 0 || row.saleValue <= 0) return null
+    const basePrice = row.saleValue / row.stockBase
+    const unit = row.units.find((u) => u.label === selectedLabel)
+    return unit ? basePrice * unit.factor : null
+  }, [selectedLabel, row.stockBase, row.saleValue, row.units])
+
+  return (
+    <>
+      {/* Line 1: Product name + status */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+      }}>
+        <span style={{
+          fontWeight: 600,
+          fontSize: 'var(--font-sm)',
+          color: 'var(--color-neutral-900)',
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {row.productName}
+        </span>
+        {row.minStock != null && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
+            fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
+            backgroundColor: row.stockBase < row.minStock ? 'var(--color-danger-100)' : 'var(--color-success-100)',
+            color: row.stockBase < row.minStock ? 'var(--color-danger-700)' : 'var(--color-success-700)',
+            flexShrink: 0,
+          }}>
+            {row.stockBase < row.minStock ? 'Abaixo min.' : 'OK'}
+          </span>
+        )}
+      </div>
+
+      {/* Line 2: Qty + Cost total + Sale per unit */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontSize: 'var(--font-xs)',
+      }}>
+        <span style={{ fontWeight: 600, color: 'var(--color-neutral-900)' }}>
+          {row.stockBase.toLocaleString('pt-BR')}
+        </span>
+        <span style={{ color: 'var(--color-neutral-500)' }}>
+          Custo {row.costValue > 0 ? fmtBRL(row.costValue) : '-'}
+        </span>
+        <span style={{ color: 'var(--color-success-700)', fontWeight: 500 }}>
+          Venda {unitSalePrice != null ? fmtBRL(unitSalePrice) : '-'}
+        </span>
+      </div>
+
+      {/* Line 3: Clickable unit badges */}
+      {row.units.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {row.units.map((u) => {
+            const isSelected = u.label === selectedLabel
+            return (
+              <span
+                key={u.label}
+                onClick={(e) => { e.stopPropagation(); setSelectedLabel(u.label) }}
+                style={{
+                  display: 'inline-flex', padding: '2px 8px', fontSize: 'var(--font-xs)',
+                  backgroundColor: isSelected ? 'var(--color-primary-100)' : 'var(--color-neutral-100)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: isSelected ? 'var(--color-primary-700)' : 'var(--color-neutral-600)',
+                  fontWeight: isSelected ? 500 : 400,
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                {u.equivalent} {u.label}
+              </span>
+            )
+          })}
+        </div>
+      )}
+    </>
+  )
 }
 
 export default function EstoquePage() {
@@ -133,74 +224,6 @@ export default function EstoquePage() {
     },
   ], [])
 
-  const renderMobileCard = (row: StockRow) => (
-    <>
-      {/* Line 1: Product name + status */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
-      }}>
-        <span style={{
-          fontWeight: 600,
-          fontSize: 'var(--font-sm)',
-          color: 'var(--color-neutral-900)',
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {row.productName}
-        </span>
-        {row.minStock != null && (
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-            fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
-            backgroundColor: row.stockBase < row.minStock ? 'var(--color-danger-100)' : 'var(--color-success-100)',
-            color: row.stockBase < row.minStock ? 'var(--color-danger-700)' : 'var(--color-success-700)',
-            flexShrink: 0,
-          }}>
-            {row.stockBase < row.minStock ? 'Abaixo min.' : 'OK'}
-          </span>
-        )}
-      </div>
-
-      {/* Line 2: Qty + Cost label + Sale label */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        fontSize: 'var(--font-xs)',
-      }}>
-        <span style={{ fontWeight: 600, color: 'var(--color-neutral-900)' }}>
-          {row.stockBase.toLocaleString('pt-BR')}
-        </span>
-        <span style={{ color: 'var(--color-neutral-500)' }}>
-          Custo {row.costValue > 0 ? fmtBRL(row.costValue) : '-'}
-        </span>
-        <span style={{ color: 'var(--color-success-700)', fontWeight: 500 }}>
-          Venda {row.saleValue > 0 ? fmtBRL(row.saleValue) : '-'}
-        </span>
-      </div>
-
-      {/* Line 3: Unit badges */}
-      {row.units.length > 0 && (
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {row.units.map((u) => (
-            <span key={u.label} style={{
-              display: 'inline-flex', padding: '2px 8px', fontSize: 'var(--font-xs)',
-              backgroundColor: 'var(--color-neutral-100)', borderRadius: 'var(--radius-sm)',
-              color: 'var(--color-neutral-600)',
-            }}>
-              {u.equivalent} {u.label}
-            </span>
-          ))}
-        </div>
-      )}
-    </>
-  )
-
   const navLinks = (
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
       <Link href="/estoque/movimentacoes" style={{
@@ -229,7 +252,6 @@ export default function EstoquePage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
           <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Estoque</h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Visao geral do estoque</p>
         </div>
         <DataTable
           columns={columns}
@@ -240,7 +262,7 @@ export default function EstoquePage() {
           searchKeys={['productName']}
           actions={navLinks}
           emptyTitle="Nenhum produto com estoque"
-          renderMobileCard={renderMobileCard}
+          renderMobileCard={(row) => <StockMobileCard row={row} />}
         />
       </div>
     </Layout>

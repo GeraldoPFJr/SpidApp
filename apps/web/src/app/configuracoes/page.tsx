@@ -402,7 +402,6 @@ export default function ConfiguracoesPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px' }}>
           <div>
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Configuracoes</h1>
-            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Preferencias do sistema</p>
           </div>
           <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row' }}>
             {!isMobile && (
@@ -434,7 +433,6 @@ export default function ConfiguracoesPage() {
         }}>
           <div>
             <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>Configuracoes</h1>
-            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Preferencias do sistema</p>
           </div>
           <button onClick={handleSave} disabled={saving} style={saveBtnStyle}>
             {saving ? (

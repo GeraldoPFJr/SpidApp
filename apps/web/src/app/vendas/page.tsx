@@ -178,7 +178,6 @@ export default function VendasPage() {
             color: 'var(--color-neutral-900)',
             margin: 0,
           }}>Vendas</h1>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', margin: '4px 0 0' }}>Historico de vendas</p>
         </div>
         <DataTable
           columns={columns}
