@@ -34,6 +34,8 @@ interface DataTableProps<T> {
   emptyTitle?: string
   emptyDescription?: string
   actions?: ReactNode
+  /** Custom mobile card renderer — replaces default card layout */
+  renderMobileCard?: (row: T, index: number) => ReactNode
 }
 
 type SortDirection = 'asc' | 'desc'
@@ -54,6 +56,7 @@ export function DataTable<T>({
   emptyTitle = 'Nenhum registro encontrado',
   emptyDescription,
   actions,
+  renderMobileCard,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<string | null>(null)
@@ -365,81 +368,85 @@ export function DataTable<T>({
                     gap: '6px',
                   }}
                 >
-                  {/* Title row */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}>
-                    <div style={{
-                      fontWeight: 600,
-                      fontSize: 'var(--font-sm)',
-                      color: 'var(--color-neutral-900)',
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {titleCol?.render
-                        ? titleCol.render(row, titleCol.key, globalIndex)
-                        : String((row as Record<string, unknown>)[titleCol?.key ?? ''] ?? '')}
-                    </div>
-                    {/* Show last column value (often status or total) as badge */}
-                    {columns.length > 2 && (() => {
-                      const lastCol = columns[columns.length - 1]!
-                      return (
-                        <div style={{ flexShrink: 0 }}>
-                          {lastCol.render
-                            ? lastCol.render(row, lastCol.key, globalIndex)
-                            : String((row as Record<string, unknown>)[lastCol.key] ?? '')}
+                  {renderMobileCard ? renderMobileCard(row, globalIndex) : (
+                    <>
+                      {/* Title row */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                      }}>
+                        <div style={{
+                          fontWeight: 600,
+                          fontSize: 'var(--font-sm)',
+                          color: 'var(--color-neutral-900)',
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {titleCol?.render
+                            ? titleCol.render(row, titleCol.key, globalIndex)
+                            : String((row as Record<string, unknown>)[titleCol?.key ?? ''] ?? '')}
                         </div>
-                      )
-                    })()}
-                  </div>
+                        {/* Show last column value (often status or total) as badge */}
+                        {columns.length > 2 && (() => {
+                          const lastCol = columns[columns.length - 1]!
+                          return (
+                            <div style={{ flexShrink: 0 }}>
+                              {lastCol.render
+                                ? lastCol.render(row, lastCol.key, globalIndex)
+                                : String((row as Record<string, unknown>)[lastCol.key] ?? '')}
+                            </div>
+                          )
+                        })()}
+                      </div>
 
-                  {/* Subtitle + extra fields */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                  }}>
-                    {subtitleCol && (
-                      <span style={{
-                        fontSize: 'var(--font-xs)',
-                        color: 'var(--color-neutral-500)',
+                      {/* Subtitle + extra fields */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        flexWrap: 'wrap',
                       }}>
-                        {subtitleCol.render
-                          ? subtitleCol.render(row, subtitleCol.key, globalIndex)
-                          : String((row as Record<string, unknown>)[subtitleCol.key] ?? '')}
-                      </span>
-                    )}
-                    {extraCols.map((col) => (
-                      <span key={col.key} style={{
-                        fontSize: 'var(--font-xs)',
-                        color: 'var(--color-neutral-400)',
-                      }}>
-                        {col.render
-                          ? col.render(row, col.key, globalIndex)
-                          : String((row as Record<string, unknown>)[col.key] ?? '')}
-                      </span>
-                    ))}
-                  </div>
+                        {subtitleCol && (
+                          <span style={{
+                            fontSize: 'var(--font-xs)',
+                            color: 'var(--color-neutral-500)',
+                          }}>
+                            {subtitleCol.render
+                              ? subtitleCol.render(row, subtitleCol.key, globalIndex)
+                              : String((row as Record<string, unknown>)[subtitleCol.key] ?? '')}
+                          </span>
+                        )}
+                        {extraCols.map((col) => (
+                          <span key={col.key} style={{
+                            fontSize: 'var(--font-xs)',
+                            color: 'var(--color-neutral-400)',
+                          }}>
+                            {col.render
+                              ? col.render(row, col.key, globalIndex)
+                              : String((row as Record<string, unknown>)[col.key] ?? '')}
+                          </span>
+                        ))}
+                      </div>
 
-                  {/* Chevron indicator for clickable rows */}
-                  {onRowClick && (
-                    <div style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--color-neutral-300)',
-                      display: 'none', // hidden but available
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                    </div>
+                      {/* Chevron indicator for clickable rows */}
+                      {onRowClick && (
+                        <div style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: 'var(--color-neutral-300)',
+                          display: 'none', // hidden but available
+                        }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )

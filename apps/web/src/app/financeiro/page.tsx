@@ -93,28 +93,31 @@ export default function FinanceiroPage() {
         {/* Action buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, auto)',
+          gridTemplateColumns: '1fr 1fr',
           gap: '8px',
         }}>
-          {[
-            { label: 'Nova Despesa', href: '/financeiro/lancamento?tipo=EXPENSE' },
-            { label: 'Nova Receita', href: '/financeiro/lancamento?tipo=INCOME' },
-            { label: 'Aporte', href: '/financeiro/lancamento?tipo=APORTE' },
-            { label: 'Retirada', href: '/financeiro/lancamento?tipo=RETIRADA' },
-            { label: 'Fechamento', href: '/financeiro/fechamento' },
-          ].map((btn) => (
-            <Link key={btn.label} href={btn.href} style={{
-              padding: isMobile ? '12px 16px' : '8px 16px',
-              fontSize: 'var(--font-sm)', fontWeight: 500,
-              color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
-              border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
-              textDecoration: 'none', transition: 'all var(--transition-fast)',
-              textAlign: 'center', minHeight: '44px',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {btn.label}
-            </Link>
-          ))}
+          <Link href="/financeiro/lancamento" style={{
+            padding: isMobile ? '12px 16px' : '8px 16px',
+            fontSize: 'var(--font-sm)', fontWeight: 600,
+            color: 'var(--color-white)', backgroundColor: 'var(--color-primary-600)',
+            border: 'none', borderRadius: 'var(--radius-md)',
+            textDecoration: 'none', transition: 'all var(--transition-fast)',
+            textAlign: 'center', minHeight: '44px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            Lancamento
+          </Link>
+          <Link href="/financeiro/fechamento" style={{
+            padding: isMobile ? '12px 16px' : '8px 16px',
+            fontSize: 'var(--font-sm)', fontWeight: 500,
+            color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)',
+            border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)',
+            textDecoration: 'none', transition: 'all var(--transition-fast)',
+            textAlign: 'center', minHeight: '44px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            Fechamento
+          </Link>
         </div>
 
         {/* Entries table */}

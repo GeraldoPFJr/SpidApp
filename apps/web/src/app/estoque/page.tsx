@@ -133,6 +133,74 @@ export default function EstoquePage() {
     },
   ], [])
 
+  const renderMobileCard = (row: StockRow) => (
+    <>
+      {/* Line 1: Product name + status */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+      }}>
+        <span style={{
+          fontWeight: 600,
+          fontSize: 'var(--font-sm)',
+          color: 'var(--color-neutral-900)',
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {row.productName}
+        </span>
+        {row.minStock != null && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
+            fontSize: 'var(--font-xs)', fontWeight: 500, borderRadius: 'var(--radius-full)',
+            backgroundColor: row.stockBase < row.minStock ? 'var(--color-danger-100)' : 'var(--color-success-100)',
+            color: row.stockBase < row.minStock ? 'var(--color-danger-700)' : 'var(--color-success-700)',
+            flexShrink: 0,
+          }}>
+            {row.stockBase < row.minStock ? 'Abaixo min.' : 'OK'}
+          </span>
+        )}
+      </div>
+
+      {/* Line 2: Qty + Cost label + Sale label */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontSize: 'var(--font-xs)',
+      }}>
+        <span style={{ fontWeight: 600, color: 'var(--color-neutral-900)' }}>
+          {row.stockBase.toLocaleString('pt-BR')}
+        </span>
+        <span style={{ color: 'var(--color-neutral-500)' }}>
+          Custo {row.costValue > 0 ? fmtBRL(row.costValue) : '-'}
+        </span>
+        <span style={{ color: 'var(--color-success-700)', fontWeight: 500 }}>
+          Venda {row.saleValue > 0 ? fmtBRL(row.saleValue) : '-'}
+        </span>
+      </div>
+
+      {/* Line 3: Unit badges */}
+      {row.units.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {row.units.map((u) => (
+            <span key={u.label} style={{
+              display: 'inline-flex', padding: '2px 8px', fontSize: 'var(--font-xs)',
+              backgroundColor: 'var(--color-neutral-100)', borderRadius: 'var(--radius-sm)',
+              color: 'var(--color-neutral-600)',
+            }}>
+              {u.equivalent} {u.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </>
+  )
+
   const navLinks = (
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
       <Link href="/estoque/movimentacoes" style={{
@@ -172,6 +240,7 @@ export default function EstoquePage() {
           searchKeys={['productName']}
           actions={navLinks}
           emptyTitle="Nenhum produto com estoque"
+          renderMobileCard={renderMobileCard}
         />
       </div>
     </Layout>
