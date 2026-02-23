@@ -9,7 +9,7 @@ import { OverdueAlert } from '@/components/OverdueAlert'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import { formatCurrency, formatDate, formatMonth, getCurrentMonth } from '@/lib/format'
+import { formatCurrency, formatDate, getCurrentMonth } from '@/lib/format'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -142,12 +142,6 @@ export default function DashboardPage() {
     fontSize: isMobile ? 'var(--font-xl)' : 'var(--font-2xl)',
     fontWeight: 700,
     color: 'var(--color-neutral-900)',
-    margin: 0,
-  }
-
-  const pageSubtitleStyle: CSSProperties = {
-    fontSize: 'var(--font-sm)',
-    color: 'var(--color-neutral-500)',
     margin: 0,
   }
 
