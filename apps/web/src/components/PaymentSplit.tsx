@@ -10,6 +10,7 @@ export interface PaymentEntry {
   amount: string
   accountId: string
   installments: number
+  dueDays: number
   cardType?: string
 }
 
@@ -42,6 +43,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
         amount: '',
         accountId: accounts[0]?.id ?? '',
         installments: 1,
+        dueDays: 30,
       },
     ])
   }, [payments, onChange, accounts])
@@ -92,7 +94,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
   // Desktop: horizontal grid row
   const rowStyleDesktop: CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: '1fr 140px 1fr 100px 40px',
+    gridTemplateColumns: '1fr 120px 1fr 80px 80px 40px',
     gap: '12px',
     padding: '12px 20px',
     alignItems: 'center',
@@ -219,6 +221,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
               <span style={headerLabelStyle}>Valor (R$)</span>
               <span style={headerLabelStyle}>Conta</span>
               <span style={headerLabelStyle}>Parcelas</span>
+              <span style={headerLabelStyle}>Prazo</span>
               <span />
             </div>
           )}
@@ -281,18 +284,34 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                     </select>
                   </div>
 
-                  {/* Installments (only visible when applicable) */}
+                  {/* Installments + Due Days (only visible when applicable) */}
                   {needsInstallments && (
-                    <div>
-                      <div style={fieldLabelStyle}>Parcelas</div>
-                      <input
-                        type="number"
-                        value={p.installments}
-                        onChange={(e) => updatePayment(p.id, 'installments', parseInt(e.target.value, 10) || 1)}
-                        min="1"
-                        max="48"
-                        style={{ ...inputStyle, textAlign: 'center' }}
-                      />
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={fieldLabelStyle}>Parcelas</div>
+                        <input
+                          type="number"
+                          value={p.installments}
+                          onChange={(e) => updatePayment(p.id, 'installments', parseInt(e.target.value, 10) || 1)}
+                          min="1"
+                          max="48"
+                          style={{ ...inputStyle, textAlign: 'center' }}
+                        />
+                      </div>
+                      {['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method) && (
+                        <div style={{ flex: 1 }}>
+                          <div style={fieldLabelStyle}>Prazo (dias)</div>
+                          <input
+                            type="number"
+                            value={p.dueDays}
+                            onChange={(e) => updatePayment(p.id, 'dueDays', parseInt(e.target.value, 10) || 1)}
+                            min="1"
+                            max="365"
+                            placeholder="30"
+                            style={{ ...inputStyle, textAlign: 'center' }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -300,6 +319,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
             }
 
             /* Desktop row */
+            const needsDueDays = ['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method)
             return (
               <div key={p.id} style={rowStyleDesktop}>
                 <select value={p.method} onChange={(e) => updatePayment(p.id, 'method', e.target.value)} style={selectStyle}>
@@ -327,6 +347,16 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                   max="48"
                   disabled={!needsInstallments}
                   style={{ ...inputStyle, textAlign: 'center', opacity: needsInstallments ? 1 : 0.5 }}
+                />
+                <input
+                  type="number"
+                  value={needsDueDays ? p.dueDays : ''}
+                  onChange={(e) => updatePayment(p.id, 'dueDays', parseInt(e.target.value, 10) || 1)}
+                  min="1"
+                  max="365"
+                  placeholder="dias"
+                  disabled={!needsDueDays}
+                  style={{ ...inputStyle, textAlign: 'center', opacity: needsDueDays ? 1 : 0.5 }}
                 />
                 <button
                   onClick={() => removePayment(p.id)}

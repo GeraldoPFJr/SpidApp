@@ -126,6 +126,7 @@ export default function NovaVendaPage() {
         amount: total.toFixed(2).replace('.', ','),
         accountId: firstAccount.id,
         installments: 1,
+        dueDays: 30,
       }])
     }
   }, [accounts, payments.length, total])
@@ -261,6 +262,7 @@ export default function NovaVendaPage() {
             amount: parseFloat(p.amount.replace(',', '.')) || 0,
             accountId: p.accountId,
             installments: p.installments || null,
+            installmentIntervalDays: ['CREDIARIO', 'BOLETO', 'CHEQUE'].includes(p.method) ? (p.dueDays || 30) : null,
           })),
         },
       })
