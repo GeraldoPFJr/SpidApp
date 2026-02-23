@@ -136,7 +136,6 @@ export const createSaleSchema = z.object({
   status: z.enum(['DRAFT', 'CONFIRMED']).default('DRAFT'),
   subtotal: z.number().nonnegative(),
   discount: z.number().nonnegative().default(0),
-  surcharge: z.number().nonnegative().default(0),
   freight: z.number().nonnegative().default(0),
   total: z.number().nonnegative(),
   notes: z.string().max(1000).nullish(),

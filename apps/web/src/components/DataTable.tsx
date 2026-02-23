@@ -309,10 +309,11 @@ export function DataTable<T>({
     // Determine which columns show in cards
     const titleCol = columns.find((c) => c.mobileTitle) ?? columns[0]
     const subtitleCol = columns.find((c) => c.mobileSubtitle) ?? columns[1]
+    const lastCol = columns.length > 2 ? columns[columns.length - 1] : null
     const visibleCols = columns.filter((c) => c.mobileVisible)
     const extraCols = visibleCols.length > 0
-      ? visibleCols.filter((c) => c !== titleCol && c !== subtitleCol)
-      : columns.slice(2, 5).filter((c) => c !== titleCol && c !== subtitleCol)
+      ? visibleCols.filter((c) => c !== titleCol && c !== subtitleCol && c !== lastCol)
+      : columns.slice(2, 5).filter((c) => c !== titleCol && c !== subtitleCol && c !== lastCol)
 
     return (
       <div style={containerStyle}>

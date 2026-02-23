@@ -32,6 +32,7 @@ interface DashboardData {
     customerName: string | null
     total: number
     status: string
+    paymentStatus: string
     couponNumber: number | null
   }>
   overdueCount: number
@@ -82,16 +83,18 @@ export default function DashboardPage() {
       ),
     },
     {
-      key: 'status',
+      key: 'paymentStatus',
       header: 'Status',
       width: '120px',
       render: (row) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          CONFIRMED: { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+          PAID: { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+          OPEN: { label: 'Em Aberto', bg: 'var(--color-primary-100)', color: 'var(--color-primary-700)' },
+          OVERDUE: { label: 'Vencida', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
           DRAFT: { label: 'Rascunho', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
-          CANCELLED: { label: 'Cancelada', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
+          CANCELLED: { label: 'Cancelada', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-500)' },
         }
-        const s = statusMap[row.status] ?? { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
+        const s = statusMap[row.paymentStatus] ?? { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
         return (
           <span
             style={{

@@ -11,7 +11,6 @@ interface SaleDetailData {
   status: SaleStatus
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   couponNumber: number | null
@@ -163,12 +162,6 @@ export function SaleDetailPage() {
           <div style={rowStyle}>
             <span style={{ color: 'var(--text-secondary)' }}>Desconto</span>
             <span style={{ color: 'var(--danger-600)' }}>-{formatBRL(sale.discount)}</span>
-          </div>
-        )}
-        {sale.surcharge > 0 && (
-          <div style={rowStyle}>
-            <span style={{ color: 'var(--text-secondary)' }}>Acrescimo</span>
-            <span>+{formatBRL(sale.surcharge)}</span>
           </div>
         )}
         {sale.freight > 0 && (

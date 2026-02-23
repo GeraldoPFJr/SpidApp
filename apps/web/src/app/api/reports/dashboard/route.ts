@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Recent sales (last 10)
     const recentSales = await prisma.sale.findMany({
       where: { date: { gte: start, lte: end }, tenantId },
-      include: { customer: { select: { name: true } } },
+      include: { customer: { select: { name: true } }, receivables: true },
       orderBy: { date: 'desc' },
       take: 10,
     })
@@ -101,14 +101,28 @@ export async function GET(request: NextRequest) {
       toReceive: Math.round(aReceber * 100) / 100,
       overdueCount,
       overdueTotal: Math.round(overdueTotal * 100) / 100,
-      recentSales: recentSales.map((s) => ({
-        id: s.id,
-        date: s.date.toISOString(),
-        customerName: s.customer?.name ?? null,
-        total: Number(s.total),
-        status: s.status,
-        couponNumber: s.couponNumber,
-      })),
+      recentSales: recentSales.map((s) => {
+        let paymentStatus: string = s.status
+        if (s.status === 'CONFIRMED') {
+          const openRec = s.receivables.filter((r) => r.status === 'OPEN')
+          if (openRec.length === 0) {
+            paymentStatus = 'PAID'
+          } else if (openRec.some((r) => r.dueDate < now)) {
+            paymentStatus = 'OVERDUE'
+          } else {
+            paymentStatus = 'OPEN'
+          }
+        }
+        return {
+          id: s.id,
+          date: s.date.toISOString(),
+          customerName: s.customer?.name ?? null,
+          total: Number(s.total),
+          status: s.status,
+          paymentStatus,
+          couponNumber: s.couponNumber,
+        }
+      }),
     })
   } catch (error) {
     console.error('Error in GET /api/reports/dashboard:', error)

@@ -35,7 +35,6 @@ interface CouponData {
   items: CouponItem[]
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   amountReceived: number

@@ -51,7 +51,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       notes?: string | null
       subtotal?: number
       discount?: number
-      surcharge?: number
       freight?: number
       total?: number
       items?: Array<{ productId: string; unitId: string; qty: number; unitPrice: number; total: number }>

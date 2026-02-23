@@ -15,6 +15,7 @@ interface SaleRaw {
   customerName?: string | null
   total: number
   status: string
+  paymentStatus?: string
   couponNumber: number | null
 }
 
@@ -24,6 +25,7 @@ interface SaleRow {
   customerName: string | null
   total: number
   status: string
+  paymentStatus: string
   couponNumber: number | null
 }
 
@@ -34,6 +36,7 @@ function mapSaleRow(raw: SaleRaw): SaleRow {
     customerName: raw.customerName ?? raw.customer?.name ?? null,
     total: Number(raw.total),
     status: raw.status,
+    paymentStatus: raw.paymentStatus ?? raw.status,
     couponNumber: raw.couponNumber,
   }
 }
@@ -48,7 +51,7 @@ export default function VendasPage() {
   const filtered = useMemo(() => {
     if (!data) return []
     if (!statusFilter) return data
-    return data.filter((s) => s.status === statusFilter)
+    return data.filter((s) => s.paymentStatus === statusFilter)
   }, [data, statusFilter])
 
   const columns: DataTableColumn<SaleRow>[] = useMemo(() => [
@@ -81,16 +84,18 @@ export default function VendasPage() {
       render: (row) => <span style={{ fontWeight: 600 }}>{formatCurrency(row.total)}</span>,
     },
     {
-      key: 'status',
+      key: 'paymentStatus',
       header: 'Status',
       width: '130px',
       render: (row) => {
         const map: Record<string, { label: string; bg: string; color: string }> = {
-          CONFIRMED: { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+          PAID: { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+          OPEN: { label: 'Em Aberto', bg: 'var(--color-primary-100)', color: 'var(--color-primary-700)' },
+          OVERDUE: { label: 'Vencida', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
           DRAFT: { label: 'Rascunho', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
-          CANCELLED: { label: 'Cancelada', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
+          CANCELLED: { label: 'Cancelada', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-500)' },
         }
-        const s = map[row.status] ?? { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
+        const s = map[row.paymentStatus] ?? { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
         return (
           <span style={{
             display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
@@ -131,7 +136,9 @@ export default function VendasPage() {
         }}
       >
         <option value="">Todos os status</option>
-        <option value="CONFIRMED">Confirmadas</option>
+        <option value="PAID">Pagas</option>
+        <option value="OPEN">Em Aberto</option>
+        <option value="OVERDUE">Vencidas</option>
         <option value="DRAFT">Rascunhos</option>
         <option value="CANCELLED">Canceladas</option>
       </select>

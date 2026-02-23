@@ -31,7 +31,6 @@ interface CouponData {
   items: CouponItem[]
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   payments: CouponPayment[]
@@ -193,12 +192,6 @@ export function CouponPreview({ data, onPrint }: CouponPreviewProps) {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Desconto:</span>
             <span>- {formatCurrency(data.discount)}</span>
-          </div>
-        )}
-        {data.surcharge > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Acrescimo:</span>
-            <span>+ {formatCurrency(data.surcharge)}</span>
           </div>
         )}
         {data.freight > 0 && (

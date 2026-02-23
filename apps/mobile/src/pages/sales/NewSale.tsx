@@ -81,7 +81,6 @@ export function NewSalePage() {
   const [items, setItems] = useState<SaleItem[]>([])
   const [discount, setDiscount] = useState(0)
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('fixed')
-  const [surcharge, setSurcharge] = useState(0)
   const [freight, setFreight] = useState(0)
   const [payments, setPayments] = useState<PaymentEntry[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
@@ -111,8 +110,8 @@ export function NewSalePage() {
   )
 
   const total = useMemo(
-    () => Math.max(0, subtotal - discountAmount + surcharge + freight),
-    [subtotal, discountAmount, surcharge, freight]
+    () => Math.max(0, subtotal - discountAmount + freight),
+    [subtotal, discountAmount, freight]
   )
 
   // ─── Customer data ─────────────────────────────────────
@@ -190,7 +189,6 @@ export function NewSalePage() {
       status: 'CONFIRMED' as const,
       subtotal,
       discount: discountAmount,
-      surcharge,
       freight,
       total,
       notes: null as string | null,
@@ -340,7 +338,6 @@ export function NewSalePage() {
             setItems([])
             setPayments([])
             setDiscount(0)
-            setSurcharge(0)
             setFreight(0)
             setCustomerId('')
             setShowSuccess(false)
@@ -566,17 +563,6 @@ export function NewSalePage() {
                   placeholder="0"
                 />
               </div>
-              <div>
-                <label style={labelStyle}>Acrescimo (R$)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  style={inputStyle}
-                  value={surcharge > 0 ? surcharge.toString() : ''}
-                  onChange={(e) => setSurcharge(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                />
-              </div>
             </div>
             <div>
               <label style={labelStyle}>Frete (R$)</label>
@@ -684,12 +670,6 @@ export function NewSalePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-sm)' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Desconto</span>
               <span style={{ color: 'var(--danger-600)' }}>-{formatBRL(discountAmount)}</span>
-            </div>
-          )}
-          {surcharge > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-sm)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Acrescimo</span>
-              <span>+{formatBRL(surcharge)}</span>
             </div>
           )}
           {freight > 0 && (

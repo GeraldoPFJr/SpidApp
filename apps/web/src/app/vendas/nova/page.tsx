@@ -59,7 +59,6 @@ export default function NovaVendaPage() {
   // Adjustments
   const [discount, setDiscount] = useState('')
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('fixed')
-  const [surcharge, setSurcharge] = useState('')
   const [freight, setFreight] = useState('')
 
   // Payment
@@ -96,9 +95,8 @@ export default function NovaVendaPage() {
     return discountType === 'percent' ? subtotal * (v / 100) : v
   }, [discount, discountType, subtotal])
 
-  const surchargeValue = parseFloat(surcharge.replace(',', '.')) || 0
   const freightValue = parseFloat(freight.replace(',', '.')) || 0
-  const total = Math.max(0, subtotal - discountValue + surchargeValue + freightValue)
+  const total = Math.max(0, subtotal - discountValue + freightValue)
 
   const selectedCustomer = customers?.find((c) => c.id === customerId)
 
@@ -252,7 +250,6 @@ export default function NovaVendaPage() {
           status: 'CONFIRMED',
           subtotal,
           discount: discountValue,
-          surcharge: surchargeValue,
           freight: freightValue,
           total,
           deviceId: 'web',
@@ -273,7 +270,7 @@ export default function NovaVendaPage() {
     } finally {
       setSaving(false)
     }
-  }, [customerId, items, discountValue, surchargeValue, freightValue, payments, subtotal, total])
+  }, [customerId, items, discountValue, freightValue, payments, subtotal, total])
 
   const resetForm = useCallback(() => {
     setItems([createEmptyItem()])
@@ -281,7 +278,6 @@ export default function NovaVendaPage() {
     setCustomerId(null)
     setCustomerSearch('')
     setDiscount('')
-    setSurcharge('')
     setFreight('')
     setSavedSaleId(null)
     setShowSuccess(false)
@@ -975,14 +971,31 @@ export default function NovaVendaPage() {
             )
           })}
 
-          {/* Adjustments + Totals */}
+          {/* Subtotal summary in items card */}
           {validItems.length > 0 && (
             <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--color-neutral-100)' }}>
+              <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto' }}>
+                <div style={summaryRowStyle}>
+                  <span>Subtotal</span>
+                  <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ─── SECTION: Pagamento ─── */}
+        <div style={{ animation: 'spid-fade-in 0.3s ease 0.1s both' }}>
+          {/* Adjustments: Desconto, Acrescimo, Frete */}
+          {validItems.length > 0 && (
+            <div style={{
+              ...sectionStyle,
+              marginBottom: '12px',
+            }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
-                gap: '10px',
-                marginBottom: '14px',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: '12px',
               }}>
                 <div>
                   <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
@@ -990,7 +1003,7 @@ export default function NovaVendaPage() {
                     <select
                       value={discountType}
                       onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
-                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0, padding: isMobile ? '10px 4px' : '7px 4px' }}
+                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0 }}
                     >
                       <option value="fixed">R$</option>
                       <option value="percent">%</option>
@@ -1001,20 +1014,9 @@ export default function NovaVendaPage() {
                       value={discount}
                       onChange={(e) => setDiscount(e.target.value)}
                       placeholder="0"
-                      style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
+                      style={{ ...miniInputStyle, textAlign: 'right' }}
                     />
                   </div>
-                </div>
-                <div>
-                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Acrescimo (R$)</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={surcharge}
-                    onChange={(e) => setSurcharge(e.target.value)}
-                    placeholder="0,00"
-                    style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
-                  />
                 </div>
                 <div>
                   <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete (R$)</label>
@@ -1024,41 +1026,29 @@ export default function NovaVendaPage() {
                     value={freight}
                     onChange={(e) => setFreight(e.target.value)}
                     placeholder="0,00"
-                    style={{ ...miniInputStyle, textAlign: 'right', padding: isMobile ? '10px' : undefined }}
+                    style={{ ...miniInputStyle, textAlign: 'right' }}
                   />
                 </div>
               </div>
-
-              <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto' }}>
-                <div style={summaryRowStyle}>
-                  <span>Subtotal</span>
-                  <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
+              {(discountValue > 0 || freightValue > 0) && (
+                <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--color-neutral-100)' }}>
+                  {discountValue > 0 && (
+                    <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}>
+                      <span>Desconto</span>
+                      <span>- {formatCurrency(discountValue)}</span>
+                    </div>
+                  )}
+                  {freightValue > 0 && (
+                    <div style={summaryRowStyle}>
+                      <span>Frete</span>
+                      <span>+ {formatCurrency(freightValue)}</span>
+                    </div>
+                  )}
                 </div>
-                {discountValue > 0 && (
-                  <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}>
-                    <span>Desconto</span>
-                    <span>- {formatCurrency(discountValue)}</span>
-                  </div>
-                )}
-                {surchargeValue > 0 && (
-                  <div style={summaryRowStyle}>
-                    <span>Acrescimo</span>
-                    <span>+ {formatCurrency(surchargeValue)}</span>
-                  </div>
-                )}
-                {freightValue > 0 && (
-                  <div style={summaryRowStyle}>
-                    <span>Frete</span>
-                    <span>+ {formatCurrency(freightValue)}</span>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           )}
-        </div>
 
-        {/* ─── SECTION: Pagamento ─── */}
-        <div style={{ animation: 'spid-fade-in 0.3s ease 0.1s both' }}>
           <PaymentSplit
             payments={payments}
             onChange={setPayments}

@@ -50,7 +50,6 @@ interface SaleRaw {
   status: string
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   couponNumber: number | null
@@ -70,7 +69,6 @@ interface SaleDetail {
   status: string
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   couponNumber: number | null
@@ -110,7 +108,6 @@ function mapSaleDetail(raw: SaleRaw): SaleDetail {
     status: raw.status,
     subtotal: Number(raw.subtotal),
     discount: Number(raw.discount),
-    surcharge: Number(raw.surcharge),
     freight: Number(raw.freight),
     total: Number(raw.total),
     couponNumber: raw.couponNumber,
@@ -282,12 +279,27 @@ export default function VendaDetalhePage() {
     )
   }
 
+  // Compute payment-aware status
+  let computedPaymentStatus: string = sale.status
+  if (sale.status === 'CONFIRMED') {
+    const openRec = sale.receivables.filter((r) => r.status === 'OPEN')
+    if (openRec.length === 0) {
+      computedPaymentStatus = 'PAID'
+    } else if (openRec.some((r) => new Date(r.dueDate) < new Date())) {
+      computedPaymentStatus = 'OVERDUE'
+    } else {
+      computedPaymentStatus = 'OPEN'
+    }
+  }
+
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-    CONFIRMED: { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+    PAID: { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' },
+    OPEN: { label: 'Em Aberto', bg: 'var(--color-primary-100)', color: 'var(--color-primary-700)' },
+    OVERDUE: { label: 'Vencida', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
     DRAFT: { label: 'Rascunho', bg: 'var(--color-warning-100)', color: 'var(--color-warning-700)' },
     CANCELLED: { label: 'Cancelada', bg: 'var(--color-danger-100)', color: 'var(--color-danger-700)' },
   }
-  const st = statusMap[sale.status] ?? { label: 'Confirmada', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
+  const st = statusMap[computedPaymentStatus] ?? { label: 'Paga', bg: 'var(--color-success-100)', color: 'var(--color-success-700)' }
 
   return (
     <Layout>
@@ -377,7 +389,6 @@ export default function VendaDetalhePage() {
             <div><p style={infoLabelStyle}>Data</p><p style={infoValueStyle}>{formatDateTime(sale.date)}</p></div>
             <div><p style={infoLabelStyle}>Subtotal</p><p style={infoValueStyle}>{formatCurrency(sale.subtotal)}</p></div>
             {sale.discount > 0 && <div><p style={infoLabelStyle}>Desconto</p><p style={{ ...infoValueStyle, color: 'var(--color-success-600)' }}>- {formatCurrency(sale.discount)}</p></div>}
-            {sale.surcharge > 0 && <div><p style={infoLabelStyle}>Acrescimo</p><p style={infoValueStyle}>+ {formatCurrency(sale.surcharge)}</p></div>}
             {sale.freight > 0 && <div><p style={infoLabelStyle}>Frete</p><p style={infoValueStyle}>+ {formatCurrency(sale.freight)}</p></div>}
             <div><p style={infoLabelStyle}>Total</p><p style={{ ...infoValueStyle, fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(sale.total)}</p></div>
           </div>
@@ -556,7 +567,6 @@ export default function VendaDetalhePage() {
               })),
               subtotal: sale.subtotal,
               discount: sale.discount,
-              surcharge: sale.surcharge,
               freight: sale.freight,
               total: sale.total,
               payments: sale.payments.map((p) => ({

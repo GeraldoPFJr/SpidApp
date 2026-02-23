@@ -191,7 +191,6 @@ export interface Sale {
   status: SaleStatus
   subtotal: number
   discount: number
-  surcharge: number
   freight: number
   total: number
   couponNumber: number | null

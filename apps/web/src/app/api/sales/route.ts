@@ -29,11 +29,27 @@ export async function GET(request: NextRequest) {
 
     const sales = await prisma.sale.findMany({
       where,
-      include: { customer: true, items: true, payments: true },
+      include: { customer: true, items: true, payments: true, receivables: true },
       orderBy: { date: 'desc' },
     })
 
-    return NextResponse.json(sales)
+    const now = new Date()
+    const salesWithPaymentStatus = sales.map((sale) => {
+      let paymentStatus: string = sale.status // DRAFT or CANCELLED
+      if (sale.status === 'CONFIRMED') {
+        const openReceivables = sale.receivables.filter((r) => r.status === 'OPEN')
+        if (openReceivables.length === 0) {
+          paymentStatus = 'PAID'
+        } else if (openReceivables.some((r) => r.dueDate < now)) {
+          paymentStatus = 'OVERDUE'
+        } else {
+          paymentStatus = 'OPEN'
+        }
+      }
+      return { ...sale, paymentStatus }
+    })
+
+    return NextResponse.json(salesWithPaymentStatus)
   } catch (error) {
     console.error('Error in GET /api/sales:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
