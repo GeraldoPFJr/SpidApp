@@ -346,7 +346,7 @@ export function Sidebar({ mobileOpen, onMobileClose, isMobile }: SidebarProps) {
   }
 
   return (
-    <aside style={sidebarStyle}>
+    <aside style={sidebarStyle} data-sidebar-desktop>
       <div style={logoContainerStyle}>
         <span style={logoStyle}>Xpid</span>
         <span style={logoIconStyle}>X</span>

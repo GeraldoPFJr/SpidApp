@@ -70,51 +70,56 @@ export function Layout({ children, title }: LayoutProps) {
         mobileOpen={drawerOpen}
         onMobileClose={closeDrawer}
       />
-      <div style={mainWrapperStyle}>
-        {(title || isMobile) && (
-          <header style={headerStyle}>
-            {isMobile && (
-              <button
-                onClick={openDrawer}
-                aria-label="Abrir menu"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--color-neutral-600)',
-                  flexShrink: 0,
-                  padding: 0,
-                  minHeight: '44px',
-                  minWidth: '44px',
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
-            )}
-            {title ? (
-              <h1 style={headerTitleStyle}>{title}</h1>
-            ) : isMobile ? (
-              <span style={{
+      <div style={mainWrapperStyle} data-main-wrapper>
+        <header
+          style={headerStyle}
+          data-layout-header
+          data-has-title={title ? '' : undefined}
+        >
+          <button
+            onClick={openDrawer}
+            aria-label="Abrir menu"
+            data-hamburger-btn
+            style={{
+              display: isMobile ? 'flex' : 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-neutral-600)',
+              flexShrink: 0,
+              padding: 0,
+              minHeight: '44px',
+              minWidth: '44px',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          {title ? (
+            <h1 style={headerTitleStyle}>{title}</h1>
+          ) : (
+            <span
+              data-mobile-brand
+              style={{
+                display: isMobile ? 'block' : 'none',
                 fontSize: 'var(--font-base)',
                 fontWeight: 700,
                 color: 'var(--color-neutral-800)',
                 letterSpacing: '-0.01em',
-              }}>
-                Xpid
-              </span>
-            ) : null}
-          </header>
-        )}
+              }}
+            >
+              Xpid
+            </span>
+          )}
+        </header>
         <main style={mainStyle} className="page-enter">
           {children}
         </main>

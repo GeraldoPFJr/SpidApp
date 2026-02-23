@@ -446,6 +446,47 @@ textarea {
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
   }
+
+  /* ── SSR flash prevention ──
+     On mobile, hide the desktop sidebar and fix layout
+     BEFORE React hydrates. !important overrides inline styles. */
+  [data-sidebar-desktop] {
+    display: none !important;
+  }
+
+  [data-main-wrapper] {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  [data-main-wrapper] > main {
+    padding: 16px !important;
+  }
+
+  [data-main-wrapper] > [data-layout-header] {
+    padding: 0 16px !important;
+  }
+
+  /* Show hamburger + brand on mobile even during SSR */
+  [data-hamburger-btn] {
+    display: flex !important;
+  }
+
+  [data-mobile-brand] {
+    display: block !important;
+  }
+
+  /* Always show header on mobile */
+  [data-layout-header] {
+    display: flex !important;
+  }
+}
+
+/* ── Desktop: hide untitled header (no hamburger on desktop) ── */
+@media (min-width: 641px) {
+  [data-layout-header]:not([data-has-title]) {
+    display: none;
+  }
 }
 
 /* ════════════════════════════════════════════════════════

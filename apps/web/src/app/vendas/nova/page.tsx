@@ -493,7 +493,7 @@ export default function NovaVendaPage() {
         flexDirection: 'column',
         gap: isMobile ? '12px' : '16px',
         maxWidth: '960px',
-        paddingBottom: isMobile ? '120px' : '100px',
+        paddingBottom: isMobile ? '18px' : '18px',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
