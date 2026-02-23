@@ -34,8 +34,8 @@ export default function NovaCompraPage() {
   const [supplierId, setSupplierId] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<PurchaseItemRow[]>([])
-  const [extraCosts, setExtraCosts] = useState<ExtraCostRow[]>([])
+  const [items, setItems] = useState<PurchaseItemRow[]>([{ id: crypto.randomUUID(), productId: '', unitId: '', qty: '1', unitCost: '' }])
+  const [extraCosts, setExtraCosts] = useState<ExtraCostRow[]>([{ id: crypto.randomUUID(), label: '', amount: '' }])
   const [paymentType, setPaymentType] = useState<'cash' | 'installment'>('cash')
   const [installments, setInstallments] = useState('1')
   const [saving, setSaving] = useState(false)
@@ -46,7 +46,10 @@ export default function NovaCompraPage() {
   }, [])
 
   const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id))
+    setItems((prev) => {
+      const filtered = prev.filter((i) => i.id !== id)
+      return filtered.length === 0 ? [{ id: crypto.randomUUID(), productId: '', unitId: '', qty: '1', unitCost: '' }] : filtered
+    })
   }, [])
 
   const updateItem = useCallback((id: string, field: keyof PurchaseItemRow, value: string) => {
@@ -58,7 +61,10 @@ export default function NovaCompraPage() {
   }, [])
 
   const removeExtraCost = useCallback((id: string) => {
-    setExtraCosts((prev) => prev.filter((c) => c.id !== id))
+    setExtraCosts((prev) => {
+      const filtered = prev.filter((c) => c.id !== id)
+      return filtered.length === 0 ? [{ id: crypto.randomUUID(), label: '', amount: '' }] : filtered
+    })
   }, [])
 
   const updateExtraCost = useCallback((id: string, field: keyof ExtraCostRow, value: string) => {
@@ -81,8 +87,9 @@ export default function NovaCompraPage() {
 
   const handleSubmit = useCallback(async () => {
     const errs: Record<string, string> = {}
+    const validItems = items.filter((i) => i.productId)
     if (!supplierId) errs.supplierId = 'Selecione um fornecedor'
-    if (items.length === 0) errs.items = 'Adicione ao menos um item'
+    if (validItems.length === 0) errs.items = 'Adicione ao menos um item'
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
     setSaving(true)
@@ -91,7 +98,7 @@ export default function NovaCompraPage() {
         method: 'POST',
         body: {
           supplierId, date, notes: notes || null,
-          items: items.map((i) => {
+          items: validItems.map((i) => {
             const qty = parseFloat(i.qty.replace(',', '.')) || 0
             const unitCost = parseFloat(i.unitCost.replace(',', '.')) || 0
             return {
@@ -172,35 +179,33 @@ export default function NovaCompraPage() {
               + Adicionar Item
             </button>
           </div>
-          {items.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>Adicione itens a compra</div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              {items.map((item) => {
-                const prod = products?.find((p) => p.id === item.productId)
-                const qty = parseFloat(item.qty.replace(',', '.')) || 0
-                const cost = parseFloat(item.unitCost.replace(',', '.')) || 0
-                return (
-                  <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px 120px 100px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                    <select value={item.productId} onChange={(e) => updateItem(item.id, 'productId', e.target.value)} style={miniInputStyle}>
-                      <option value="">Produto...</option>
-                      {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                    <select value={item.unitId} onChange={(e) => updateItem(item.id, 'unitId', e.target.value)} style={miniInputStyle} disabled={!item.productId}>
-                      <option value="">Unid.</option>
-                      {prod?.units?.map((u) => <option key={u.id} value={u.id}>{u.nameLabel}</option>)}
-                    </select>
-                    <input type="text" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} style={{ ...miniInputStyle, textAlign: 'center' }} placeholder="Qtd" />
-                    <input type="text" value={item.unitCost} onChange={(e) => updateItem(item.id, 'unitCost', e.target.value)} style={{ ...miniInputStyle, textAlign: 'right' }} placeholder="Custo unit." />
-                    <span style={{ textAlign: 'right', fontWeight: 600, fontSize: 'var(--font-sm)' }}>{formatCurrency(qty * cost)}</span>
+          <div style={{ overflowX: 'auto' }}>
+            {items.map((item) => {
+              const prod = products?.find((p) => p.id === item.productId)
+              const qty = parseFloat(item.qty.replace(',', '.')) || 0
+              const cost = parseFloat(item.unitCost.replace(',', '.')) || 0
+              return (
+                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px 120px 100px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                  <select value={item.productId} onChange={(e) => updateItem(item.id, 'productId', e.target.value)} style={miniInputStyle}>
+                    <option value="">Produto...</option>
+                    {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <select value={item.unitId} onChange={(e) => updateItem(item.id, 'unitId', e.target.value)} style={miniInputStyle} disabled={!item.productId}>
+                    <option value="">Unid.</option>
+                    {prod?.units?.map((u) => <option key={u.id} value={u.id}>{u.nameLabel}</option>)}
+                  </select>
+                  <input type="text" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} style={{ ...miniInputStyle, textAlign: 'center' }} placeholder="Qtd" />
+                  <input type="text" value={item.unitCost} onChange={(e) => updateItem(item.id, 'unitCost', e.target.value)} style={{ ...miniInputStyle, textAlign: 'right' }} placeholder="Custo unit." />
+                  <span style={{ textAlign: 'right', fontWeight: 600, fontSize: 'var(--font-sm)' }}>{formatCurrency(qty * cost)}</span>
+                  {items.length > 1 ? (
                     <button onClick={() => removeItem(item.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                     </button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                  ) : <span />}
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Extra Costs */}
@@ -211,19 +216,17 @@ export default function NovaCompraPage() {
               + Adicionar Custo
             </button>
           </div>
-          {extraCosts.length === 0 ? (
-            <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-neutral-400)', fontSize: 'var(--font-sm)' }}>Nenhum custo extra</div>
-          ) : (
-            extraCosts.map((c) => (
-              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 160px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                <input type="text" value={c.label} onChange={(e) => updateExtraCost(c.id, 'label', e.target.value)} placeholder="Ex: Frete" style={miniInputStyle} />
-                <input type="text" value={c.amount} onChange={(e) => updateExtraCost(c.id, 'amount', e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+          {extraCosts.map((c) => (
+            <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 160px 40px', gap: '8px', padding: '8px 0', alignItems: 'center', borderBottom: '1px solid var(--color-neutral-100)' }}>
+              <input type="text" value={c.label} onChange={(e) => updateExtraCost(c.id, 'label', e.target.value)} placeholder="Ex: Frete" style={miniInputStyle} />
+              <input type="text" value={c.amount} onChange={(e) => updateExtraCost(c.id, 'amount', e.target.value)} placeholder="0,00" style={{ ...miniInputStyle, textAlign: 'right' }} />
+              {extraCosts.length > 1 ? (
                 <button onClick={() => removeExtraCost(c.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', cursor: 'pointer', color: 'var(--color-danger-500)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 </button>
-              </div>
-            ))
-          )}
+              ) : <span />}
+            </div>
+          ))}
         </div>
 
         {/* Payment + Total */}
@@ -254,11 +257,11 @@ export default function NovaCompraPage() {
 
         <div className="form-actions">
           <button onClick={() => router.back()} style={{ padding: '10px 20px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--color-neutral-600)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-neutral-300)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={handleSubmit} disabled={saving || !supplierId || items.length === 0} style={{
+          <button onClick={handleSubmit} disabled={saving || !supplierId || !items.some((i) => i.productId)} style={{
             padding: '10px 24px', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--color-white)',
             backgroundColor: 'var(--color-primary-600)', border: 'none', borderRadius: 'var(--radius-md)',
-            cursor: (saving || !supplierId || items.length === 0) ? 'not-allowed' : 'pointer',
-            opacity: (saving || !supplierId || items.length === 0) ? 0.5 : 1,
+            cursor: (saving || !supplierId || !items.some((i) => i.productId)) ? 'not-allowed' : 'pointer',
+            opacity: (saving || !supplierId || !items.some((i) => i.productId)) ? 0.5 : 1,
           }}>
             {saving ? 'Salvando...' : 'Salvar Compra'}
           </button>
