@@ -814,7 +814,7 @@ export default function NovaVendaPage() {
                           style={{ ...miniInputStyle, padding: '10px 8px' }}
                           disabled={!item.productId}
                         >
-                          <option value="">Un.</option>
+                          <option value="" disabled hidden>Selecione</option>
                           {prod?.units?.map((u) => (
                             <option key={u.id} value={u.id}>{u.nameLabel}</option>
                           ))}
@@ -902,7 +902,7 @@ export default function NovaVendaPage() {
                   style={miniInputStyle}
                   disabled={!item.productId}
                 >
-                  <option value="">Un.</option>
+                  <option value="" disabled hidden>Selecione</option>
                   {prod?.units?.map((u) => (
                     <option key={u.id} value={u.id}>{u.nameLabel}</option>
                   ))}
