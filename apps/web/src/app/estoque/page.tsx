@@ -50,11 +50,13 @@ function StockMobileCard({ row }: { row: StockRow }) {
   const baseUnit = row.units.find((u) => u.factor === 1) ?? row.units[0]
   const [selectedLabel, setSelectedLabel] = useState(baseUnit?.label ?? null)
 
-  const unitSalePrice = useMemo(() => {
+  const totalSaleValue = useMemo(() => {
     if (row.stockBase <= 0 || row.saleValue <= 0) return null
     const basePrice = row.saleValue / row.stockBase
     const unit = row.units.find((u) => u.label === selectedLabel)
-    return unit ? basePrice * unit.factor : null
+    if (!unit) return null
+    // qty of this unit that fits × price per unit (basePrice × factor)
+    return unit.equivalent * (basePrice * unit.factor)
   }, [selectedLabel, row.stockBase, row.saleValue, row.units])
 
   return (
@@ -104,7 +106,7 @@ function StockMobileCard({ row }: { row: StockRow }) {
           Custo {row.costValue > 0 ? fmtBRL(row.costValue) : '-'}
         </span>
         <span style={{ color: 'var(--color-success-700)', fontWeight: 500 }}>
-          Venda {unitSalePrice != null ? fmtBRL(unitSalePrice) : '-'}
+          Venda {totalSaleValue != null ? fmtBRL(totalSaleValue) : '-'}
         </span>
       </div>
 
