@@ -143,27 +143,6 @@ export default function ProdutoDetalhePage() {
       render: (row) => formatDate(row.date),
     },
     {
-      key: 'direction',
-      header: 'Direcao',
-      width: '100px',
-      render: (row) => (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px 10px',
-            fontSize: 'var(--font-xs)',
-            fontWeight: 500,
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: row.direction === 'IN' ? 'var(--color-success-100)' : 'var(--color-danger-100)',
-            color: row.direction === 'IN' ? 'var(--color-success-700)' : 'var(--color-danger-700)',
-          }}
-        >
-          {row.direction === 'IN' ? 'Entrada' : 'Saida'}
-        </span>
-      ),
-    },
-    {
       key: 'qtyBase',
       header: 'Quantidade',
       width: '120px',
@@ -178,11 +157,7 @@ export default function ProdutoDetalhePage() {
       render: (row) => {
         const reasonMap: Record<string, string> = {
           PURCHASE: 'Compra',
-          SALE: 'Venda',
           ADJUSTMENT: 'Ajuste',
-          LOSS: 'Perda',
-          CONSUMPTION: 'Consumo',
-          DONATION: 'Doacao',
           RETURN: 'Devolucao',
           INVENTORY_COUNT: 'Inventario',
         }

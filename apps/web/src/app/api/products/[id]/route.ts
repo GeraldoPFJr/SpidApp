@@ -12,9 +12,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (isAuthError(auth)) return auth
 
     const { id } = await params
+    const tenantId = auth.tenantId
 
     const product = await prisma.product.findFirst({
-      where: { id, deletedAt: null, tenantId: auth.tenantId },
+      where: { id, deletedAt: null, tenantId },
       include: {
         units: { orderBy: { sortOrder: 'asc' } },
         prices: { include: { tier: true, unit: true } },
@@ -24,7 +25,59 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
     if (!product) return errorResponse('Product not found', 404)
 
-    return NextResponse.json(product)
+    const now = new Date()
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+
+    const [inSum, outSum, recentMovements, salesItems] = await Promise.all([
+      prisma.inventoryMovement.aggregate({
+        where: { productId: id, direction: 'IN', tenantId },
+        _sum: { qtyBase: true },
+      }),
+      prisma.inventoryMovement.aggregate({
+        where: { productId: id, direction: 'OUT', tenantId },
+        _sum: { qtyBase: true },
+      }),
+      prisma.inventoryMovement.findMany({
+        where: { productId: id, direction: 'IN', tenantId },
+        orderBy: { date: 'desc' },
+        take: 20,
+        select: { id: true, date: true, direction: true, qtyBase: true, reasonType: true, notes: true },
+      }),
+      prisma.saleItem.findMany({
+        where: {
+          productId: id,
+          tenantId,
+          sale: { status: 'CONFIRMED', date: { gte: threeMonthsAgo } },
+        },
+        select: { qty: true, total: true, sale: { select: { date: true } } },
+      }),
+    ])
+
+    const stockBase = (inSum._sum.qtyBase ?? 0) - (outSum._sum.qtyBase ?? 0)
+
+    // Agrupar vendas por mês (últimos 3 meses)
+    const monthlyMap = new Map<string, { revenue: number; qty: number }>()
+    for (let i = 2; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthKey = d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+      monthlyMap.set(monthKey, { revenue: 0, qty: 0 })
+    }
+    for (const item of salesItems) {
+      const saleDate = new Date(item.sale.date)
+      const monthKey = saleDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+      const entry = monthlyMap.get(monthKey)
+      if (entry) {
+        entry.revenue += Number(item.total)
+        entry.qty += item.qty
+      }
+    }
+    const salesLast3Months = Array.from(monthlyMap.entries()).map(([month, data]) => ({
+      month,
+      revenue: data.revenue,
+      qty: data.qty,
+    }))
+
+    return NextResponse.json({ ...product, stockBase, recentMovements, salesLast3Months })
   } catch (error) {
     console.error('Error in GET /api/products/[id]:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
