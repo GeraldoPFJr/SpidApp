@@ -342,19 +342,19 @@ export default function NovaVendaPage() {
 
   const itemRowStyle: CSSProperties = isMobile
     ? {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        padding: '12px 0',
-        position: 'relative',
-      }
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      padding: '12px 0',
+      position: 'relative',
+    }
     : {
-        display: 'grid',
-        gridTemplateColumns: '1fr 120px 72px 100px 100px 36px',
-        gap: '8px',
-        padding: '6px 0',
-        alignItems: 'center',
-      }
+      display: 'grid',
+      gridTemplateColumns: '1fr 120px 72px 100px 100px 36px',
+      gap: '8px',
+      padding: '6px 0',
+      alignItems: 'center',
+    }
 
   const headerLabelStyle: CSSProperties = {
     fontSize: '11px',
@@ -493,7 +493,7 @@ export default function NovaVendaPage() {
         flexDirection: 'column',
         gap: isMobile ? '12px' : '16px',
         maxWidth: '960px',
-        paddingBottom: isMobile ? '18px' : '18px',
+        paddingBottom: isMobile ? '28px' : '28px',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -951,13 +951,13 @@ export default function NovaVendaPage() {
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.color = 'var(--color-danger-500)'
-                      ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-danger-200)'
-                      ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-danger-50)'
+                        ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-danger-200)'
+                        ; (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-danger-50)'
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLElement).style.color = 'var(--color-neutral-300)'
-                      ;(e.currentTarget as HTMLElement).style.borderColor = 'transparent'
-                      ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                        ; (e.currentTarget as HTMLElement).style.borderColor = 'transparent'
+                        ; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
                     }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
