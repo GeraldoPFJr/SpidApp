@@ -300,15 +300,15 @@ export default function NovaVendaPage() {
 
   const sectionStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
-    borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)',
+    borderRadius: '16px',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
     padding: isMobile ? '16px' : '20px 24px',
-    boxShadow: 'var(--shadow-sm)',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     animation: 'xpid-fade-in 0.3s ease',
   }
 
   const sectionTitleStyle: CSSProperties = {
-    fontSize: 'var(--font-xs)',
+    fontSize: '11px',
     fontWeight: 600,
     color: 'var(--color-neutral-400)',
     textTransform: 'uppercase',
@@ -318,26 +318,26 @@ export default function NovaVendaPage() {
 
   const inputStyle: CSSProperties = {
     width: '100%',
-    padding: isMobile ? '12px' : '8px 12px',
+    padding: isMobile ? '12px 14px' : '10px 12px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)',
-    borderRadius: 'var(--radius-md)',
+    backgroundColor: 'var(--color-neutral-50)',
+    border: '1px solid transparent',
+    borderRadius: '10px',
     outline: 'none',
-    transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const miniInputStyle: CSSProperties = {
-    padding: isMobile ? '10px' : '7px 10px',
+    padding: isMobile ? '10px 12px' : '8px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)',
-    borderRadius: 'var(--radius-sm)',
+    backgroundColor: 'var(--color-neutral-50)',
+    border: '1px solid transparent',
+    borderRadius: '8px',
     outline: 'none',
     width: '100%',
-    transition: 'border-color var(--transition-fast)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const itemRowStyle: CSSProperties = isMobile
@@ -364,13 +364,6 @@ export default function NovaVendaPage() {
     letterSpacing: '0.06em',
   }
 
-  const summaryRowStyle: CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '3px 0',
-    fontSize: 'var(--font-sm)',
-    color: 'var(--color-neutral-500)',
-  }
 
   // ─── Render: Success ──────────────────────────────
 
@@ -846,23 +839,6 @@ export default function NovaVendaPage() {
                     </div>
                   )}
 
-                  {/* Subtotal */}
-                  {!isGhost && item.subtotal > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      marginTop: '8px',
-                      paddingTop: '4px',
-                    }}>
-                      <span style={{
-                        fontWeight: 600,
-                        fontSize: 'var(--font-sm)',
-                        color: 'var(--color-neutral-800)',
-                      }}>
-                        Subtotal: {formatCurrency(item.subtotal)}
-                      </span>
-                    </div>
-                  )}
                 </div>
               )
             }
@@ -971,14 +947,47 @@ export default function NovaVendaPage() {
             )
           })}
 
-          {/* Subtotal summary in items card */}
+          {/* Desconto / Frete — inline no card de itens */}
           {validItems.length > 0 && (
-            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--color-neutral-100)' }}>
-              <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto' }}>
-                <div style={summaryRowStyle}>
-                  <span>Subtotal</span>
-                  <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
+            <div style={{
+              marginTop: '12px',
+              paddingTop: '12px',
+              borderTop: '1px solid var(--color-neutral-100)',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px',
+            }}>
+              <div>
+                <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <select
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                    style={{ ...miniInputStyle, width: '56px', flexShrink: 0 }}
+                  >
+                    <option value="fixed">R$</option>
+                    <option value="percent">%</option>
+                  </select>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    placeholder="0"
+                    style={{ ...miniInputStyle, textAlign: 'right' }}
+                  />
                 </div>
+              </div>
+              <div>
+                <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={freight}
+                  onChange={(e) => setFreight(e.target.value)}
+                  placeholder="0,00"
+                  style={{ ...miniInputStyle, textAlign: 'right' }}
+                />
               </div>
             </div>
           )}
@@ -986,69 +995,6 @@ export default function NovaVendaPage() {
 
         {/* ─── SECTION: Pagamento ─── */}
         <div style={{ animation: 'xpid-fade-in 0.3s ease 0.1s both' }}>
-          {/* Adjustments: Desconto, Acrescimo, Frete */}
-          {validItems.length > 0 && (
-            <div style={{
-              ...sectionStyle,
-              marginBottom: '12px',
-            }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-              }}>
-                <div>
-                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <select
-                      value={discountType}
-                      onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
-                      style={{ ...miniInputStyle, width: '56px', flexShrink: 0 }}
-                    >
-                      <option value="fixed">R$</option>
-                      <option value="percent">%</option>
-                    </select>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
-                      placeholder="0"
-                      style={{ ...miniInputStyle, textAlign: 'right' }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete (R$)</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={freight}
-                    onChange={(e) => setFreight(e.target.value)}
-                    placeholder="0,00"
-                    style={{ ...miniInputStyle, textAlign: 'right' }}
-                  />
-                </div>
-              </div>
-              {(discountValue > 0 || freightValue > 0) && (
-                <div style={{ maxWidth: isMobile ? '100%' : '260px', marginLeft: isMobile ? 0 : 'auto', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--color-neutral-100)' }}>
-                  {discountValue > 0 && (
-                    <div style={{ ...summaryRowStyle, color: 'var(--color-success-600)' }}>
-                      <span>Desconto</span>
-                      <span>- {formatCurrency(discountValue)}</span>
-                    </div>
-                  )}
-                  {freightValue > 0 && (
-                    <div style={summaryRowStyle}>
-                      <span>Frete</span>
-                      <span>+ {formatCurrency(freightValue)}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           <PaymentSplit
             payments={payments}
             onChange={setPayments}
@@ -1076,84 +1022,98 @@ export default function NovaVendaPage() {
         </div>
       </div>
 
-      {/* ─── STICKY BOTTOM BAR ─── */}
+      {/* ─── STICKY BOTTOM BAR — fonte unica do total ─── */}
       <div style={{
         position: 'sticky',
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 40,
-        backgroundColor: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderTop: '1px solid var(--color-neutral-200)',
-        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.06)',
-        padding: isMobile ? '12px 16px' : '14px 24px',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.04)',
+        padding: isMobile ? '12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)' : '12px 24px',
         marginLeft: isMobile ? '-16px' : '-32px',
         marginRight: isMobile ? '-16px' : '-32px',
         marginBottom: isMobile ? '-16px' : '-32px',
       }}>
         {isMobile ? (
-          // ── Mobile bottom bar: stacked layout ──
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                {validItems.length > 0 && (
-                  <span style={{ fontSize: 'var(--font-xs)', color: 'var(--color-neutral-400)' }}>
-                    {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
-                <span style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
-                  {formatCurrency(total)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: 'var(--color-neutral-900)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+              }}>
+                {formatCurrency(total)}
+              </span>
+              {validItems.length > 0 && (
+                <span style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  color: 'var(--color-neutral-400)',
+                  marginTop: '2px',
+                  fontWeight: 400,
+                }}>
+                  {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
+                  {discountValue > 0 && ` · desc ${formatCurrency(discountValue)}`}
                 </span>
-              </div>
+              )}
             </div>
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
               style={{
-                width: '100%',
-                padding: '14px 24px',
+                padding: '14px 28px',
                 fontSize: 'var(--font-base)',
                 fontWeight: 600,
                 color: 'var(--color-white)',
                 backgroundColor: canSubmit ? 'var(--color-success-600)' : 'var(--color-neutral-300)',
                 border: 'none',
-                borderRadius: 'var(--radius-md)',
+                borderRadius: '14px',
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
-                transition: 'all var(--transition-fast)',
-                boxShadow: canSubmit ? '0 2px 8px rgba(22, 163, 74, 0.3)' : 'none',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: canSubmit ? '0 4px 12px rgba(22, 163, 74, 0.25)' : 'none',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {saving ? 'Confirmando...' : 'Confirmar Venda'}
+              {saving ? 'Confirmando...' : 'Confirmar'}
             </button>
           </div>
         ) : (
-          // ── Desktop bottom bar ──
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             maxWidth: '960px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{
+                fontSize: '28px',
+                fontWeight: 700,
+                color: 'var(--color-neutral-900)',
+                letterSpacing: '-0.02em',
+              }}>
+                {formatCurrency(total)}
+              </span>
               {validItems.length > 0 && (
-                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-400)' }}>
+                <span style={{
+                  fontSize: 'var(--font-xs)',
+                  color: 'var(--color-neutral-400)',
+                  fontWeight: 400,
+                }}>
                   {validItems.length} {validItems.length === 1 ? 'item' : 'itens'}
+                  {discountValue > 0 && ` · desc ${formatCurrency(discountValue)}`}
+                  {freightValue > 0 && ` · frete ${formatCurrency(freightValue)}`}
                 </span>
               )}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--color-neutral-500)', fontWeight: 500 }}>Total</span>
-                <span style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, color: 'var(--color-neutral-900)' }}>
-                  {formatCurrency(total)}
-                </span>
-              </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => router.back()}
                 style={{
@@ -1162,10 +1122,10 @@ export default function NovaVendaPage() {
                   fontWeight: 500,
                   color: 'var(--color-neutral-500)',
                   backgroundColor: 'transparent',
-                  border: '1px solid var(--color-neutral-300)',
-                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-neutral-200)',
+                  borderRadius: '12px',
                   cursor: 'pointer',
-                  transition: 'all var(--transition-fast)',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 Cancelar
@@ -1180,10 +1140,10 @@ export default function NovaVendaPage() {
                   color: 'var(--color-white)',
                   backgroundColor: canSubmit ? 'var(--color-success-600)' : 'var(--color-neutral-300)',
                   border: 'none',
-                  borderRadius: 'var(--radius-md)',
+                  borderRadius: '12px',
                   cursor: canSubmit ? 'pointer' : 'not-allowed',
-                  transition: 'all var(--transition-fast)',
-                  boxShadow: canSubmit ? '0 2px 8px rgba(22, 163, 74, 0.3)' : 'none',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: canSubmit ? '0 4px 12px rgba(22, 163, 74, 0.25)' : 'none',
                 }}
                 onMouseEnter={(e) => {
                   if (canSubmit) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-success-700)'

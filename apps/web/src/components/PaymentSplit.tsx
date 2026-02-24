@@ -77,31 +77,31 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-white)',
-    borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border)',
-    boxShadow: 'var(--shadow-sm)',
+    borderRadius: '16px',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
   }
 
   const headerStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: isMobile ? '12px 16px' : '16px 20px',
-    borderBottom: '1px solid var(--color-border)',
+    padding: isMobile ? '14px 16px' : '16px 20px',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
   }
 
   const addButtonStyle: CSSProperties = {
-    padding: isMobile ? '10px 16px' : '4px 12px',
+    padding: isMobile ? '8px 14px' : '6px 12px',
     fontSize: 'var(--font-xs)',
     fontWeight: 500,
     color: 'var(--color-primary-600)',
-    backgroundColor: 'var(--color-primary-50)',
-    border: '1px solid var(--color-primary-200)',
-    borderRadius: 'var(--radius-sm)',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '8px',
     cursor: 'pointer',
     minHeight: isMobile ? '44px' : 'auto',
     minWidth: isMobile ? '44px' : 'auto',
-    transition: 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   // Desktop: horizontal grid row
@@ -111,7 +111,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
     gap: '12px',
     padding: '12px 20px',
     alignItems: 'center',
-    borderBottom: '1px solid var(--color-neutral-100)',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
   }
 
   // Mobile: vertical card per payment
@@ -120,37 +120,37 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
     flexDirection: 'column',
     gap: '12px',
     padding: '16px',
-    borderBottom: '1px solid var(--color-neutral-100)',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
     position: 'relative',
   }
 
   const selectStyle: CSSProperties = {
     width: '100%',
-    padding: isMobile ? '12px' : '6px 10px',
+    padding: isMobile ? '12px' : '8px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)',
-    borderRadius: 'var(--radius-sm)',
+    backgroundColor: 'var(--color-neutral-50)',
+    border: '1px solid transparent',
+    borderRadius: '8px',
     outline: 'none',
     cursor: 'pointer',
     minHeight: isMobile ? '44px' : 'auto',
     WebkitAppearance: 'none' as CSSProperties['WebkitAppearance'],
-    transition: 'border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const inputStyle: CSSProperties = {
     width: '100%',
-    padding: isMobile ? '12px' : '6px 10px',
+    padding: isMobile ? '12px' : '8px 10px',
     fontSize: 'var(--font-sm)',
     color: 'var(--color-neutral-800)',
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)',
-    borderRadius: 'var(--radius-sm)',
+    backgroundColor: 'var(--color-neutral-50)',
+    border: '1px solid transparent',
+    borderRadius: '8px',
     outline: 'none',
     textAlign: 'right',
     minHeight: isMobile ? '44px' : 'auto',
-    transition: 'border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const fieldLabelStyle: CSSProperties = {
@@ -168,25 +168,13 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
     justifyContent: 'center',
     width: `${removeButtonSize}px`,
     height: `${removeButtonSize}px`,
-    borderRadius: 'var(--radius-sm)',
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-neutral-300)',
+    borderRadius: '8px',
+    backgroundColor: 'transparent',
+    border: 'none',
     cursor: 'pointer',
-    color: 'var(--color-danger-500)',
-    transition: 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+    color: 'var(--color-neutral-300)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
     flexShrink: 0,
-  }
-
-  const footerStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: isMobile ? 'flex-start' : 'center',
-    justifyContent: 'space-between',
-    flexDirection: isMobile ? 'column' : 'row',
-    gap: isMobile ? '8px' : '0',
-    padding: isMobile ? '12px 16px' : '12px 20px',
-    backgroundColor: isBalanced ? 'var(--color-success-50)' : 'var(--color-warning-50)',
-    borderTop: '1px solid var(--color-border)',
-    borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
   }
 
   /* ── Desktop column header labels ── */
@@ -384,24 +372,24 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
         </div>
       )}
 
-      {/* ── Footer: totals ── */}
-      {payments.length > 0 && (
-        <div style={footerStyle}>
-          <div style={{
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '4px' : '24px',
-            fontSize: 'var(--font-sm)',
-          }}>
-            <span>Total da venda: <strong>{formatCurrency(total)}</strong></span>
-            <span>Total pago: <strong>{formatCurrency(totalPaid)}</strong></span>
-          </div>
+      {/* ── Footer: only show when values don't match ── */}
+      {payments.length > 0 && !isBalanced && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: '8px',
+          padding: isMobile ? '10px 16px' : '10px 20px',
+          backgroundColor: remaining > 0 ? 'var(--color-warning-50)' : 'var(--color-danger-50)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+          borderRadius: '0 0 16px 16px',
+        }}>
           <span style={{
             fontWeight: 600,
             fontSize: 'var(--font-sm)',
-            color: isBalanced ? 'var(--color-success-700)' : remaining > 0 ? 'var(--color-warning-700)' : 'var(--color-danger-700)',
+            color: remaining > 0 ? 'var(--color-warning-700)' : 'var(--color-danger-700)',
           }}>
-            {isBalanced ? 'Valores conferem' : remaining > 0 ? `Faltam ${formatCurrency(remaining)}` : `Excesso de ${formatCurrency(Math.abs(remaining))}`}
+            {remaining > 0 ? `Restam ${formatCurrency(remaining)}` : `Excesso ${formatCurrency(Math.abs(remaining))}`}
           </span>
         </div>
       )}
