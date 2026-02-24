@@ -994,7 +994,7 @@ export default function NovaVendaPage() {
             }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gridTemplateColumns: '1fr 1fr',
                 gap: '12px',
               }}>
                 <div>

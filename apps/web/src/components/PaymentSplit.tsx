@@ -246,8 +246,8 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
             if (isMobile) {
               return (
                 <div key={p.id} style={rowStyleMobile}>
-                  {/* Top row: method + remove button */}
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                  {/* Top row: method + account + remove button */}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                     <div style={{ flex: 1 }}>
                       <div style={fieldLabelStyle}>Forma</div>
                       <select
@@ -257,6 +257,18 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                       >
                         {PAYMENT_METHODS.map((m) => (
                           <option key={m.value} value={m.value}>{m.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={fieldLabelStyle}>Conta</div>
+                      <select
+                        value={p.accountId}
+                        onChange={(e) => updatePayment(p.id, 'accountId', e.target.value)}
+                        style={selectStyle}
+                      >
+                        {accounts.map((a) => (
+                          <option key={a.id} value={a.id}>{a.name}</option>
                         ))}
                       </select>
                     </div>
@@ -281,20 +293,6 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                       placeholder="0,00"
                       style={inputStyle}
                     />
-                  </div>
-
-                  {/* Account */}
-                  <div>
-                    <div style={fieldLabelStyle}>Conta</div>
-                    <select
-                      value={p.accountId}
-                      onChange={(e) => updatePayment(p.id, 'accountId', e.target.value)}
-                      style={selectStyle}
-                    >
-                      {accounts.map((a) => (
-                        <option key={a.id} value={a.id}>{a.name}</option>
-                      ))}
-                    </select>
                   </div>
 
                   {/* Installments + Due Days (only visible when applicable) */}
