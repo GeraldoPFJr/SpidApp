@@ -486,7 +486,7 @@ export default function NovaVendaPage() {
         flexDirection: 'column',
         gap: isMobile ? '12px' : '16px',
         maxWidth: '960px',
-        paddingBottom: isMobile ? '18px' : '28px',
+        paddingBottom: isMobile ? '100px' : '80px',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -827,18 +827,46 @@ export default function NovaVendaPage() {
                       </div>
                       <div>
                         <span style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Preco</span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
-                          style={{ ...miniInputStyle, textAlign: 'right', padding: '10px 8px' }}
-                          placeholder="0,00"
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <span style={{
+                            position: 'absolute',
+                            left: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: 'var(--font-sm)',
+                            color: 'var(--color-neutral-500)',
+                            pointerEvents: 'none',
+                          }}>R$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={item.unitPrice}
+                            onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
+                            style={{ ...miniInputStyle, textAlign: 'right', padding: '10px 8px 10px 36px' }}
+                            placeholder="0,00"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
 
+                  {/* Subtotal no mobile */}
+                  {!isGhost && item.subtotal > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      marginTop: '8px',
+                      paddingTop: '4px',
+                    }}>
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: 'var(--font-sm)',
+                        color: 'var(--color-neutral-700)',
+                      }}>
+                        Subtotal: {formatCurrency(item.subtotal)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )
             }
@@ -892,14 +920,25 @@ export default function NovaVendaPage() {
                   style={{ ...miniInputStyle, textAlign: 'center' }}
                   disabled={isGhost}
                 />
-                <input
-                  type="text"
-                  value={item.unitPrice}
-                  onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
-                  style={{ ...miniInputStyle, textAlign: 'right' }}
-                  disabled={isGhost}
-                  placeholder="0,00"
-                />
+                <div style={{ position: 'relative' }}>
+                  <span style={{
+                    position: 'absolute',
+                    left: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 'var(--font-sm)',
+                    color: 'var(--color-neutral-500)',
+                    pointerEvents: 'none',
+                  }}>R$</span>
+                  <input
+                    type="text"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
+                    style={{ ...miniInputStyle, textAlign: 'right', paddingLeft: '32px' }}
+                    disabled={isGhost}
+                    placeholder="0,00"
+                  />
+                </div>
                 <span style={{
                   textAlign: 'right',
                   fontWeight: 600,
@@ -953,32 +992,38 @@ export default function NovaVendaPage() {
               marginTop: '12px',
               paddingTop: '12px',
               borderTop: '1px solid var(--color-neutral-100)',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '10px',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'flex-end',
             }}>
-              <div>
-                <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <select
-                    value={discountType}
-                    onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
-                    style={{ ...miniInputStyle, width: '56px', flexShrink: 0 }}
-                  >
-                    <option value="fixed">R$</option>
-                    <option value="percent">%</option>
-                  </select>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                    placeholder="0"
-                    style={{ ...miniInputStyle, textAlign: 'right' }}
-                  />
-                </div>
+              {/* Selector R$/% — 20% da linha */}
+              <div style={{ flex: '0 0 20%' }}>
+                <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Tipo</label>
+                <select
+                  value={discountType}
+                  onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                  style={{ ...miniInputStyle, width: '100%' }}
+                >
+                  <option value="fixed">R$</option>
+                  <option value="percent">%</option>
+                </select>
               </div>
-              <div>
+
+              {/* Desconto — 40% da linha */}
+              <div style={{ flex: '0 0 40%' }}>
+                <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Desconto</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  placeholder="0"
+                  style={{ ...miniInputStyle, textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Frete — 40% da linha */}
+              <div style={{ flex: '0 0 40%' }}>
                 <label style={{ ...headerLabelStyle, display: 'block', marginBottom: '4px' }}>Frete</label>
                 <input
                   type="text"

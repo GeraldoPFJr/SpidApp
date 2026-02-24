@@ -104,10 +104,12 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
-  // Desktop: horizontal grid row
+  // Desktop: horizontal grid row (6 cols se >1 payment, 5 cols se 1 payment)
   const rowStyleDesktop: CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: '1fr 120px 1fr 80px 80px 40px',
+    gridTemplateColumns: payments.length > 1
+      ? '1fr 120px 1fr 80px 80px 40px'  // Forma, Valor, Conta, Parcelas, Prazo, Remove
+      : '1fr 1fr 80px 80px 40px',        // Forma, Conta, Parcelas, Prazo, Remove (sem Valor)
     gap: '12px',
     padding: '12px 20px',
     alignItems: 'center',
@@ -219,7 +221,7 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
               borderBottom: '1px solid var(--color-border)',
             }}>
               <span style={headerLabelStyle}>Forma</span>
-              <span style={headerLabelStyle}>Valor (R$)</span>
+              {payments.length > 1 && <span style={headerLabelStyle}>Valor (R$)</span>}
               <span style={headerLabelStyle}>Conta</span>
               <span style={headerLabelStyle}>Parcelas</span>
               <span style={headerLabelStyle}>Prazo</span>
@@ -271,17 +273,19 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                     </button>
                   </div>
 
-                  {/* Amount */}
-                  <div>
-                    <div style={fieldLabelStyle}>Valor (R$)</div>
-                    <input
-                      type="text"
-                      value={p.amount}
-                      onChange={(e) => updatePayment(p.id, 'amount', e.target.value)}
-                      placeholder="0,00"
-                      style={inputStyle}
-                    />
-                  </div>
+                  {/* Amount — só mostra se tiver mais de 1 forma de pagamento */}
+                  {payments.length > 1 && (
+                    <div>
+                      <div style={fieldLabelStyle}>Valor (R$)</div>
+                      <input
+                        type="text"
+                        value={p.amount}
+                        onChange={(e) => updatePayment(p.id, 'amount', e.target.value)}
+                        placeholder="0,00"
+                        style={inputStyle}
+                      />
+                    </div>
+                  )}
 
                   {/* Installments + Due Days (only visible when applicable) */}
                   {needsInstallments && (
@@ -326,13 +330,15 @@ export function PaymentSplit({ payments, onChange, total, accounts }: PaymentSpl
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
-                <input
-                  type="text"
-                  value={p.amount}
-                  onChange={(e) => updatePayment(p.id, 'amount', e.target.value)}
-                  placeholder="0,00"
-                  style={inputStyle}
-                />
+                {payments.length > 1 && (
+                  <input
+                    type="text"
+                    value={p.amount}
+                    onChange={(e) => updatePayment(p.id, 'amount', e.target.value)}
+                    placeholder="0,00"
+                    style={inputStyle}
+                  />
+                )}
                 <select value={p.accountId} onChange={(e) => updatePayment(p.id, 'accountId', e.target.value)} style={selectStyle}>
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>{a.name}</option>
