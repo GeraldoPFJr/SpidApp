@@ -5,7 +5,7 @@ import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const unitBodySchema = z.object({
-  nameLabel: z.string().min(1),
+  nameLabel: z.string().min(1).transform((v) => v.toUpperCase()),
   factorToBase: z.number().int().positive(),
   isSellable: z.boolean(),
   sortOrder: z.number().int().nonnegative().default(0),

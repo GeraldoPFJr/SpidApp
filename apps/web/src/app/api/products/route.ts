@@ -72,17 +72,22 @@ export async function POST(request: NextRequest) {
         data: { ...productData, tenantId },
       })
 
-      await Promise.all(
+      const createdUnits = await Promise.all(
         units.map((u) =>
           tx.productUnit.create({ data: { ...u, productId: created.id, tenantId } }),
         ),
       )
 
       if (prices?.length) {
+        const sortOrderToId = new Map(createdUnits.map((u) => [u.sortOrder, u.id]))
         await Promise.all(
-          prices.map((p) =>
-            tx.productPrice.create({ data: { ...p, productId: created.id, tenantId } }),
-          ),
+          prices.map((p) => {
+            const unitId = sortOrderToId.get(p.unitSortOrder)
+            if (!unitId) throw new Error(`Unit with sortOrder ${p.unitSortOrder} not found`)
+            return tx.productPrice.create({
+              data: { unitId, tierId: p.tierId, price: p.price, productId: created.id, tenantId },
+            })
+          }),
         )
       }
 

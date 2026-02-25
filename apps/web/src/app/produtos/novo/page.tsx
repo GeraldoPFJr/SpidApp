@@ -48,7 +48,7 @@ export default function NovoProdutoPage() {
 
   // Units
   const [units, setUnits] = useState<UnitRow[]>([
-    { id: crypto.randomUUID(), nameLabel: 'Unidade', factorToBase: 1, isSellable: true, sortOrder: 0 },
+    { id: crypto.randomUUID(), nameLabel: 'UND', factorToBase: 1, isSellable: true, sortOrder: 0 },
   ])
 
   // Prices
@@ -127,11 +127,14 @@ export default function NovoProdutoPage() {
           })),
           prices: prices
             .filter((p) => p.price)
-            .map((p) => ({
-              unitId: p.unitId,
-              tierId: p.tierId,
-              price: parseFloat(p.price.replace(',', '.')),
-            })),
+            .map((p) => {
+              const unit = units.find((u) => u.id === p.unitId)
+              return {
+                unitSortOrder: unit?.sortOrder ?? 0,
+                tierId: p.tierId,
+                price: parseFloat(p.price.replace(',', '.')),
+              }
+            }),
         },
       })
       router.push('/produtos')
@@ -272,8 +275,9 @@ export default function NovoProdutoPage() {
           <label style={{ ...labelStyle, fontSize: 'var(--font-xs)' }}>Fator p/ Base</label>
           <input
             type="number"
-            value={unit.factorToBase}
-            onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 1)}
+            value={unit.factorToBase || ''}
+            onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 0)}
+            onBlur={() => { if (!unit.factorToBase || unit.factorToBase < 1) updateUnit(unit.id, 'factorToBase', 1) }}
             min="1"
             style={{ ...miniInputStyle, textAlign: 'right' }}
           />
@@ -497,8 +501,9 @@ export default function NovoProdutoPage() {
                       <td style={miniTdStyle}>
                         <input
                           type="number"
-                          value={unit.factorToBase}
-                          onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 1)}
+                          value={unit.factorToBase || ''}
+                          onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 0)}
+                          onBlur={() => { if (!unit.factorToBase || unit.factorToBase < 1) updateUnit(unit.id, 'factorToBase', 1) }}
                           min="1"
                           style={{ ...miniInputStyle, textAlign: 'right' }}
                         />

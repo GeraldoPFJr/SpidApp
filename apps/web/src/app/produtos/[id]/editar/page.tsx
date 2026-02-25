@@ -320,8 +320,9 @@ export default function EditarProdutoPage() {
           <label style={{ ...labelStyle, fontSize: 'var(--font-xs)' }}>Fator p/ Base</label>
           <input
             type="number"
-            value={unit.factorToBase}
-            onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 1)}
+            value={unit.factorToBase || ''}
+            onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 0)}
+            onBlur={() => { if (!unit.factorToBase || unit.factorToBase < 1) updateUnit(unit.id, 'factorToBase', 1) }}
             min="1"
             style={{ ...miniInputStyle, textAlign: 'right' }}
           />
@@ -570,8 +571,9 @@ export default function EditarProdutoPage() {
                       <td style={miniTdStyle}>
                         <input
                           type="number"
-                          value={unit.factorToBase}
-                          onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 1)}
+                          value={unit.factorToBase || ''}
+                          onChange={(e) => updateUnit(unit.id, 'factorToBase', parseInt(e.target.value, 10) || 0)}
+                          onBlur={() => { if (!unit.factorToBase || unit.factorToBase < 1) updateUnit(unit.id, 'factorToBase', 1) }}
                           min="1"
                           style={{ ...miniInputStyle, textAlign: 'right' }}
                         />

@@ -5,10 +5,16 @@ export * from './auth'
 // ─── Produtos ────────────────────────────────────────────
 
 const productUnitSchema = z.object({
-  nameLabel: z.string().min(1),
+  nameLabel: z.string().min(1).transform((v) => v.toUpperCase()),
   factorToBase: z.number().int().positive(),
   isSellable: z.boolean(),
   sortOrder: z.number().int().nonnegative(),
+})
+
+const createProductPriceSchema = z.object({
+  unitSortOrder: z.number().int().nonnegative(),
+  tierId: z.string().uuid(),
+  price: z.number().nonnegative(),
 })
 
 const productPriceSchema = z.object({
@@ -25,7 +31,7 @@ export const createProductSchema = z.object({
   minStock: z.number().int().nonnegative().nullish(),
   active: z.boolean().default(true),
   units: z.array(productUnitSchema).min(1),
-  prices: z.array(productPriceSchema).optional(),
+  prices: z.array(createProductPriceSchema).optional(),
 })
 
 const productUnitUpdateSchema = productUnitSchema.extend({
