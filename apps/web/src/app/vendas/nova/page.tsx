@@ -1067,22 +1067,19 @@ export default function NovaVendaPage() {
         </div>
       </div>
 
-      {/* ─── STICKY BOTTOM BAR — fonte unica do total ─── */}
+      {/* ─── FIXED BOTTOM BAR — fonte unica do total ─── */}
       <div style={{
-        position: 'sticky',
+        position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 40,
+        zIndex: 50,
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(0, 0, 0, 0.06)',
         boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.04)',
         padding: isMobile ? '12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)' : '12px 24px',
-        marginLeft: isMobile ? '-16px' : '-32px',
-        marginRight: isMobile ? '-16px' : '-32px',
-        marginBottom: isMobile ? '-16px' : '-32px',
       }}>
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1136,6 +1133,8 @@ export default function NovaVendaPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             maxWidth: '960px',
+            margin: '0 auto',
+            width: '100%',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span style={{
