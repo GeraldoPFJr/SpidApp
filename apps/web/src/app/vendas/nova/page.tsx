@@ -480,14 +480,15 @@ export default function NovaVendaPage() {
   const canSubmit = validItems.length > 0 && !saving
 
   return (
-    <Layout>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: isMobile ? '12px' : '16px',
-        maxWidth: '960px',
-        paddingBottom: isMobile ? '100px' : '80px',
-      }}>
+    <>
+      <Layout>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isMobile ? '12px' : '16px',
+          maxWidth: '960px',
+          paddingBottom: isMobile ? '100px' : '80px',
+        }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
@@ -1065,7 +1066,8 @@ export default function NovaVendaPage() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </Layout>
 
       {/* ─── FIXED BOTTOM BAR — fonte unica do total ─── */}
       <div style={{
@@ -1073,7 +1075,7 @@ export default function NovaVendaPage() {
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 50,
+        zIndex: 100,
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
@@ -1202,6 +1204,6 @@ export default function NovaVendaPage() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   )
 }
