@@ -155,7 +155,7 @@ export default function VendaDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { isMobile } = useMediaQuery()
-  const { showToast, showError, toastProps } = useToast()
+  const { showToast, toastProps } = useToast()
   const { data: rawSale, loading, refetch } = useApi<SaleRaw>(`/sales/${id}`)
   const { data: accounts } = useApi<Account[]>('/accounts')
   const sale = rawSale ? mapSaleDetail(rawSale) : null
