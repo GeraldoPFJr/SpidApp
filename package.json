@@ -12,16 +12,31 @@
     "test": "pnpm -r run test",
     "db:migrate": "pnpm --filter @xpid/api exec prisma migrate dev",
     "db:generate": "pnpm --filter @xpid/api exec prisma generate",
-    "db:studio": "pnpm --filter @xpid/api exec prisma studio"
+    "db:studio": "pnpm --filter @xpid/api exec prisma studio",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
     "eslint": "^9.20.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.5.2",
     "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
+  },
+  "lint-staged": {
+    "apps/web/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "bash -c 'cd apps/web && tsc --noEmit'"
+    ],
+    "apps/mobile/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "**/*.{ts,tsx,json,md}": [
+      "prettier --write"
+    ]
   }
 }
