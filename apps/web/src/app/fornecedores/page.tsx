@@ -6,12 +6,15 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import type { Supplier } from '@xpid/shared'
+import { Toast } from '@xpid/ui'
 
 export default function FornecedoresPage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<Supplier[]>('/suppliers')
+  const { toastProps } = useToast()
 
   const columns: DataTableColumn<Supplier>[] = useMemo(() => [
     {
@@ -95,6 +98,7 @@ export default function FornecedoresPage() {
           emptyDescription="Comece cadastrando seu primeiro fornecedor"
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

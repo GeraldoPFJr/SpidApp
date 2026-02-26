@@ -1,4 +1,6 @@
-import type { CSSProperties } from 'react'
+'use client'
+
+import { type CSSProperties, useEffect } from 'react'
 import { colors, fonts, radius, shadows, spacing } from '../styles/theme.js'
 
 type ToastVariant = 'success' | 'error' | 'warning'
@@ -8,6 +10,7 @@ interface ToastProps {
   variant?: ToastVariant
   visible: boolean
   onClose: () => void
+  duration?: number
 }
 
 const variantStyles: Record<ToastVariant, CSSProperties> = {
@@ -16,7 +19,13 @@ const variantStyles: Record<ToastVariant, CSSProperties> = {
   warning: { backgroundColor: colors.warning[600], color: colors.neutral[0] },
 }
 
-export function Toast({ message, variant = 'success', visible, onClose }: ToastProps) {
+export function Toast({ message, variant = 'success', visible, onClose, duration = 3000 }: ToastProps) {
+  useEffect(() => {
+    if (!visible || !duration) return
+    const timer = setTimeout(onClose, duration)
+    return () => clearTimeout(timer)
+  }, [visible, duration, onClose])
+
   if (!visible) return null
 
   const style: CSSProperties = {

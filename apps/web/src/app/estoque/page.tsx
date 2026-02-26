@@ -6,6 +6,8 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
+import { Toast } from '@xpid/ui'
 
 interface ApiStockRow {
   productId: string
@@ -143,6 +145,7 @@ export default function EstoquePage() {
   const { isMobile } = useMediaQuery()
   const { data: rawData, loading } = useApi<ApiStockRow[]>('/inventory')
   const data = useMemo(() => (rawData ?? []).map(mapStockRow), [rawData])
+  const { toastProps } = useToast()
 
   const columns: DataTableColumn<StockRow>[] = useMemo(() => [
     {
@@ -267,6 +270,7 @@ export default function EstoquePage() {
           renderMobileCard={(row) => <StockMobileCard row={row} />}
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

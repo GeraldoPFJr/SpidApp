@@ -6,7 +6,9 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { Toast } from '@xpid/ui'
 
 interface ProductRawUnit {
   id: string
@@ -135,6 +137,7 @@ export default function ProdutoDetalhePage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
   const { data: rawProduct, loading } = useApi<ProductRaw>(`/products/${id}`)
+  const { toastProps } = useToast()
   const product = rawProduct ? mapProductDetail(rawProduct) : null
 
   const movementColumns: DataTableColumn<ProductDetail['recentMovements'][0]>[] = useMemo(() => [
@@ -529,6 +532,7 @@ export default function ProdutoDetalhePage() {
           />
         </div>
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { setToastFlash } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import type { Supplier, Product, ProductUnit } from '@xpid/shared'
@@ -113,6 +114,7 @@ export default function NovaCompraPage() {
           })),
         },
       })
+      setToastFlash('Compra registrada com sucesso')
       router.push('/compras')
     } catch {
       setErrors({ submit: 'Erro ao salvar compra. Tente novamente.' })

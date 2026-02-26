@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { setToastFlash } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 
 interface InventoryProduct {
@@ -64,6 +65,7 @@ export default function InventarioPage() {
           })),
         },
       })
+      setToastFlash('Contagem aplicada com sucesso')
       router.push('/estoque')
     } catch {
       setSubmitError('Erro ao aplicar contagem. Tente novamente.')

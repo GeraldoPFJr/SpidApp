@@ -7,8 +7,10 @@ import { StatsCard } from '@/components/StatsCard'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { FinanceEntry, Account } from '@xpid/shared'
+import { Toast } from '@xpid/ui'
 
 interface FinanceOverview {
   accounts: Array<Account & { balance: number }>
@@ -18,6 +20,7 @@ interface FinanceOverview {
 export default function FinanceiroPage() {
   const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<FinanceOverview>('/finance')
+  const { toastProps } = useToast()
   const [typeFilter, setTypeFilter] = useState('')
   const [accountFilter, setAccountFilter] = useState('')
 
@@ -155,6 +158,7 @@ export default function FinanceiroPage() {
           emptyTitle="Nenhum lancamento"
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

@@ -6,8 +6,10 @@ import { Layout } from '@/components/Layout'
 import { CouponPreview } from '@/components/CouponPreview'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
+import { Toast } from '@xpid/ui'
 import type { Account } from '@xpid/shared'
 
 interface SaleRawItem {
@@ -153,6 +155,7 @@ export default function VendaDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { isMobile } = useMediaQuery()
+  const { showToast, toastProps } = useToast()
   const { data: rawSale, loading, refetch } = useApi<SaleRaw>(`/sales/${id}`)
   const { data: accounts } = useApi<Account[]>('/accounts')
   const sale = rawSale ? mapSaleDetail(rawSale) : null
@@ -196,12 +199,13 @@ export default function VendaDetalhePage() {
       })
       setPayingId(null)
       refetch()
+      showToast('Recebimento registrado')
     } catch {
       setPayError('Erro ao registrar recebimento.')
     } finally {
       setPaySaving(false)
     }
-  }, [payAmount, payAccountId, payMethod, payDate, refetch])
+  }, [payAmount, payAccountId, payMethod, payDate, refetch, showToast])
 
   const kindLabels: Record<string, string> = {
     CREDIARIO: 'Crediario',
@@ -242,6 +246,7 @@ export default function VendaDetalhePage() {
       })
       setShowCancelModal(false)
       refetch()
+      showToast('Venda cancelada', 'warning')
     } catch {
       setCancelError('Erro ao cancelar venda. Tente novamente.')
     } finally {
@@ -914,6 +919,7 @@ export default function VendaDetalhePage() {
           </div>
         )}
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

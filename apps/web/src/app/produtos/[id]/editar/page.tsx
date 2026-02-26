@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { setToastFlash } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 import type { Category, Subcategory } from '@xpid/shared'
 
@@ -182,6 +183,7 @@ export default function EditarProdutoPage() {
             })),
         },
       })
+      setToastFlash('Produto atualizado com sucesso')
       router.push(`/produtos/${id}`)
     } catch {
       setErrors({ submit: 'Erro ao salvar produto. Tente novamente.' })

@@ -5,8 +5,10 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { Toast } from '@xpid/ui'
 
 interface MovementRow {
   id: string
@@ -25,6 +27,7 @@ const REASON_MAP: Record<string, string> = {
 
 export default function MovimentacoesPage() {
   const { isMobile } = useMediaQuery()
+  const { showToast, toastProps } = useToast()
   const { data, loading, refetch } = useApi<MovementRow[]>('/inventory/movements')
   const [showModal, setShowModal] = useState(false)
   const [newProductId, setNewProductId] = useState('')
@@ -71,6 +74,7 @@ export default function MovimentacoesPage() {
       setNewProductId(''); setNewQty(''); setNewNotes('')
       setSubmitError(null)
       refetch()
+      showToast('Movimentacao registrada')
     } catch {
       setSubmitError('Erro ao criar movimentacao. Tente novamente.')
     } finally {
@@ -193,6 +197,7 @@ export default function MovimentacoesPage() {
           </div>
         )}
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

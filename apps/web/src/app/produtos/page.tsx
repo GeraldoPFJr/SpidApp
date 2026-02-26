@@ -6,7 +6,9 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import type { Product } from '@xpid/shared'
+import { Toast } from '@xpid/ui'
 
 interface ProductRow extends Product {
   categoryName?: string
@@ -17,6 +19,7 @@ export default function ProdutosPage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<ProductRow[]>('/products')
+  const { toastProps } = useToast()
 
   const columns: DataTableColumn<ProductRow>[] = useMemo(() => [
     {
@@ -134,6 +137,7 @@ export default function ProdutosPage() {
           emptyDescription="Comece cadastrando seu primeiro produto"
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

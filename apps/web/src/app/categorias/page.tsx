@@ -4,7 +4,9 @@ import { type CSSProperties, useCallback, useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
+import { Toast } from '@xpid/ui'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -160,6 +162,7 @@ const dangerBtnStyle: CSSProperties = {
 
 function ProductCategories() {
   const { isMobile } = useMediaQuery()
+  const { showToast, toastProps } = useToast()
   const { data: categories, loading, refetch } = useApi<Category[]>('/categories')
   const [newCatName, setNewCatName] = useState('')
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
@@ -182,40 +185,65 @@ function ProductCategories() {
   const handleAddCategory = useCallback(async () => {
     const name = newCatName.trim()
     if (!name) return
-    await apiClient('/categories', { method: 'POST', body: { name } })
-    setNewCatName('')
-    refetch()
-  }, [newCatName, refetch])
+    try {
+      await apiClient('/categories', { method: 'POST', body: { name } })
+      setNewCatName('')
+      refetch()
+      showToast('Categoria criada')
+    } catch {
+      showToast('Erro ao criar categoria', 'error')
+    }
+  }, [newCatName, refetch, showToast])
 
   const handleUpdateCategory = useCallback(async (id: string) => {
     const name = editingCatName.trim()
     if (!name) return
-    await apiClient(`/categories/${id}`, { method: 'PUT', body: { name } })
-    setEditingCatId(null)
-    setEditingCatName('')
-    refetch()
-  }, [editingCatName, refetch])
+    try {
+      await apiClient(`/categories/${id}`, { method: 'PUT', body: { name } })
+      setEditingCatId(null)
+      setEditingCatName('')
+      refetch()
+      showToast('Categoria atualizada')
+    } catch {
+      showToast('Erro ao atualizar categoria', 'error')
+    }
+  }, [editingCatName, refetch, showToast])
 
   const handleDeleteCategory = useCallback(async (id: string) => {
     if (!confirm('Excluir esta categoria e todas as suas subcategorias?')) return
-    await apiClient(`/categories/${id}`, { method: 'DELETE' })
-    refetch()
-  }, [refetch])
+    try {
+      await apiClient(`/categories/${id}`, { method: 'DELETE' })
+      refetch()
+      showToast('Categoria excluida')
+    } catch {
+      showToast('Erro ao excluir categoria', 'error')
+    }
+  }, [refetch, showToast])
 
   const handleAddSubcategory = useCallback(async (categoryId: string) => {
     const name = newSubName.trim()
     if (!name) return
-    await apiClient(`/categories/${categoryId}/subcategories`, { method: 'POST', body: { name } })
-    setNewSubName('')
-    setAddingSubToCatId(null)
-    refetch()
-  }, [newSubName, refetch])
+    try {
+      await apiClient(`/categories/${categoryId}/subcategories`, { method: 'POST', body: { name } })
+      setNewSubName('')
+      setAddingSubToCatId(null)
+      refetch()
+      showToast('Subcategoria criada')
+    } catch {
+      showToast('Erro ao criar subcategoria', 'error')
+    }
+  }, [newSubName, refetch, showToast])
 
   const handleDeleteSubcategory = useCallback(async (id: string) => {
     if (!confirm('Excluir esta subcategoria?')) return
-    await apiClient(`/subcategories/${id}`, { method: 'DELETE' })
-    refetch()
-  }, [refetch])
+    try {
+      await apiClient(`/subcategories/${id}`, { method: 'DELETE' })
+      refetch()
+      showToast('Subcategoria excluida')
+    } catch {
+      showToast('Erro ao excluir subcategoria', 'error')
+    }
+  }, [refetch, showToast])
 
   const mobileCardStyle: CSSProperties = {
     ...cardStyle,
@@ -446,6 +474,7 @@ function ProductCategories() {
           </div>
         )}
       </div>
+      <Toast {...toastProps} />
     </div>
   )
 }
@@ -454,6 +483,7 @@ function ProductCategories() {
 
 function FinanceCategories() {
   const { isMobile } = useMediaQuery()
+  const { showToast, toastProps } = useToast()
   const { data: categories, loading, refetch } = useApi<FinanceCategory[]>('/finance/categories')
   const [activeType, setActiveType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE')
   const [newName, setNewName] = useState('')
@@ -465,25 +495,40 @@ function FinanceCategories() {
   const handleAdd = useCallback(async () => {
     const name = newName.trim()
     if (!name) return
-    await apiClient('/finance/categories', { method: 'POST', body: { name, type: activeType } })
-    setNewName('')
-    refetch()
-  }, [newName, activeType, refetch])
+    try {
+      await apiClient('/finance/categories', { method: 'POST', body: { name, type: activeType } })
+      setNewName('')
+      refetch()
+      showToast('Categoria financeira criada')
+    } catch {
+      showToast('Erro ao criar categoria', 'error')
+    }
+  }, [newName, activeType, refetch, showToast])
 
   const handleUpdate = useCallback(async (id: string) => {
     const name = editingName.trim()
     if (!name) return
-    await apiClient(`/finance/categories/${id}`, { method: 'PUT', body: { name } })
-    setEditingId(null)
-    setEditingName('')
-    refetch()
-  }, [editingName, refetch])
+    try {
+      await apiClient(`/finance/categories/${id}`, { method: 'PUT', body: { name } })
+      setEditingId(null)
+      setEditingName('')
+      refetch()
+      showToast('Categoria financeira atualizada')
+    } catch {
+      showToast('Erro ao atualizar categoria', 'error')
+    }
+  }, [editingName, refetch, showToast])
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm('Excluir esta categoria financeira?')) return
-    await apiClient(`/finance/categories/${id}`, { method: 'DELETE' })
-    refetch()
-  }, [refetch])
+    try {
+      await apiClient(`/finance/categories/${id}`, { method: 'DELETE' })
+      refetch()
+      showToast('Categoria financeira excluida')
+    } catch {
+      showToast('Erro ao excluir categoria', 'error')
+    }
+  }, [refetch, showToast])
 
   const mobileCardStyle: CSSProperties = {
     ...cardStyle,
@@ -655,6 +700,7 @@ function FinanceCategories() {
           </div>
         )}
       </div>
+      <Toast {...toastProps} />
     </div>
   )
 }

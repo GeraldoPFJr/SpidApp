@@ -7,8 +7,10 @@ import { PaymentSplit, type PaymentEntry } from '@/components/PaymentSplit'
 import { InstallmentConfig } from '@/components/InstallmentConfig'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
+import { Toast } from '@xpid/ui'
 import type { Customer, Product, ProductUnit, Account } from '@xpid/shared'
 
 // ─── Types ──────────────────────────────────────────
@@ -46,6 +48,7 @@ function createEmptyItem(): SaleItem {
 export default function NovaVendaPage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
+  const { showToast, toastProps } = useToast()
 
   // Customer
   const [customerId, setCustomerId] = useState<string | null>(null)
@@ -160,12 +163,13 @@ export default function NovaVendaPage() {
       setCustomerId(newCustomer.id)
       setCustomerSearch('')
       setShowCustomerDropdown(false)
+      showToast('Cliente cadastrado')
     } catch {
-      // Silently fail
+      showToast('Erro ao cadastrar cliente', 'error')
     } finally {
       setCreatingCustomer(false)
     }
-  }, [customerSearch, refetchCustomers])
+  }, [customerSearch, refetchCustomers, showToast])
 
   // ─── Item Management ──────────────────────────────
 
@@ -1067,6 +1071,7 @@ export default function NovaVendaPage() {
           )}
         </div>
         </div>
+        <Toast {...toastProps} />
       </Layout>
 
       {/* ─── FIXED BOTTOM BAR — fonte unica do total ─── */}

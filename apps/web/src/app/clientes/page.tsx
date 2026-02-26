@@ -6,8 +6,10 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency } from '@/lib/format'
 import type { Customer } from '@xpid/shared'
+import { Toast } from '@xpid/ui'
 
 interface CustomerRow extends Customer {
   openAmount?: number
@@ -18,6 +20,7 @@ export default function ClientesPage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
   const { data, loading } = useApi<CustomerRow[]>('/customers')
+  const { toastProps } = useToast()
 
   const columns: DataTableColumn<CustomerRow>[] = useMemo(() => [
     {
@@ -132,6 +135,7 @@ export default function ClientesPage() {
           emptyDescription="Comece cadastrando seu primeiro cliente"
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

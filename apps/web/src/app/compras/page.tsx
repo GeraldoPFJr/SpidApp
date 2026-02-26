@@ -6,7 +6,9 @@ import { Layout } from '@/components/Layout'
 import { DataTable, type DataTableColumn } from '@/components/DataTable'
 import { useApi } from '@/hooks/useApi'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { Toast } from '@xpid/ui'
 
 interface PurchaseRaw {
   id: string
@@ -47,6 +49,7 @@ export default function ComprasPage() {
   const { isMobile } = useMediaQuery()
   const { data: rawData, loading } = useApi<PurchaseRaw[]>('/purchases')
   const data = useMemo(() => rawData?.map(mapPurchaseRow) ?? [], [rawData])
+  const { toastProps } = useToast()
 
   const columns: DataTableColumn<PurchaseRow>[] = useMemo(() => [
     { key: 'date', header: 'Data', width: '120px', render: (row) => formatDate(row.date) },
@@ -101,6 +104,7 @@ export default function ComprasPage() {
           emptyDescription="Registre sua primeira compra"
         />
       </div>
+      <Toast {...toastProps} />
     </Layout>
   )
 }

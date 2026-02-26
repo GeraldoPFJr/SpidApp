@@ -4,6 +4,7 @@ import { type CSSProperties, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { setToastFlash } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 
 export default function NovoFornecedorPage() {
@@ -45,6 +46,7 @@ export default function NovoFornecedorPage() {
           notes: notes.trim() || null,
         },
       })
+      setToastFlash('Fornecedor salvo com sucesso')
       router.push('/fornecedores')
     } catch {
       setErrors({ submit: 'Erro ao salvar fornecedor. Tente novamente.' })

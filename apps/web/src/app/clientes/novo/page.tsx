@@ -4,6 +4,7 @@ import { type CSSProperties, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/Layout'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { setToastFlash } from '@/hooks/useToast'
 import { apiClient } from '@/lib/api'
 
 export default function NovoClientePage() {
@@ -39,6 +40,7 @@ export default function NovoClientePage() {
           notes: notes.trim() || null,
         },
       })
+      setToastFlash('Cliente salvo com sucesso')
       router.push('/clientes')
     } catch {
       setErrors({ submit: 'Erro ao salvar cliente. Tente novamente.' })
