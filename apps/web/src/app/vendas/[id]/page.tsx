@@ -155,7 +155,7 @@ export default function VendaDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { isMobile } = useMediaQuery()
-  const { showToast, toastProps } = useToast()
+  const { showToast, showError, toastProps } = useToast()
   const { data: rawSale, loading, refetch } = useApi<SaleRaw>(`/sales/${id}`)
   const { data: accounts } = useApi<Account[]>('/accounts')
   const sale = rawSale ? mapSaleDetail(rawSale) : null
@@ -200,7 +200,7 @@ export default function VendaDetalhePage() {
       setPayingId(null)
       refetch()
       showToast('Recebimento registrado')
-    } catch {
+    } catch (error) {
       setPayError('Erro ao registrar recebimento.')
     } finally {
       setPaySaving(false)
@@ -247,7 +247,7 @@ export default function VendaDetalhePage() {
       setShowCancelModal(false)
       refetch()
       showToast('Venda cancelada', 'warning')
-    } catch {
+    } catch (error) {
       setCancelError('Erro ao cancelar venda. Tente novamente.')
     } finally {
       setCancelling(false)

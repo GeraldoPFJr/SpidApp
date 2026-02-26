@@ -48,7 +48,7 @@ export default function NovoFornecedorPage() {
       })
       setToastFlash('Fornecedor salvo com sucesso')
       router.push('/fornecedores')
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar fornecedor. Tente novamente.' })
     } finally {
       setSaving(false)

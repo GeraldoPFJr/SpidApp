@@ -185,7 +185,7 @@ export default function EditarProdutoPage() {
       })
       setToastFlash('Produto atualizado com sucesso')
       router.push(`/produtos/${id}`)
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar produto. Tente novamente.' })
     } finally {
       setSaving(false)

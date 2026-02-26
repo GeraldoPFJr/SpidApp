@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { getErrorMessage } from '@/lib/error-handler'
 
 type ToastVariant = 'success' | 'error' | 'warning'
 
@@ -30,6 +31,14 @@ export function useToast() {
     setState({ message, variant, visible: true })
   }, [])
 
+  /**
+   * Mostra toast de erro extraindo mensagem do erro automaticamente
+   */
+  const showError = useCallback((error: unknown, fallbackMessage = 'Ocorreu um erro') => {
+    const message = getErrorMessage(error) || fallbackMessage
+    setState({ message, variant: 'error', visible: true })
+  }, [])
+
   const hideToast = useCallback(() => {
     setState((prev) => ({ ...prev, visible: false }))
   }, [])
@@ -41,7 +50,7 @@ export function useToast() {
     onClose: hideToast,
   }
 
-  return { showToast, hideToast, toastProps }
+  return { showToast, showError, hideToast, toastProps }
 }
 
 export function setToastFlash(message: string, variant: ToastVariant = 'success') {

@@ -3,6 +3,7 @@ import { createProductSchema } from '@xpid/shared'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, isAuthError } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/api-utils'
+import { getErrorMessage } from '@/lib/prisma-errors'
 
 export async function GET(request: NextRequest) {
   try {
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
     console.error('Error in POST /api/products:', error)
-    const message = error instanceof Error ? error.message : 'Failed to create product'
-    return errorResponse(message, 500)
+    const message = getErrorMessage(error, 'Erro ao criar produto')
+    return errorResponse(message, 400)
   }
 }

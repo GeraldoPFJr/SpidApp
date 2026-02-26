@@ -48,7 +48,7 @@ function createEmptyItem(): SaleItem {
 export default function NovaVendaPage() {
   const router = useRouter()
   const { isMobile } = useMediaQuery()
-  const { showToast, toastProps } = useToast()
+  const { showToast, showError, toastProps } = useToast()
 
   // Customer
   const [customerId, setCustomerId] = useState<string | null>(null)
@@ -164,12 +164,12 @@ export default function NovaVendaPage() {
       setCustomerSearch('')
       setShowCustomerDropdown(false)
       showToast('Cliente cadastrado')
-    } catch {
-      showToast('Erro ao cadastrar cliente', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao cadastrar cliente')
     } finally {
       setCreatingCustomer(false)
     }
-  }, [customerSearch, refetchCustomers, showToast])
+  }, [customerSearch, refetchCustomers, showToast, showError])
 
   // ─── Item Management ──────────────────────────────
 
@@ -269,7 +269,7 @@ export default function NovaVendaPage() {
       })
       setSavedSaleId(result.id)
       setShowSuccess(true)
-    } catch {
+    } catch (error) {
       setSubmitError('Erro ao salvar venda. Tente novamente.')
     } finally {
       setSaving(false)

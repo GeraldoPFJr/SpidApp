@@ -42,7 +42,7 @@ export default function NovoClientePage() {
       })
       setToastFlash('Cliente salvo com sucesso')
       router.push('/clientes')
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar cliente. Tente novamente.' })
     } finally {
       setSaving(false)

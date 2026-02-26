@@ -116,7 +116,7 @@ export default function NovaCompraPage() {
       })
       setToastFlash('Compra registrada com sucesso')
       router.push('/compras')
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar compra. Tente novamente.' })
     } finally {
       setSaving(false)

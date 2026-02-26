@@ -30,7 +30,27 @@ export async function apiClient<T>(path: string, options: ApiOptions = {}): Prom
 
   if (!response.ok) {
     const errorBody = await response.text()
-    throw new ApiError(response.status, errorBody)
+    let errorMessage = errorBody
+
+    // Try to parse JSON error response
+    try {
+      const errorJson = JSON.parse(errorBody)
+      if (errorJson.error) {
+        // Handle both string and object error formats
+        if (typeof errorJson.error === 'string') {
+          errorMessage = errorJson.error
+        } else if (errorJson.error.message) {
+          errorMessage = errorJson.error.message
+        } else {
+          // Flatten Zod errors or other structured errors
+          errorMessage = JSON.stringify(errorJson.error)
+        }
+      }
+    } catch {
+      // Keep original errorBody if not JSON
+    }
+
+    throw new ApiError(response.status, errorMessage)
   }
 
   return response.json() as Promise<T>

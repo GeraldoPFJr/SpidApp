@@ -48,7 +48,7 @@ export default function FechamentoPage() {
       })
       setToastFlash('Fechamento salvo com sucesso')
       router.push('/financeiro')
-    } catch {
+    } catch (error) {
       setSubmitError('Erro ao salvar fechamento. Tente novamente.')
     } finally {
       setSaving(false)

@@ -162,7 +162,7 @@ const dangerBtnStyle: CSSProperties = {
 
 function ProductCategories() {
   const { isMobile } = useMediaQuery()
-  const { showToast, toastProps } = useToast()
+  const { showToast, showError, toastProps } = useToast()
   const { data: categories, loading, refetch } = useApi<Category[]>('/categories')
   const [newCatName, setNewCatName] = useState('')
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
@@ -190,10 +190,10 @@ function ProductCategories() {
       setNewCatName('')
       refetch()
       showToast('Categoria criada')
-    } catch {
-      showToast('Erro ao criar categoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao criar categoria')
     }
-  }, [newCatName, refetch, showToast])
+  }, [newCatName, refetch, showToast, showError])
 
   const handleUpdateCategory = useCallback(async (id: string) => {
     const name = editingCatName.trim()
@@ -204,10 +204,10 @@ function ProductCategories() {
       setEditingCatName('')
       refetch()
       showToast('Categoria atualizada')
-    } catch {
-      showToast('Erro ao atualizar categoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao atualizar categoria')
     }
-  }, [editingCatName, refetch, showToast])
+  }, [editingCatName, refetch, showToast, showError])
 
   const handleDeleteCategory = useCallback(async (id: string) => {
     if (!confirm('Excluir esta categoria e todas as suas subcategorias?')) return
@@ -215,10 +215,10 @@ function ProductCategories() {
       await apiClient(`/categories/${id}`, { method: 'DELETE' })
       refetch()
       showToast('Categoria excluida')
-    } catch {
-      showToast('Erro ao excluir categoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao excluir categoria')
     }
-  }, [refetch, showToast])
+  }, [refetch, showToast, showError])
 
   const handleAddSubcategory = useCallback(async (categoryId: string) => {
     const name = newSubName.trim()
@@ -229,10 +229,10 @@ function ProductCategories() {
       setAddingSubToCatId(null)
       refetch()
       showToast('Subcategoria criada')
-    } catch {
-      showToast('Erro ao criar subcategoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao criar subcategoria')
     }
-  }, [newSubName, refetch, showToast])
+  }, [newSubName, refetch, showToast, showError])
 
   const handleDeleteSubcategory = useCallback(async (id: string) => {
     if (!confirm('Excluir esta subcategoria?')) return
@@ -240,10 +240,10 @@ function ProductCategories() {
       await apiClient(`/subcategories/${id}`, { method: 'DELETE' })
       refetch()
       showToast('Subcategoria excluida')
-    } catch {
-      showToast('Erro ao excluir subcategoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao excluir subcategoria')
     }
-  }, [refetch, showToast])
+  }, [refetch, showToast, showError])
 
   const mobileCardStyle: CSSProperties = {
     ...cardStyle,
@@ -483,7 +483,7 @@ function ProductCategories() {
 
 function FinanceCategories() {
   const { isMobile } = useMediaQuery()
-  const { showToast, toastProps } = useToast()
+  const { showToast, showError, toastProps } = useToast()
   const { data: categories, loading, refetch } = useApi<FinanceCategory[]>('/finance/categories')
   const [activeType, setActiveType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE')
   const [newName, setNewName] = useState('')
@@ -500,10 +500,10 @@ function FinanceCategories() {
       setNewName('')
       refetch()
       showToast('Categoria financeira criada')
-    } catch {
-      showToast('Erro ao criar categoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao criar categoria')
     }
-  }, [newName, activeType, refetch, showToast])
+  }, [newName, activeType, refetch, showToast, showError])
 
   const handleUpdate = useCallback(async (id: string) => {
     const name = editingName.trim()
@@ -517,7 +517,7 @@ function FinanceCategories() {
     } catch {
       showToast('Erro ao atualizar categoria', 'error')
     }
-  }, [editingName, refetch, showToast])
+  }, [editingName, refetch, showToast, showError])
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm('Excluir esta categoria financeira?')) return
@@ -525,10 +525,10 @@ function FinanceCategories() {
       await apiClient(`/finance/categories/${id}`, { method: 'DELETE' })
       refetch()
       showToast('Categoria financeira excluida')
-    } catch {
-      showToast('Erro ao excluir categoria', 'error')
+    } catch (error) {
+      showError(error, 'Erro ao excluir categoria')
     }
-  }, [refetch, showToast])
+  }, [refetch, showToast, showError])
 
   const mobileCardStyle: CSSProperties = {
     ...cardStyle,

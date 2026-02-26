@@ -67,7 +67,7 @@ export default function InventarioPage() {
       })
       setToastFlash('Contagem aplicada com sucesso')
       router.push('/estoque')
-    } catch {
+    } catch (error) {
       setSubmitError('Erro ao aplicar contagem. Tente novamente.')
     } finally {
       setSaving(false)

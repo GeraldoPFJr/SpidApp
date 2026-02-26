@@ -65,7 +65,7 @@ function LancamentoContent() {
       })
       setToastFlash('Lancamento salvo com sucesso')
       router.push('/financeiro')
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar lancamento' })
     } finally {
       setSaving(false)

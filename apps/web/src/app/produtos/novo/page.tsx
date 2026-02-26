@@ -140,7 +140,7 @@ export default function NovoProdutoPage() {
       })
       setToastFlash('Produto salvo com sucesso')
       router.push('/produtos')
-    } catch {
+    } catch (error) {
       setErrors({ submit: 'Erro ao salvar produto. Tente novamente.' })
     } finally {
       setSaving(false)

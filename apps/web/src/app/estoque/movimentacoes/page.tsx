@@ -75,7 +75,7 @@ export default function MovimentacoesPage() {
       setSubmitError(null)
       refetch()
       showToast('Movimentacao registrada')
-    } catch {
+    } catch (error) {
       setSubmitError('Erro ao criar movimentacao. Tente novamente.')
     } finally {
       setSaving(false)
