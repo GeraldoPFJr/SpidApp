@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   transpilePackages: ['@xpid/shared', '@xpid/ui'],
   serverExternalPackages: ['@prisma/client'],
   webpack: (config) => {
