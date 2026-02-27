@@ -17,7 +17,7 @@ const createMovementSchema = z.object({
     'RETURN',
     'INVENTORY_COUNT',
   ]),
-  notes: z.string().max(500).optional(),
+  notes: z.string().max(500).nullable().optional(),
 })
 
 export async function GET(request: NextRequest) {

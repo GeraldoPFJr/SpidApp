@@ -8,8 +8,8 @@ const settleSchema = z.object({
   amount: z.number().positive(),
   accountId: z.string().uuid(),
   method: z.string().min(1),
-  date: z.string().optional(),
-  notes: z.string().max(500).optional(),
+  date: z.string().nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
 })
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -35,10 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const now = result.data.date ? new Date(result.data.date) : new Date()
-    const totalSettled = receivable.settlements.reduce(
-      (sum, s) => sum + Number(s.amount),
-      0,
-    )
+    const totalSettled = receivable.settlements.reduce((sum, s) => sum + Number(s.amount), 0)
     const remaining = Number(receivable.amount) - totalSettled
 
     if (result.data.amount > remaining + 0.01) {

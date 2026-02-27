@@ -7,8 +7,8 @@ import { errorResponse, parseBody } from '@/lib/api-utils'
 const closureSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
   accountId: z.string().uuid(),
-  countedClosing: z.number().optional(),
-  notes: z.string().max(1000).optional(),
+  countedClosing: z.number().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -93,12 +93,15 @@ export async function POST(request: NextRequest) {
       include: { account: true },
     })
 
-    return NextResponse.json({
-      ...closure,
-      totalIncome,
-      totalExpense,
-      difference: countedClosing !== undefined ? countedClosing - expectedClosing : null,
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        ...closure,
+        totalIncome,
+        totalExpense,
+        difference: countedClosing != null ? countedClosing - expectedClosing : null,
+      },
+      { status: 201 },
+    )
   } catch (error) {
     console.error('Error in POST /api/finance/closures:', error)
     const message = error instanceof Error ? error.message : 'Failed to create closure'

@@ -7,9 +7,9 @@ import { errorResponse, parseBody } from '@/lib/api-utils'
 
 const cancelSaleSchema = z.object({
   merchandiseAction: z.string().min(1),
-  merchandiseNotes: z.string().optional(),
+  merchandiseNotes: z.string().nullable().optional(),
   moneyAction: z.string().min(1),
-  moneyNotes: z.string().optional(),
+  moneyNotes: z.string().nullable().optional(),
 })
 
 type RouteParams = { params: Promise<{ id: string }> }
